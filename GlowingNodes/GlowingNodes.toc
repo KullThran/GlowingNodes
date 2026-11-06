@@ -16,6 +16,8 @@
 ## SavedVariables: GlowingNodesDB
 ## IconTexture: Interface\AddOns\GlowingNodes\Media\Art\icon
 ## X-Category: Professions
+## X-Curse-Project-ID: 1787092
+## X-Wago-ID: j6jAYgNR
 ## AddonCompartmentFunc: GlowingNodes_OnCompartmentClick
 
 Libs\embeds.xml
