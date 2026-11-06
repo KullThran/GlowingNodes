@@ -57,8 +57,8 @@ jobs:
       - name: Check publishing credentials
         shell: bash
         env:
-          CF_API_KEY: ${{ secrets.CF_API_KEY }}
-          WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
+          CF_API_KEY: ${{ secrets.GLOWINGNODES_CURSE }}
+          WAGO_API_TOKEN: ${{ secrets.GLOWINGNODES_WAGO }}
         run: |
           test -n "$CF_API_KEY"
           test -n "$WAGO_API_TOKEN"
@@ -68,6 +68,6 @@ jobs:
         with:
           args: '-n "${{ steps.version.outputs.PACKAGE_NAME }}:${{ steps.version.outputs.PACKAGE_TITLE }}"'
         env:
-          CF_API_KEY: ${{ secrets.CF_API_KEY }}
-          WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
+          CF_API_KEY: ${{ secrets.GLOWINGNODES_CURSE }}
+          WAGO_API_TOKEN: ${{ secrets.GLOWINGNODES_WAGO }}
           GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
