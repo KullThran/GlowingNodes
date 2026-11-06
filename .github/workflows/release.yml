@@ -1,0 +1,73 @@
+name: Publish Glowing Nodes
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Require a version tag
+        shell: bash
+        run: |
+          if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-beta)?$ ]]; then
+            echo "Releases need a vX.Y.Z or vX.Y.Z-beta tag." >&2
+            exit 1
+          fi
+
+      - name: Release notes from the changelog
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          version="${version%-beta}"
+          awk -v v="$version" '
+            $0 ~ "^## " v "([[:space:]]|$)" { found=1; print; next }
+            found && /^## [0-9]+\.[0-9]+\.[0-9]+/ { exit }
+            found { print }
+          ' GlowingNodes/CHANGELOG.md > RELEASE_NOTES.md
+          if [[ ! -s RELEASE_NOTES.md ]]; then
+            echo "No section for $version in GlowingNodes/CHANGELOG.md." >&2
+            exit 1
+          fi
+
+      - name: Package name
+        id: version
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          version="${version%-beta}"
+          if [[ "$GITHUB_REF_NAME" == *-beta ]]; then
+            echo "PACKAGE_NAME=GlowingNodes_beta_${version}" >> "$GITHUB_OUTPUT"
+            echo "PACKAGE_TITLE=Glowing Nodes BETA ${version}" >> "$GITHUB_OUTPUT"
+          else
+            echo "PACKAGE_NAME=GlowingNodes_${version}" >> "$GITHUB_OUTPUT"
+            echo "PACKAGE_TITLE=Glowing Nodes ${version}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check publishing credentials
+        shell: bash
+        env:
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
+          WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
+        run: |
+          test -n "$CF_API_KEY"
+          test -n "$WAGO_API_TOKEN"
+
+      - name: Package and publish to CurseForge, Wago and GitHub
+        uses: BigWigsMods/packager@v2
+        with:
+          args: '-n "${{ steps.version.outputs.PACKAGE_NAME }}:${{ steps.version.outputs.PACKAGE_TITLE }}"'
+        env:
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
+          WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
+          GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}

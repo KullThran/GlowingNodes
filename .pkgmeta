@@ -1,0 +1,25 @@
+package-as: GlowingNodes
+
+move-folders:
+  GlowingNodes/GlowingNodes: GlowingNodes
+
+enable-nolib-creation: no
+
+manual-changelog:
+  filename: RELEASE_NOTES.md
+  markup-type: markdown
+
+ignore:
+  - .github
+  - .vscode
+  - .claude
+  - docs
+  - tests
+  - tools
+  - promo
+  - README.md
+  - RELEASE_NOTES.md
+  - "*.ps1"
+  - "*.py"
+  - "*.jsx"
+  - "*.out"

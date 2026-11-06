@@ -1,0 +1,45 @@
+## Interface: 16001
+## AllowLoadGameType: camelot
+## Title: |cff3fe0c5Glowing|r Nodes
+## Notes: Makes ore veins, herbs and skinnable corpses glow brightly, with the profession level needed to gather them. /gn
+## Notes-esES: Hace brillar las menas, hierbas y pieles desollables, con el nivel de profesión necesario para recogerlas. /gn
+## Notes-deDE: Lässt Erzvorkommen, Kräuter und häutbare Leichen hell leuchten, mit der nötigen Berufsstufe. /gn
+## Notes-frFR: Fait briller les filons, les herbes et les cadavres à dépecer, avec le niveau de métier requis. /gn
+## Notes-itIT: Fa brillare vene di minerale, erbe e cadaveri da scuoiare, con il livello di professione richiesto. /gn
+## Notes-ptBR: Faz veios de minério, ervas e corpos esfoláveis brilharem, com o nível de profissão necessário. /gn
+## Notes-ruRU: Подсвечивает рудные жилы, травы и туши для снятия шкур и показывает нужный уровень профессии. /gn
+## Notes-koKR: 광맥, 약초, 무두질할 수 있는 시체를 밝게 빛나게 하고 필요한 전문기술 숙련도를 보여줍니다. /gn
+## Notes-zhCN: 让矿脉、草药和可剥皮的尸体发出亮光，并显示所需的专业技能等级。/gn
+## Notes-zhTW: 讓礦脈、草藥和可剝皮的屍體發出亮光，並顯示所需的專業技能等級。/gn
+## Author: KullThran
+## Version: 1.0.0
+## SavedVariables: GlowingNodesDB
+## IconTexture: Interface\AddOns\GlowingNodes\Media\Art\icon
+## X-Category: Professions
+## AddonCompartmentFunc: GlowingNodes_OnCompartmentClick
+
+Libs\embeds.xml
+
+Locales\Locales.lua
+Locales\enUS.lua
+Locales\esES.lua
+Locales\deDE.lua
+Locales\frFR.lua
+Locales\itIT.lua
+Locales\ptBR.lua
+Locales\ruRU.lua
+Locales\koKR.lua
+Locales\zhCN.lua
+Locales\zhTW.lua
+
+Core\Init.lua
+Core\NodeData.lua
+Core\Skills.lua
+Core\Glow.lua
+Core\Sounds.lua
+Core\SoftTarget.lua
+
+UI\Widgets.lua
+UI\Alert.lua
+UI\Window.lua
+UI\Settings.lua

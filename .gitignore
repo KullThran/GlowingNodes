@@ -1,0 +1,11 @@
+# Local development files (not published)
+/.vscode/
+/.claude/
+/docs/
+/tests/
+/promo/
+/tools/photoshop/_src/
+luac.out
+__pycache__/
+*.pyc
+/tools/

@@ -1,0 +1,21 @@
+Glowing Nodes: third-party notices
+=================================
+
+Ace3 (Libs/AceAddon-3.0, AceDB-3.0, AceEvent-3.0, AceTimer-3.0, AceConsole-3.0),
+LibStub and CallbackHandler-1.0
+  Copyright (c) 2007, Ace3 Development Team. BSD-style licence: Libs/Ace3-LICENSE.txt.
+
+Technique credit
+  Hanging an effect on the soft-target nameplate of a world object, and
+  reading its kind from the cursor icon, was first shown to work on
+  World of Warcraft: Forever by "Forever Loot Sparkles" (Ashtar Senior,
+  GPL-3.0). Glowing Nodes uses its own implementation of that approach;
+  no code from it is included.
+
+Node names
+  The Spanish node names in Core/NodeData.lua are the game's own texts
+  (Blizzard Entertainment), checked against the client's tables.
+
+Sounds and art
+  Media/Sounds are synthesised by tools/sounds/make_sounds.py; Media/Art is
+  painted by tools/photoshop (Python + Photoshop) for this addon.

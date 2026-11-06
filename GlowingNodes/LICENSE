@@ -1,0 +1,43 @@
+Glowing Nodes License
+Copyright (c) 2026 KullThran. All rights reserved.
+
+This license applies only to the portions of Glowing Nodes originally authored
+by KullThran (the "Original Work").
+
+Permission is granted to download, install, and use the Original Work for
+personal, non-commercial purposes. You may also modify the Original Work for
+your own private use.
+
+Except with prior written permission from KullThran, you may not:
+
+1. publish, share, or distribute modified versions of the Original Work;
+2. sell, sublicense, rent, or commercially exploit the Original Work;
+3. remove or alter copyright, attribution, or license notices; or
+4. represent the Original Work, or substantial portions of it, as your own.
+
+Unmodified copies of Glowing Nodes may be redistributed only when this license,
+all applicable third-party notices, the original project name, and the original
+folder structure are retained.
+
+Third-party components
+----------------------
+
+This license does not apply to third-party code, libraries, fonts, textures,
+artwork, data, or other resources included with or used by Glowing Nodes. Those
+components remain the property of their respective authors and are governed by
+their own licenses and terms. Their inclusion does not transfer ownership to
+KullThran and does not grant rights beyond those provided by their respective
+owners.
+
+If a third-party license conflicts with this license, the third-party license
+controls for that component. No permission is granted to use a third-party
+component when its original license or author does not permit that use.
+
+Disclaimer
+----------
+
+THE ORIGINAL WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL THE
+AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM THE
+ORIGINAL WORK OR ITS USE.
