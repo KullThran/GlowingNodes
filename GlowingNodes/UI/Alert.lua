@@ -46,7 +46,7 @@ function Alert.NewCard(parent)
     ring:SetSize(78, 78)
     ring:SetPoint("CENTER", c.halo, "CENTER")
 
-    c.name = W.Text(c, 14, W.INK, W.TITLE_FONT)
+    c.name = W.Text(c, 14, W.INK, W.NAME_FONT) -- the game's name for the node
     c.name:SetPoint("CENTER", c, "TOP", 0, -153)
     c.name:SetWidth(164)
     c.name:SetJustifyH("CENTER")
@@ -73,14 +73,14 @@ function Alert.NewCard(parent)
         self.halo:SetAlpha(0.65 + 0.25 * math.sin(self.t * 2.2))
     end)
 
-    -- info: { category, name, required, skill, hasProf, state, objectID }
+    -- info: { category, name, required, skill, hasProf, state, objectID, icon }
     function c:Fill(info)
         local cat = info.category or "ore"
         local col = ns.db[cat] and ns.db[cat].color or { r = 1, g = 1, b = 1 }
         self.edge:SetVertexColor(col.r, col.g, col.b)
         self.halo:SetVertexColor(col.r, col.g, col.b)
         self.title:SetText(L["ALERT_TITLE_" .. cat])
-        self.icon:SetTexture(Data.IconFor(cat, info.required, info.name))
+        self.icon:SetTexture(info.icon or Data.IconFor(cat, info.required, info.name))
         self.name:SetText(info.name or "")
         local text, r, g, b = Glow.NumberFor(info.required, info.skill, false, info.hasProf)
         self.level:SetText(L.ALERT_LEVEL:format("|cff" .. Hex(r, g, b) .. text .. "|r"))

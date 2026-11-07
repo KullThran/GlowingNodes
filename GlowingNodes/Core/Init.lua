@@ -45,6 +45,7 @@ ns.DEFAULTS = {
         soundOnReady = false,
         debug = false,
         window = {},
+        windowScale = 1, -- the options window's zoom, 0.5-1.5 (as in KullThranUI)
         lastTab = "ore",
         alert = {
             enabled = true,
@@ -55,9 +56,20 @@ ns.DEFAULTS = {
             hideCombat = true,
             point = nil, -- { point, relPoint, x, y } once dragged
         },
+        map = {
+            record = { ore = true, herb = true, skin = true }, -- what goes in the log
+            show = { ore = true, herb = true, skin = true },   -- what the maps draw
+            worldMap = true,
+            minimap = true,
+            pinSize = 12,
+        },
     },
     global = {
         learned = {}, -- "o<objectID>" / "n<lower name>" -> required skill seen in game
+        language = "auto", -- the addon's language: "auto" follows the client
+        nodes = {},     -- [uiMapID][x*1e4 .. y*1e4] = { k = kind, n = name, c = gathered, s = seen, t = last gathered,
+                        --   v = last met, o = objectID, r = level needed, p = false while only seen from afar }
+        gatherLog = {}, -- last gathers, newest last: { t, k, n, m = uiMapID, x, y }
     },
 }
 
@@ -136,6 +148,9 @@ function Addon:OnInitialize()
     self.db = LibStub("AceDB-3.0"):New("GlowingNodesDB", ns.DEFAULTS, true)
     ns.db = self.db.profile
     ns.global = self.db.global
+    -- the language picked in the window (the window is built later, on use)
+    ns.UseLanguage(ns.global.language)
+    if ns.W then ns.W.SetFonts(ns.LOCALE) end
     local function Reload()
         ns.db = self.db.profile
         ns.Fire("Changed", "*")
@@ -149,9 +164,33 @@ function Addon:OnInitialize()
     self:RegisterChatCommand("glowingnodes", "Slash")
 end
 
+-- A test build put a game waypoint on logged nodes; that's gone. If it left
+-- one behind (kept in global.farWaypoint), it is cleared once, and only if
+-- the game's waypoint is still that one.
+local function ClearOldWaypoint()
+    local old = ns.global.farWaypoint
+    if not old then return end
+    ns.global.farWaypoint = nil
+    if not (C_Map and C_Map.HasUserWaypoint and C_Map.HasUserWaypoint() and C_Map.ClearUserWaypoint) then return end
+    local pos
+    if C_Map.GetUserWaypointPositionForMap then
+        local ok, p = pcall(C_Map.GetUserWaypointPositionForMap, old.mapID)
+        if ok then pos = p end
+    end
+    local x, y = pos and pos.x, pos and pos.y
+    if pos and pos.GetXY then x, y = pos:GetXY() end
+    if type(x) == "number" and math.abs(x - old.x) < 2e-3 and math.abs(y - old.y) < 2e-3 then
+        pcall(C_Map.ClearUserWaypoint)
+    end
+end
+
 function Addon:OnEnable()
     ns.Fire("Enable")
+    pcall(ClearOldWaypoint)
     self:ScheduleTimer(function()
+        -- other addons set the same ranges as they log in (their own values):
+        -- ours again, written only where they differ
+        if ns.db.enabled and ns.SoftTarget then ns.SoftTarget:ApplyCVars() end
         local other = ns.ConflictingAddon()
         if other and ns.db.enabled then
             ns.Print(L.MSG_CONFLICT:format(other))
@@ -174,10 +213,29 @@ function ns.SetCat(category, key, value)
     ns.Fire("Changed", category .. "." .. key)
 end
 
+-- ns.SetMap("worldMap", true) / ns.SetMap("show", false, "herb")
+function ns.SetMap(key, value, kind)
+    if kind then
+        ns.db.map[key][kind] = value
+    else
+        ns.db.map[key] = value
+    end
+    ns.Fire("Changed", "map." .. key)
+end
+
+-- the addon's language; it takes a /reload, as the texts are built once
+function ns.SetLanguage(code)
+    ns.global.language = code
+    ns.Fire("LanguageChanged", ns.ResolveLanguage(code) ~= ns.LOCALE)
+end
+
 function Addon:Slash(input)
     local cmd = strtrim((input or ""):lower())
     if cmd == "" or cmd == "config" or cmd == "options" then
         ns.Window:Toggle()
+    elseif cmd == "map" or cmd == "mapa" then
+        ns.Window:Open()
+        ns.Window:Select("map")
     elseif cmd == "on" or cmd == "off" then
         ns.Set("enabled", cmd == "on")
         ns.Print(cmd == "on" and L.MSG_ON or L.MSG_OFF)
@@ -189,6 +247,8 @@ function Addon:Slash(input)
         ns.Print("debug " .. (ns.db.debug and "on" or "off"))
     elseif cmd == "rango" or cmd == "range" then
         ns.SoftTarget:PrintRange()
+    elseif cmd:match("^rango %d+$") or cmd:match("^range %d+$") then
+        ns.SoftTarget:SetRange(tonumber(cmd:match("%d+")))
     elseif cmd == "info" then
         ns.SoftTarget:PrintInfo()
     else

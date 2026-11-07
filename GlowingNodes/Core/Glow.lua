@@ -136,9 +136,19 @@ function Glow:Flare()
     for _, g in ipairs(self.glints) do self:Respawn(g, true) end
 end
 
-function Glow:Attach(anchor, x, y)
+-- world: hung on a nameplate in the world. The game shrinks nameplates with
+-- distance, and a glow that followed it was a faint ring around the
+-- interact icon on a node far off; it keeps its own size instead (the UI's),
+-- and only its drop to the ground (y) follows the nameplate, as perspective
+-- shortens it.
+function Glow:Attach(anchor, x, y, world)
     local f = self.frame
     f:SetParent(anchor)
+    self.world, self.offX, self.offY, self.rel = world, x or 0, y or 0, nil
+    if f.SetIgnoreParentScale then
+        f:SetIgnoreParentScale(world and true or false)
+        f:SetScale(world and UIParent:GetEffectiveScale() or 1)
+    end
     f:ClearAllPoints()
     f:SetPoint("CENTER", anchor, "CENTER", x or 0, y or 0)
     if f.SetIgnoreParentAlpha then f:SetIgnoreParentAlpha(true) end
@@ -151,9 +161,12 @@ function Glow:Attach(anchor, x, y)
     self.anchor = anchor
 end
 
-function Glow:Show(state)
+-- instant: no fade-in (a node the game picked again a moment after dropping
+-- it: at a distance its pick can flicker, and a glow fading in from zero each
+-- time would never get to show)
+function Glow:Show(state, instant)
     self.state = state or "ready"
-    self.appear = 0
+    self.appear = instant and 1 or 0
     self.ready = self.state == "ready" and 1 or 0
     self.locked = self.state == "locked" and 1 or 0
     self.burstAge = BURST_TIME
@@ -170,10 +183,30 @@ function Glow:IsShown()
     return self.frame:IsShown()
 end
 
+-- the nameplate's size against the UI's, for a world glow's drop to the ground
+local function PlateRel(anchor)
+    local ok, ps = pcall(anchor.GetEffectiveScale, anchor)
+    local us = UIParent:GetEffectiveScale()
+    if not ok or type(ps) ~= "number" or (issecretvalue and issecretvalue(ps)) or not us or us <= 0 then return nil end
+    return ps / us
+end
+Glow.PlateRel = PlateRel
+
 function Glow:Update(elapsed)
     local cfg, opts = self.cfg, self.opts
     if not cfg then return end
     if elapsed > 0.1 then elapsed = 0.1 end
+    if self.world and self.anchor then
+        local f = self.frame
+        local us = UIParent:GetEffectiveScale()
+        if f:GetScale() ~= us then f:SetScale(us) end
+        local rel = PlateRel(self.anchor)
+        if rel and math.abs(rel - (self.rel or -1)) > 0.005 then
+            self.rel = rel
+            f:ClearAllPoints()
+            f:SetPoint("CENTER", self.anchor, "CENTER", self.offX * rel, self.offY * rel)
+        end
+    end
     self.t = self.t + elapsed
     self.appear = Approach(self.appear, 1, elapsed / FADE_IN)
     self.ready = Approach(self.ready, self.state == "ready" and 1 or 0, elapsed / BLEND)

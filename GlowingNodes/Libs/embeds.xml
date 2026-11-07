@@ -7,4 +7,6 @@
 	<Include file="AceTimer-3.0\AceTimer-3.0.xml"/>
 	<Include file="AceDB-3.0\AceDB-3.0.xml"/>
 	<Include file="AceConsole-3.0\AceConsole-3.0.xml"/>
+	<Script file="HereBeDragons\HereBeDragons-2.0.lua"/>
+	<Script file="HereBeDragons\HereBeDragons-Pins-2.0.lua"/>
 </Ui>

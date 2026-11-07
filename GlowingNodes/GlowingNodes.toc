@@ -12,7 +12,7 @@
 ## Notes-zhCN: 让矿脉、草药和可剥皮的尸体发出亮光，并显示所需的专业技能等级。/gn
 ## Notes-zhTW: 讓礦脈、草藥和可剝皮的屍體發出亮光，並顯示所需的專業技能等級。/gn
 ## Author: KullThran
-## Version: 1.0.1
+## Version: 1.1.0
 ## SavedVariables: GlowingNodesDB
 ## IconTexture: Interface\AddOns\GlowingNodes\Media\Art\icon
 ## X-Category: Professions
@@ -40,8 +40,12 @@ Core\Skills.lua
 Core\Glow.lua
 Core\Sounds.lua
 Core\SoftTarget.lua
+Core\Gather.lua
 
 UI\Widgets.lua
 UI\Alert.lua
+UI\MapPins.lua
+UI\MapPage.lua
+UI\NodeModel.lua
 UI\Window.lua
 UI\Settings.lua

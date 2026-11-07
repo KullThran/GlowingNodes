@@ -1,18 +1,22 @@
 -- Widgets.lua
--- The options window is a gatherer's field notebook: parchment in a stitched
--- leather cover. The widgets are written on the page: ink check boxes, an
--- engraved ruler with a brass needle, watercolour dabs for colours, ruled
--- stamps for buttons. Textures come from tools/photoshop/Build-NodesArt.ps1.
--- The "accent" is the colour of the node kind on the page, used as coloured
--- ink and watercolour washes, never as glow.
+-- The options window is made of the alert card's materials: brown pebbled
+-- leather, a cream running stitch, bronze corner caps and rims. Controls:
+-- dark wells in bronze rims, grooves with a bronze ring for a knob, leather
+-- plaques for tabs and buttons, gems for colours. Textures (Media/Art/f_*)
+-- come from tools/photoshop/leather/Build-LeatherArt.ps1.
+-- The "accent" is the colour of the node kind on the page: the tick, the
+-- slider's fill, the lit plate under the pointer.
 local _, ns = ...
 
 local W = {}
 ns.W = W
 
 local ART = ns.ART
--- Fonts with the glyphs of the client's language: Friz Quadrata and Morpheus
--- have no Cyrillic, Korean or Chinese, so those clients get their own fonts.
+-- Fonts with the glyphs of the addon's language: Friz Quadrata and Morpheus
+-- have no Cyrillic, Korean or Chinese. Every client ships these fonts (the
+-- game's font families use them), so any language can be picked on any
+-- client. Texts that come from the game (node and zone names) are in the
+-- client's language and use the client's own font.
 local probe = UIParent:CreateFontString(nil, "BACKGROUND")
 local function FirstFont(...)
     for i = 1, select("#", ...) do
@@ -23,21 +27,35 @@ local function FirstFont(...)
     end
     return "Fonts\\FRIZQT__.TTF"
 end
-local CLIENT = GetLocale and GetLocale() or "enUS"
-W.FONT = FirstFont(STANDARD_TEXT_FONT, "Fonts\\FRIZQT__.TTF")
-if CLIENT == "ruRU" then
-    W.TITLE_FONT = FirstFont("Fonts\\MORPHEUS_CYR.TTF", W.FONT)
-elseif CLIENT == "koKR" or CLIENT == "zhCN" or CLIENT == "zhTW" then
-    W.TITLE_FONT = W.FONT
-else
-    W.TITLE_FONT = FirstFont("Fonts\\MORPHEUS.TTF", W.FONT)
+local LANG_FONTS = {
+    ruRU = { "Fonts\\FRIZQT___CYR.TTF", "Fonts\\MORPHEUS_CYR.TTF" },
+    koKR = { "Fonts\\2002.TTF", "Fonts\\2002.TTF" },
+    zhCN = { "Fonts\\ARKai_T.ttf", "Fonts\\ARKai_T.ttf" },
+    zhTW = { "Fonts\\bLEI00D.ttf", "Fonts\\bLEI00D.ttf" },
+}
+function W.FontsFor(lang)
+    local f = LANG_FONTS[lang]
+    if f then
+        local body = FirstFont(f[1], STANDARD_TEXT_FONT)
+        return body, FirstFont(f[2], body)
+    end
+    local body = FirstFont("Fonts\\FRIZQT__.TTF", STANDARD_TEXT_FONT)
+    return body, FirstFont("Fonts\\MORPHEUS.TTF", body)
 end
+function W.SetFonts(lang)
+    W.FONT, W.TITLE_FONT = W.FontsFor(lang)
+    local client = ns.CLIENT_LOCALE or "enUS"
+    W.CLIENT_FONT = LANG_FONTS[client] and (W.FontsFor(client)) or FirstFont(STANDARD_TEXT_FONT, W.FONT)
+    -- game names with the title font only when they share its alphabet
+    W.NAME_FONT = (W.FontsFor(client) == W.FONT) and W.TITLE_FONT or W.CLIENT_FONT
+end
+W.SetFonts(ns.LOCALE)
 
-W.INK = { 0.92, 0.85, 0.70 }      -- light ink: the page is dark vellum
-W.INK_SOFT = { 0.64, 0.56, 0.43 }
-W.GOLD = { 0.93, 0.79, 0.50 }
-W.TAN = { 0.74, 0.62, 0.45 }
-W.DEFAULT_ACCENT = { 0.56, 0.36, 0.14 } -- sepia, the General page
+W.INK = { 0.95, 0.91, 0.82 }      -- cream text on brown leather, as on the alert
+W.INK_SOFT = { 0.76, 0.70, 0.60 }
+W.GOLD = { 0.98, 0.82, 0.56 }     -- warm gold headings
+W.TAN = { 0.84, 0.76, 0.64 }
+W.DEFAULT_ACCENT = { 0.92, 0.62, 0.36 } -- bronze-amber, the General page
 W.accent = { unpack(W.DEFAULT_ACCENT) }
 
 local accentPainters = {}
@@ -107,6 +125,15 @@ function W.Ink(parent, file, layer, sub)
     return t
 end
 
+-- a dark inset under a control, so it stands out from the page
+function W.Backing(parent, alpha, l, t, r, b, anchor)
+    local tex = parent:CreateTexture(nil, "BACKGROUND", nil, -2)
+    tex:SetColorTexture(0.06, 0.035, 0.015, alpha or 0.45)
+    tex:SetPoint("TOPLEFT", anchor or parent, "TOPLEFT", l or 0, t or 0)
+    tex:SetPoint("BOTTOMRIGHT", anchor or parent, "BOTTOMRIGHT", r or 0, b or 0)
+    return tex
+end
+
 function W.Tooltip(frame, title, text)
     if not (title or text) then return end
     frame:HookScript("OnEnter", function(self)
@@ -156,19 +183,42 @@ function W.NineSlice(frame, file, texSize, corner, edge, layer, sub)
 end
 
 ---------------------------------------------------------------------------
--- Section: a heading written in the notebook, underlined with a flourish
+-- Three-slice along x: the caps keep their shape, the middle stretches
+---------------------------------------------------------------------------
+
+function W.ThreeSlice(parent, file, texW, capPx, capW, layer, sub)
+    local c = capPx / texW
+    local l = W.Tex(parent, file, layer, sub)
+    local m = W.Tex(parent, file, layer, sub)
+    local r = W.Tex(parent, file, layer, sub)
+    l:SetTexCoord(0, c, 0, 1)
+    m:SetTexCoord(c, 1 - c, 0, 1)
+    r:SetTexCoord(1 - c, 1, 0, 1)
+    l:SetPoint("TOPLEFT") l:SetPoint("BOTTOMLEFT") l:SetWidth(capW)
+    r:SetPoint("TOPRIGHT") r:SetPoint("BOTTOMRIGHT") r:SetWidth(capW)
+    m:SetPoint("TOPLEFT", l, "TOPRIGHT") m:SetPoint("BOTTOMRIGHT", r, "BOTTOMLEFT")
+    local obj = { parts = { l, m, r } }
+    function obj:SetVertexColor(cr, cg, cb, ca)
+        for _, t in ipairs(self.parts) do t:SetVertexColor(cr, cg, cb, ca or 1) end
+    end
+    return obj
+end
+
+---------------------------------------------------------------------------
+-- Section: a gold heading over a bronze rule led by a diamond
 ---------------------------------------------------------------------------
 
 function W.Section(parent, title, w, h)
     local s = CreateFrame("Frame", nil, parent)
     s:SetSize(w, h)
-    local t = W.Text(s, 16, W.INK, W.TITLE_FONT)
+    local t = W.Text(s, 16, W.GOLD, W.TITLE_FONT)
     t:SetPoint("TOPLEFT", 0, 0)
     t:SetText(title or "")
-    local rule = W.Ink(s, "flourish", "ARTWORK")
-    rule:SetPoint("TOPLEFT", t, "BOTTOMLEFT", -2, -1)
-    rule:SetSize(math.min(w, 200), 12)
-    rule:SetAlpha(0.8)
+    t:SetShadowColor(0, 0, 0, 1)
+    t:SetShadowOffset(1, -1)
+    local rule = W.Tex(s, "f_rule", "ARTWORK")
+    rule:SetPoint("TOPLEFT", t, "BOTTOMLEFT", -4, 1)
+    rule:SetSize(math.min(w, 250), 16)
     s.title = t
     s.y = -30
     function s:Add(widget, height, x)
@@ -181,39 +231,37 @@ function W.Section(parent, title, w, h)
 end
 
 ---------------------------------------------------------------------------
--- Check: an inked box, ticked in the page's colour
+-- Check: a dark well in a bronze rim, ticked in the page's colour
 ---------------------------------------------------------------------------
 
 function W.Check(parent, label, tip, get, set, onLeather)
     local f = CreateFrame("Button", nil, parent)
     f:SetHeight(22)
-    local box = W.Tex(f, "check_box", "ARTWORK")
-    box:SetSize(22, 22)
-    box:SetPoint("LEFT", -3, 0)
-    local tick = W.Tex(f, "check_tick", "OVERLAY")
-    tick:SetSize(24, 24)
-    tick:SetPoint("CENTER", box, "CENTER", 2, 3)
+    local box = W.Tex(f, "f_check", "ARTWORK")
+    box:SetSize(24, 24)
+    box:SetPoint("LEFT", -4, 0)
+    local tick = W.Tex(f, "f_tick", "OVERLAY")
+    tick:SetSize(22, 22)
+    tick:SetPoint("CENTER", box, "CENTER", 1, 1)
     local text = onLeather and W.GoldText(f, 12, W.FONT) or W.Text(f, 12)
-    text:SetPoint("LEFT", box, "RIGHT", 4, 0)
+    text:SetPoint("LEFT", box, "RIGHT", 3, 0)
     text:SetPoint("RIGHT", 0, 0)
     text:SetText(label)
+    if not onLeather then
+        text:SetShadowColor(0, 0, 0, 0.9)
+        text:SetShadowOffset(1, -1)
+    end
     local hover = false
 
     local function paint()
         local on = get()
         tick:SetShown(on)
+        tick:SetVertexColor(W.AccentInk(0.9))
+        box:SetVertexColor(hover and 1 or 0.9, hover and 1 or 0.9, hover and 1 or 0.9)
         if onLeather then
-            box:SetVertexColor(unpack(W.GOLD))
-            tick:SetVertexColor(1, 0.9, 0.62)
-            text:SetTextColor(unpack(hover and { 1, 0.92, 0.7 } or W.GOLD))
+            text:SetTextColor(unpack(hover and W.INK or W.GOLD))
         else
-            box:SetVertexColor(unpack(W.INK))
-            tick:SetVertexColor(W.AccentInk(0.75))
-            if hover then
-                text:SetTextColor(W.AccentInk(0.7))
-            else
-                text:SetTextColor(unpack(on and W.INK or W.INK_SOFT))
-            end
+            text:SetTextColor(unpack(hover and { 1, 1, 1 } or W.INK))
         end
     end
     f:SetScript("OnClick", function()
@@ -229,8 +277,31 @@ function W.Check(parent, label, tip, get, set, onLeather)
 end
 
 ---------------------------------------------------------------------------
--- Slider: a ruler with a brass needle, coloured wash up to the value
+-- Slider: a groove in a bronze rim, filled in the page's colour up to the
+-- value, with a bronze rivet for a knob
 ---------------------------------------------------------------------------
+
+-- the groove, its fill and the knob on a Slider; returns the painter
+function W.SliderTrack(s, knobSize)
+    local track = CreateFrame("Frame", nil, s)
+    track:SetPoint("LEFT", 0, 0)
+    track:SetPoint("RIGHT", 0, 0)
+    track:SetHeight(16)
+    track:SetFrameLevel(math.max(s:GetFrameLevel() - 1, 0))
+    W.ThreeSlice(track, "f_track", 256, 16, 8, "BACKGROUND")
+    local fill = CreateFrame("Frame", nil, track)
+    fill:SetPoint("LEFT", 1, 0)
+    fill:SetHeight(16)
+    local paint = W.ThreeSlice(fill, "f_fill", 256, 12, 6, "ARTWORK")
+    s:SetThumbTexture(ART .. "f_knob")
+    s:GetThumbTexture():SetSize(knobSize or 20, knobSize or 20)
+    W.OnAccent(function(r, g, b) paint:SetVertexColor(r, g, b, 1) end)
+    return function(p)
+        local w = (s:GetWidth() - 2) * math.max(0, math.min(1, p))
+        fill:SetShown(w >= 12)
+        fill:SetWidth(math.max(w, 12))
+    end
+end
 
 function W.Slider(parent, label, minV, maxV, step, get, set, fmt, tip)
     local f = CreateFrame("Frame", nil, parent)
@@ -238,9 +309,13 @@ function W.Slider(parent, label, minV, maxV, step, get, set, fmt, tip)
     local text = W.Text(f, 12)
     text:SetPoint("TOPLEFT", 0, 0)
     text:SetText(label)
-    local value = W.Text(f, 13, W.INK, W.TITLE_FONT)
-    value:SetPoint("TOPRIGHT", -2, 1)
+    text:SetShadowColor(0, 0, 0, 0.9)
+    text:SetShadowOffset(1, -1)
+    local value = W.Text(f, 14, W.GOLD, W.TITLE_FONT)
+    value:SetPoint("TOPRIGHT", -2, 2)
     value:SetJustifyH("RIGHT")
+    value:SetShadowColor(0, 0, 0, 1)
+    value:SetShadowOffset(1, -1)
 
     local s = CreateFrame("Slider", nil, f)
     s:SetOrientation("HORIZONTAL")
@@ -251,23 +326,13 @@ function W.Slider(parent, label, minV, maxV, step, get, set, fmt, tip)
     s:SetValueStep(step)
     if s.SetObeyStepOnDrag then s:SetObeyStepOnDrag(true) end
     s:EnableMouseWheel(true)
-    local wash = W.Tex(s, "wash", "BACKGROUND")
-    wash:SetPoint("LEFT", 0, -3)
-    wash:SetHeight(18)
-    local ruler = W.Ink(s, "ruler", "ARTWORK")
-    ruler:SetPoint("LEFT", 0, 0)
-    ruler:SetPoint("RIGHT", 0, 0)
-    ruler:SetHeight(20)
-    s:SetThumbTexture(ART .. "nib")
-    local thumb = s:GetThumbTexture()
-    thumb:SetSize(18, 18)
+    local fillTo = W.SliderTrack(s)
 
     local format = fmt or function(v) return tostring(v) end
     local updating = false
     local function show(v)
         value:SetText(format(v))
-        local p = (v - minV) / (maxV - minV)
-        wash:SetWidth(math.max(s:GetWidth() * p, 0.01))
+        fillTo((v - minV) / (maxV - minV))
     end
     s:SetScript("OnValueChanged", function(_, v)
         v = math.floor(v / step + 0.5) * step
@@ -285,60 +350,70 @@ function W.Slider(parent, label, minV, maxV, step, get, set, fmt, tip)
         updating = false
         show(get())
     end
-    W.OnAccent(function(r, g, b) wash:SetVertexColor(r, g, b, 0.5) end)
     f:Refresh()
     return W.Track(f)
 end
 
 ---------------------------------------------------------------------------
--- Button: a ruled stamp; a wash of colour on hover
+-- Button: an iron plate in a bronze rim; lit in the page's colour on hover
 ---------------------------------------------------------------------------
 
 function W.Button(parent, label, width, onClick)
     local b = CreateFrame("Button", nil, parent)
     b:SetSize(width or 120, 26)
-    local wash = W.Tex(b, "wash", "BACKGROUND", -1)
-    wash:SetPoint("TOPLEFT", 2, 2)
-    wash:SetPoint("BOTTOMRIGHT", -2, -4)
-    wash:SetAlpha(0)
-    W.NineSlice(b, "stamp9", 64, 10, 8, "BACKGROUND", 0)
-    local text = W.Text(b, 12)
+    W.NineSlice(b, "f_button", 128, 24, 10, "BACKGROUND", 0)
+    local glow = W.Tex(b, "f_tab_glow", "ARTWORK")
+    glow:SetPoint("TOPLEFT", 2, -2)
+    glow:SetPoint("BOTTOMRIGHT", -2, 2)
+    glow:SetAlpha(0)
+    local text = W.Text(b, 12, W.INK)
     text:SetPoint("CENTER", 0, 0)
     text:SetJustifyH("CENTER")
     text:SetText(label)
+    text:SetShadowColor(0, 0, 0, 1)
+    text:SetShadowOffset(1, -1)
     b.text = text
-    b:SetScript("OnEnter", function() wash:SetAlpha(1) end)
-    b:SetScript("OnLeave", function() wash:SetAlpha(0) end)
+    b:SetScript("OnEnter", function() glow:SetAlpha(0.3) end)
+    b:SetScript("OnLeave", function() glow:SetAlpha(0) end)
     b:SetScript("OnMouseDown", function() text:SetPoint("CENTER", 1, -1) end)
     b:SetScript("OnMouseUp", function() text:SetPoint("CENTER", 0, 0) end)
     b:SetScript("OnClick", function(self)
         Click()
         onClick(self)
     end)
-    W.OnAccent(function(r, g, bb) wash:SetVertexColor(r, g, bb, 0.45) end)
+    W.OnAccent(function(r, g, bb) glow:SetVertexColor(r, g, bb) end)
     return b
 end
 
 ---------------------------------------------------------------------------
--- Selector:  label ............  <  value  >   (value underlined)
+-- Selector:  label ............  <  value  >   (value in a dark well)
 ---------------------------------------------------------------------------
 
-function W.Selector(parent, label, values, nameOf, get, set, extraWidth)
+-- opts: leather (gold label on the cover), boxWidth, fontOf(value) for values
+-- written in another alphabet
+function W.Selector(parent, label, values, nameOf, get, set, extraWidth, opts)
+    opts = opts or {}
     local f = CreateFrame("Frame", nil, parent)
     f:SetHeight(26)
-    local text = W.Text(f, 12)
+    local text = opts.leather and W.GoldText(f, 12, W.FONT) or W.Text(f, 12)
     text:SetPoint("LEFT", 0, 0)
     text:SetText(label)
+    text:SetShadowColor(0, 0, 0, 0.9)
+    text:SetShadowOffset(1, -1)
     local box = CreateFrame("Frame", nil, f)
     box:SetPoint("RIGHT", -(extraWidth or 0), 0)
-    box:SetSize(140, 24)
-    local valueText = W.Text(box, 12, W.INK)
-    valueText:SetPoint("CENTER", 0, 1)
+    box:SetSize(opts.boxWidth or 140, 24)
+    local well = CreateFrame("Frame", nil, box)
+    well:SetPoint("TOPLEFT", 18, 1)
+    well:SetPoint("BOTTOMRIGHT", -18, -1)
+    W.NineSlice(well, "f_inset", 128, 24, 9, "BACKGROUND", 0)
+    -- on the well itself: a child frame draws over its parent's text
+    local valueText = W.Text(well, 12, W.INK)
+    valueText:SetPoint("LEFT", 6, 0)
+    valueText:SetPoint("RIGHT", -6, 0)
     valueText:SetJustifyH("CENTER")
-    local line = W.Ink(box, "divider", "ARTWORK")
-    line:SetPoint("BOTTOMLEFT", 22, 1)
-    line:SetPoint("BOTTOMRIGHT", -22, 1)
-    line:SetHeight(6)
+    if valueText.SetWordWrap then valueText:SetWordWrap(false) end
+    f.box = box
 
     local function index()
         local cur = get()
@@ -347,14 +422,16 @@ function W.Selector(parent, label, values, nameOf, get, set, extraWidth)
     end
     local function arrow(dir)
         local a = CreateFrame("Button", nil, box)
-        a:SetSize(22, 22)
+        a:SetSize(20, 20)
         a:SetPoint(dir < 0 and "LEFT" or "RIGHT", 0, 0)
-        local t = W.Ink(a, "arrow", "ARTWORK")
+        local t = W.Tex(a, "f_arrow", "ARTWORK")
+        t:SetVertexColor(0.85, 0.85, 0.85)
         t:SetAllPoints()
         if dir < 0 then t:SetTexCoord(1, 0, 0, 1) end
-        a:SetScript("OnEnter", function() t:SetVertexColor(W.AccentInk(0.8)) end)
-        a:SetScript("OnLeave", function() t:SetVertexColor(unpack(W.INK)) end)
+        a:SetScript("OnEnter", function() t:SetVertexColor(1, 1, 1) end)
+        a:SetScript("OnLeave", function() t:SetVertexColor(0.85, 0.85, 0.85) end)
         a:SetScript("OnClick", function()
+            if #values == 0 then return end
             set(values[(index() - 1 + dir) % #values + 1])
             Click()
         end)
@@ -363,17 +440,20 @@ function W.Selector(parent, label, values, nameOf, get, set, extraWidth)
     arrow(1)
     box:EnableMouseWheel(true)
     box:SetScript("OnMouseWheel", function(_, delta)
+        if #values == 0 then return end
         set(values[(index() - 1 - delta) % #values + 1])
     end)
     function f:Refresh()
-        valueText:SetText(nameOf(get()))
+        local v = get()
+        if opts.fontOf then valueText:SetFont(opts.fontOf(v) or W.FONT, 12, "") end
+        valueText:SetText(v ~= nil and nameOf(v) or "")
     end
     f:Refresh()
     return W.Track(f)
 end
 
 ---------------------------------------------------------------------------
--- Colour: watercolour dabs; the chosen one has a pencil loop round it
+-- Colour: gems; the chosen one ringed in bronze
 ---------------------------------------------------------------------------
 
 local function OpenPicker(r, g, b, onChange)
@@ -414,21 +494,22 @@ function W.ColorRow(parent, label, tip, get, set)
     local text = W.Text(f, 12)
     text:SetPoint("LEFT", 0, 0)
     text:SetText(label)
+    text:SetShadowColor(0, 0, 0, 0.9)
+    text:SetShadowOffset(1, -1)
 
-    local loop = W.Tex(f, "circle", "OVERLAY")
-    loop:SetVertexColor(0.86, 0.80, 0.68)
-    loop:SetSize(30, 30)
+    local loop = W.Tex(f, "f_ring", "OVERLAY")
+    loop:SetSize(28, 28)
 
     local function dab(size, x, color, onClick)
         local b = CreateFrame("Button", nil, f)
         b:SetSize(size, size)
         b:SetPoint("LEFT", x, 0)
-        local t = W.Tex(b, "blot", "ARTWORK")
+        local t = W.Tex(b, "f_gem", "ARTWORK")
         t:SetAllPoints()
-        if color then t:SetVertexColor(color[1], color[2], color[3], 0.95) end
+        if color then t:SetVertexColor(color[1], color[2], color[3]) end
         b.tex = t
         b:SetScript("OnClick", function() onClick() Click() end)
-        b:SetScript("OnEnter", function() t:SetSize(size + 3, size + 3) t:ClearAllPoints() t:SetPoint("CENTER") end)
+        b:SetScript("OnEnter", function() t:ClearAllPoints() t:SetPoint("CENTER") t:SetSize(size + 3, size + 3) end)
         b:SetScript("OnLeave", function() t:ClearAllPoints() t:SetAllPoints() end)
         return b
     end
@@ -446,7 +527,7 @@ function W.ColorRow(parent, label, tip, get, set)
 
     function f:Refresh()
         local c = get()
-        main.tex:SetVertexColor(c.r, c.g, c.b, 0.95)
+        main.tex:SetVertexColor(c.r, c.g, c.b)
         loop:Hide()
         for _, p in ipairs(presets) do
             if Same(c, p.color[1], p.color[2], p.color[3]) then
@@ -461,33 +542,35 @@ function W.ColorRow(parent, label, tip, get, set)
 end
 
 ---------------------------------------------------------------------------
--- Stamps in a row (the plate's states)
+-- Stamps in a row (the plate's states): small plates, the chosen one lit
 ---------------------------------------------------------------------------
 
 function W.Stamps(parent, items, get, set)
     local f = CreateFrame("Frame", nil, parent)
-    f:SetHeight(22)
+    f:SetHeight(24)
     local buttons = {}
     local function paint()
         for _, b in ipairs(buttons) do
             local on = get() == b.value
-            b.wash:SetAlpha(on and 1 or 0)
-            b.text:SetTextColor(unpack(on and W.INK or W.INK_SOFT))
+            b.glow:SetAlpha(on and 0.35 or 0)
+            b.text:SetTextColor(unpack(on and { 1, 1, 1 } or W.INK_SOFT))
         end
     end
     local count = #items
     for i, item in ipairs(items) do
         local b = CreateFrame("Button", nil, f)
-        b:SetHeight(22)
+        b:SetHeight(24)
         b.value = item[1]
-        b.wash = W.Tex(b, "wash", "BACKGROUND", -1)
-        b.wash:SetPoint("TOPLEFT", 1, 2)
-        b.wash:SetPoint("BOTTOMRIGHT", -1, -3)
-        W.NineSlice(b, "stamp9", 64, 10, 7, "BACKGROUND", 0)
+        W.NineSlice(b, "f_button", 128, 24, 8, "BACKGROUND", 0)
+        b.glow = W.Tex(b, "f_tab_glow", "ARTWORK")
+        b.glow:SetPoint("TOPLEFT", 2, -2)
+        b.glow:SetPoint("BOTTOMRIGHT", -2, 2)
         b.text = W.Text(b, 11)
         b.text:SetPoint("CENTER")
         b.text:SetJustifyH("CENTER")
         b.text:SetText(item[2])
+        b.text:SetShadowColor(0, 0, 0, 1)
+        b.text:SetShadowOffset(1, -1)
         b:SetScript("OnClick", function() set(item[1]) paint() Click() end)
         buttons[i] = b
     end
@@ -500,7 +583,7 @@ function W.Stamps(parent, items, get, set)
         end
     end)
     W.OnAccent(function(r, g, b)
-        for _, btn in ipairs(buttons) do btn.wash:SetVertexColor(r, g, b, 0.45) end
+        for _, btn in ipairs(buttons) do btn.glow:SetVertexColor(r, g, b) end
         paint()
     end)
     function f:Refresh() paint() end
@@ -508,21 +591,21 @@ function W.Stamps(parent, items, get, set)
 end
 
 ---------------------------------------------------------------------------
--- Plate: a dark picture pasted in with four photo corners
+-- Plate: a dark picture in a bronze frame, with bracket corners
 ---------------------------------------------------------------------------
 
 function W.Plate(parent, w, h)
     local p = CreateFrame("Frame", nil, parent)
     p:SetSize(w, h)
-    W.NineSlice(p, "plate9", 64, 8, 6, "BACKGROUND", 0)
+    W.NineSlice(p, "f_plate", 128, 24, 10, "BACKGROUND", 0)
     local corners = {
         { "TOPLEFT", 0, 1, 0, 1 }, { "TOPRIGHT", 1, 0, 0, 1 },
         { "BOTTOMLEFT", 0, 1, 1, 0 }, { "BOTTOMRIGHT", 1, 0, 1, 0 },
     }
     for _, c in ipairs(corners) do
-        local t = W.Tex(p, "corner", "OVERLAY", 2)
-        t:SetSize(22, 22)
-        t:SetPoint(c[1], c[1]:find("LEFT") and -4 or 4, c[1]:find("TOP") and 4 or -4)
+        local t = W.Tex(p, "f_corner", "OVERLAY", 2)
+        t:SetSize(20, 20)
+        t:SetPoint(c[1], c[1]:find("LEFT") and -3 or 3, c[1]:find("TOP") and 3 or -3)
         t:SetTexCoord(c[2], c[3], c[4], c[5])
     end
     return p
@@ -547,8 +630,8 @@ function W.Link(parent, label, url, tip)
     box:SetAutoFocus(false)
     box:SetFont(W.FONT, 11, "")
     box:SetTextColor(unpack(W.INK))
-    box:SetTextInsets(6, 6, 0, 0)
-    W.NineSlice(box, "stamp9", 64, 10, 7, "BACKGROUND", 0)
+    box:SetTextInsets(8, 8, 0, 0)
+    W.NineSlice(box, "f_inset", 128, 24, 9, "BACKGROUND", 0)
     local function reset()
         box:SetText(url)
         box:SetCursorPosition(0)
@@ -561,4 +644,26 @@ function W.Link(parent, label, url, tip)
     box:SetScript("OnTextChanged", function(self, user) if user then reset() self:HighlightText() end end)
     W.Tooltip(box, label, tip)
     return f
+end
+
+---------------------------------------------------------------------------
+-- Confirm: the game's yes/no dialog (deleting the log, reloading)
+---------------------------------------------------------------------------
+
+function W.Confirm(text, onAccept, acceptLabel)
+    if not (StaticPopupDialogs and StaticPopup_Show) then
+        onAccept()
+        return
+    end
+    StaticPopupDialogs.GLOWINGNODES_CONFIRM = {
+        text = "%s",
+        button1 = acceptLabel or YES or "Yes",
+        button2 = acceptLabel and (LATER or CANCEL or "Later") or (NO or "No"),
+        OnAccept = function(_, data) if data then data() end end,
+        timeout = 0,
+        whileDead = 1,
+        hideOnEscape = 1,
+        preferredIndex = 3,
+    }
+    StaticPopup_Show("GLOWINGNODES_CONFIRM", text, nil, onAccept)
 end

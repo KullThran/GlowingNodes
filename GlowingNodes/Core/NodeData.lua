@@ -183,6 +183,7 @@ local function ItemIcon(itemID)
     local ok, icon = pcall(get, itemID)
     if ok and icon then return icon end
 end
+Data.ItemIcon = ItemIcon
 
 function Data.IconFor(category, required, name)
     local item

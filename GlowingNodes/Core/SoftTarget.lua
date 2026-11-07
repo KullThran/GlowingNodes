@@ -18,7 +18,8 @@ ST.current = nil
 
 local SOFT = "softinteract"
 local POLL = 0.1
-local RANGE = 60 -- asked as far as it goes
+local RANGE = 60 -- the default asked of the game; /gn range <yards> tries others
+local MAX_RANGE = 500
 -- Forever's own limit on nameplates of world objects (30 by default): the glow
 -- hangs on that nameplate, so it is raised along with the soft-target range
 local OBJECT_PLATE_RANGE = 60
@@ -76,10 +77,40 @@ local function SetCV(name, value)
     pcall(C_CVar.SetCVar, name, value)
 end
 
-local function SetGate(open)
-    if open == gateOpen or InCombatLockdown() then return end
-    gateOpen = open
-    SetCV("SoftTargetNameplateInteract", open and 1 or 0)
+-- The gate is a CVar the game keeps on the server: written too often, the
+-- server answers "You're doing that too fast". So it is written at most once
+-- a second, and it stays open a moment after the glow goes, which keeps it
+-- still while the Interact Key hops between a mob and a corpse or a node.
+local GATE_EVERY = 1.0
+local GATE_CLOSE_AFTER = 2.0
+local gateWant, gateWantSince, gateWritten = nil, 0, -100
+
+local function FlushGate(force)
+    if gateWant == nil or InCombatLockdown() then return end
+    -- the setting as it really is: another addon (ForeverLootSparkles closes
+    -- it for every target it doesn't sparkle) or the game's options may have
+    -- changed it behind our back, and a remembered "open" would keep the glow
+    -- off while the game has already picked the node
+    local actual = GetCV("SoftTargetNameplateInteract")
+    if actual ~= nil then gateOpen = actual == "1" end
+    if gateWant == gateOpen then return end
+    local now = GetTime()
+    if not force then
+        if now - gateWritten < GATE_EVERY then return end
+        if not gateWant and now - gateWantSince < GATE_CLOSE_AFTER then return end
+    end
+    gateOpen = gateWant
+    gateWritten = now
+    ns.Debug(("GATE %s at %.1f"):format(gateOpen and "open" or "closed", now))
+    SetCV("SoftTargetNameplateInteract", gateOpen and 1 or 0)
+end
+
+local function SetGate(open, force)
+    if open ~= gateWant then
+        gateWant = open
+        gateWantSince = GetTime()
+    end
+    FlushGate(force)
 end
 
 local function Saved()
@@ -98,10 +129,10 @@ function ST:ApplyCVars(force)
         SetCV("SoftTargetInteract", 3)       -- Interact Key on, for everything
         SetCV("SoftTargetIconGameObject", 1) -- world objects get a nameplate at all
     end
-    SetCV("SoftTargetInteractRange", RANGE)
+    SetCV("SoftTargetInteractRange", ST.Range())
     SetCV("SoftTargetInteractArc", 2)        -- all around, not only ahead
     SetCV("SoftTargetInteractOnlyInRange", 0) -- also nodes a few steps away
-    SetCV("nameplateGameObjectMaxDistance", OBJECT_PLATE_RANGE)
+    SetCV("nameplateGameObjectMaxDistance", math.max(ST.Range(), OBJECT_PLATE_RANGE))
     gateOpen = nil
 end
 
@@ -179,20 +210,24 @@ local function ParseGUID(guid)
     return kind, tonumber(id)
 end
 
--- Tooltip lines of a unit (corpses), modern API first, then a hidden tooltip
+-- Tooltip lines of a unit (corpses). C_TooltipInfo only reads data. A hidden
+-- GameTooltip is for clients without it: on clients that have it, SetUnit on
+-- our own tooltip runs Blizzard's tooltip code with the unit's secret GUID
+-- and taints it (a "Lua Taint: GlowingNodes" error on every poll).
 local scanTip
 local function TooltipLines(unit)
     local lines = {}
     if C_TooltipInfo and C_TooltipInfo.GetUnit then
         local data = Safe(C_TooltipInfo.GetUnit, unit)
-        if type(data) == "table" and data.lines then
+        if type(data) == "table" and type(data.lines) == "table" then
             for _, line in ipairs(data.lines) do
-                if type(line.leftText) == "string" and not IsSecret(line.leftText) then
-                    lines[#lines + 1] = line.leftText
+                local text = type(line) == "table" and line.leftText
+                if type(text) == "string" and not IsSecret(text) then
+                    lines[#lines + 1] = text
                 end
             end
-            if #lines > 0 then return lines end
         end
+        return lines
     end
     if not scanTip then
         scanTip = CreateFrame("GameTooltip", "GlowingNodesScanTip", nil, "GameTooltipTemplate")
@@ -230,8 +265,12 @@ local function CorpseCategory(unit, guid)
     if Safe(UnitIsDead, unit) ~= true then return nil end
     if HasLootLeft(guid) then return nil end -- loot first, then skin
     local now = GetTime()
-    local cached = guid and corpseCache[guid]
-    if cached and now - cached.t < 2 then return cached.category, cached.blocked, cached.tooltipLevel end
+    -- a corpse whose GUID the game keeps secret is cached as "the corpse in
+    -- front of you", briefly, so it isn't read again on every poll
+    local key, keep = guid, 2
+    if not key or IsSecret(key) then key, keep = "?", 0.5 end
+    local cached = corpseCache[key]
+    if cached and now - cached.t < keep then return cached.category, cached.blocked, cached.tooltipLevel end
     local cat, blocked = CursorCategory(unit)
     local tooltipLevel
     if cat ~= "skin" and cat ~= "ore" and cat ~= "herb" then
@@ -242,7 +281,7 @@ local function CorpseCategory(unit, guid)
             if c and lvl then tooltipLevel = lvl end
         end
     end
-    if guid then corpseCache[guid] = { t = now, category = cat, blocked = blocked, tooltipLevel = tooltipLevel } end
+    corpseCache[key] = { t = now, category = cat, blocked = blocked, tooltipLevel = tooltipLevel }
     return cat, blocked, tooltipLevel
 end
 
@@ -254,6 +293,26 @@ local function GetPlate(unit)
     return C_NamePlate and Safe(C_NamePlate.GetNamePlateForUnit, unit)
 end
 
+-- What the glow hangs on: the nameplate itself. Not its UnitFrame: on world
+-- objects Blizzard keeps the UnitFrame hidden (seen in game: UnitFrame
+-- visible false, alpha 0, the nameplate visible), and a glow hung there was
+-- hidden with it.
+local function PlateAnchor(plate)
+    return plate
+end
+ST.PlateAnchor = PlateAnchor
+
+local function PlateUnit(plate)
+    local unit = plate.namePlateUnitToken
+    if type(unit) ~= "string" then
+        local uf = plate.UnitFrame
+        unit = type(uf) == "table" and uf.unit or nil
+    end
+    if type(unit) == "string" and not IsSecret(unit) then return unit end
+end
+
+-- The soft target's nameplate: asked for by name, then looked for among the
+-- nameplates the game has up (a world object that is the soft target).
 local function Resolve()
     local isUnit, isObject = Safe(UnitExists, SOFT), Safe(UnitIsGameObject, SOFT)
     if isUnit == false and isObject == false then return nil end
@@ -263,6 +322,17 @@ local function Resolve()
         if Safe(UnitIsUnit, unit, SOFT) == true then
             plate = GetPlate(unit)
             if plate then return unit, plate end
+        end
+    end
+    if C_NamePlate and C_NamePlate.GetNamePlates then
+        local ok, plates = pcall(C_NamePlate.GetNamePlates)
+        if ok and type(plates) == "table" then
+            for _, p in ipairs(plates) do
+                local unit = PlateUnit(p)
+                if unit and Safe(UnitIsGameObject, unit) == true and Safe(UnitIsUnit, unit, SOFT) == true then
+                    return SOFT, p -- the same object: asked about as the soft target
+                end
+            end
         end
     end
     if isUnit or isObject then return SOFT, nil end
@@ -285,8 +355,38 @@ end
 -- The loop
 ---------------------------------------------------------------------------
 
-local function Release()
-    if glow and glow:IsShown() then glow:Hide() end
+local shownAt
+local function Release(why)
+    if glow and glow:IsShown() then
+        if ns.db and ns.db.debug then
+            ns.Debug(("RELEASE (%s) after %.1f s"):format(why or "?", GetTime() - (shownAt or GetTime())))
+        end
+        glow:Hide()
+    end
+end
+
+-- debug: what the glow and the nameplate look like while it's up
+local function V(region, method)
+    if not region or not region[method] then return "?" end
+    local ok, v = pcall(region[method], region)
+    if not ok or IsSecret(v) then return "?" end
+    if type(v) == "number" then return ("%.2f"):format(v) end
+    return tostring(v)
+end
+
+local function Watch(target, plate)
+    if not (ns.db.debug and glow and glow:IsShown() and target) then return end
+    target.watched = target.watched or 0
+    if target.watched >= 4 or GetTime() - (target.watchAt or 0) < 1 then return end
+    target.watched, target.watchAt = target.watched + 1, GetTime()
+    -- nothing that measures: nameplates are restricted regions, and asking
+    -- where they are (GetCenter) is refused and taints
+    local f, a = glow.frame, glow.anchor
+    ns.Debug(("WATCH %s: glow shown %s visible %s alpha %s/%s strata %s; anchor %s visible %s alpha %s; plate shown %s visible %s alpha %s strata %s; state %s, fade-in %.2f"):format(
+        tostring(target.name), V(f, "IsShown"), V(f, "IsVisible"), V(f, "GetAlpha"), V(f, "GetEffectiveAlpha"),
+        V(f, "GetFrameStrata"), a == plate and "plate" or "UnitFrame", V(a, "IsVisible"), V(a, "GetEffectiveAlpha"),
+        V(plate, "IsShown"), V(plate, "IsVisible"), V(plate, "GetEffectiveAlpha"), V(plate, "GetFrameStrata"),
+        tostring(target.state), glow.appear or -1))
 end
 
 -- once per node, when its glow first shows (or first comes into reach)
@@ -317,14 +417,14 @@ end
 function ST:Evaluate()
     local db = ns.db
     if not db.enabled then
-        Release()
+        Release("off")
         ST.current = nil
         return
     end
     local unit, plate, unknown = Resolve()
     if not unit then
         SetGate(unknown == true) -- in doubt, let the game show its target
-        Release()
+        Release(unknown and "the game won't say what's targeted" or "nothing targeted")
         ST.current = nil
         return
     end
@@ -355,6 +455,12 @@ function ST:Evaluate()
             target.level = Safe(UnitLevel, unit)
         end
         target.isNew = true
+        target.pickedTime = GetTime()
+        if target.kind == "GameObject" and target.category then
+            ns.Debug(("PICK %s (%s) at %.1f, nameplate setting %s%s"):format(tostring(target.name), target.category,
+                target.pickedTime, tostring(GetCV("SoftTargetNameplateInteract")),
+                InCombatLockdown() and ", IN COMBAT: the setting can't change until it ends" or ""))
+        end
         -- where the game picked it, to tell its range from the nameplate's
         if target.category == "ore" or target.category == "herb" then
             target.pickedAt = { PlayerPosition() }
@@ -385,7 +491,7 @@ function ST:Evaluate()
     if not wanted or not plate then
         -- without a plate the gate has just been opened: the glow (and its
         -- sound) follow on the next tick, when the game has made the plate
-        Release()
+        Release(not wanted and "not a node we glow" or "the nameplate is gone")
         if not wanted and not target.logged then
             target.logged = true
             -- living mobs are no news: only objects and corpses are logged
@@ -395,7 +501,8 @@ function ST:Evaluate()
             target.waitSince = target.waitSince or GetTime()
             if not target.noPlateLogged and GetTime() - target.waitSince > 1.5 then
                 target.noPlateLogged = true
-                ns.Debug("NO PLATE " .. Describe(target))
+                ns.Debug(("NO PLATE %s; nameplate setting %s, in combat %s"):format(Describe(target),
+                    tostring(GetCV("SoftTargetNameplateInteract")), tostring(InCombatLockdown() and true or false)))
             end
         end
         return
@@ -409,10 +516,12 @@ function ST:Evaluate()
     local inRange = state ~= "far"
 
     if not glow then glow = Glow.New(nil) end
-    if glow.anchor ~= plate or target.isNew then
+    local anchor = PlateAnchor(plate)
+    if glow.anchor ~= anchor or target.isNew then
         glow:Configure(cfg, GlowOptions())
-        glow:Attach(plate, 0, db.height)
-        glow:Show(state)
+        glow:Attach(anchor, 0, db.height, true)
+        shownAt = GetTime()
+        glow:Show(state, target.found)
     else
         glow:SetState(state)
     end
@@ -424,11 +533,15 @@ function ST:Evaluate()
     end
 
     target.isNew = false
+    Watch(target, plate)
     Announce(target)
     if not target.found then
         target.found = true
         target.foundAt = { PlayerPosition() }
-        ns.Debug("GLOW " .. tostring(target.name) .. " #" .. tostring(guid and guid:sub(-8)))
+        local rel = Glow.PlateRel and Glow.PlateRel(plate)
+        ns.Debug(("GLOW %s #%s, %.1f s after the game picked it, nameplate at %s%% of the UI's size"):format(
+            tostring(target.name), tostring(guid and guid:sub(-8)), GetTime() - (target.pickedTime or GetTime()),
+            rel and ("%d"):format(rel * 100 + 0.5) or "?"))
         ns.Fire("NodeFound", target)
     else
         ns.Fire("NodeUpdate", target)
@@ -474,9 +587,38 @@ end
 -- /gn rango: how far the game really lets soft targeting reach, and whether
 -- nodes show up as vignettes (what RareScanner uses), which would allow an
 -- alert from further away than the glow can reach
+-- the pick range asked of the game: the profile's (/gn range <yards>) or 60
+function ST.Range()
+    local r = ns.db and tonumber(ns.db.pickRange)
+    if r and r >= 10 and r <= MAX_RANGE then return r end
+    return RANGE
+end
+
+-- /gn range <yards>: ask the game for that pick range and object nameplate
+-- distance, and say what it really keeps (it may cap them)
+function ST:SetRange(yards)
+    yards = math.floor(math.max(10, math.min(MAX_RANGE, yards)) + 0.5)
+    ns.db.pickRange = yards
+    if InCombatLockdown() then
+        pending = "apply"
+    else
+        ST:ApplyCVars()
+    end
+    ST:PrintRange()
+end
+
 function ST:PrintRange()
-    ns.Print(L.MSG_RANGE:format(RANGE, tostring(GetCV("SoftTargetInteractRange"))))
+    ns.Print(L.MSG_RANGE:format(ST.Range(), tostring(GetCV("SoftTargetInteractRange"))))
     ns.Print(L.MSG_PLATE_RANGE:format(tostring(GetCV("nameplateMaxDistance")), tostring(GetCV("nameplateGameObjectMaxDistance"))))
+    local function cv(name)
+        local v = GetCV(name)
+        local d = C_CVar and C_CVar.GetCVarDefault and Safe(C_CVar.GetCVarDefault, name)
+        return ("%s = %s (default %s)"):format(name, tostring(v), tostring(d))
+    end
+    local extra = { cv("SoftTargetInteractRangeIsHard"), cv("SoftTargetWorldtextFarDist"),
+        cv("SoftTargetWorldtextNearDist"), cv("SoftTargetInteractArc") }
+    ns.Print(table.concat(extra, "; "))
+    ns.Debug("RANGE " .. table.concat(extra, "; "))
     -- every console variable of this client about soft targeting, interaction
     -- or object distances, with its value and help text, kept in the saved
     -- variables (global.cvarScan) to look for a range setting of Forever's own
@@ -527,7 +669,7 @@ function ST:Refresh(force, hard)
         if ns.db.enabled then
             ST:ApplyCVars(force)
         else
-            Release()
+            Release("off")
             ST:RestoreCVars()
         end
         ST.current = nil
@@ -536,8 +678,7 @@ function ST:Refresh(force, hard)
     if glow and glow.anchor and ST.current and ST.current.category then
         local cfg = ns.db[ST.current.category]
         if cfg then glow:Configure(cfg, GlowOptions()) end
-        glow.frame:ClearAllPoints()
-        glow.frame:SetPoint("CENTER", glow.anchor, "CENTER", 0, ns.db.height)
+        glow:Attach(glow.anchor, 0, ns.db.height, true)
     end
 end
 
@@ -601,8 +742,8 @@ handlers.VARIABLES_LOADED = handlers.PLAYER_ENTERING_WORLD
 -- CVars can't change in combat: close the gate as the fight starts, or every
 -- corpse would keep a 0% nameplate until it ends
 function handlers.PLAYER_REGEN_DISABLED()
-    if ns.db.enabled then SetGate(false) end
-    Release()
+    if ns.db.enabled then SetGate(false, true) end
+    Release("combat started")
 end
 
 function handlers.PLAYER_REGEN_ENABLED()
@@ -623,10 +764,12 @@ end
 function handlers.NAME_PLATE_UNIT_REMOVED(unit)
     activePlates[unit] = nil
     local plate = GetPlate(unit)
-    if glow and plate and glow.anchor == plate then Release() end
+    if glow and plate and (glow.anchor == plate or glow.anchor == PlateAnchor(plate)) then Release("the game removed the nameplate") end
 end
 
 function handlers.PLAYER_SOFT_INTERACT_CHANGED()
+    -- another target: what was read of "the corpse in front" is about the last one
+    corpseCache["?"] = nil
     if ns.db.enabled then ST:Evaluate() end
 end
 

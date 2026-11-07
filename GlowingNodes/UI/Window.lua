@@ -1,9 +1,11 @@
 -- Window.lua
--- The options window: a field notebook. Leather cover with the title stamped
--- in gold, a parchment page with paper index tabs down the left margin, and
--- on each page the settings written in ink. The node-kind pages show the
--- glow on a pasted plate; the Alert page shows the alert card itself.
--- Layout numbers match the art (tools/photoshop/nodes_art.py).
+-- The options window, in the alert card's materials: a stitched leather cover
+-- with bronze corner caps, the title on a chevron plate, a darker sunk leather
+-- page split by a tooled double groove with a bronze diamond and a gem,
+-- leather plaques for tabs. The node-kind pages show the
+-- glow on a framed plate; the Alert page shows the alert card itself.
+-- Layout numbers match the art (tools/photoshop/leather/leather_art.py), which
+-- is drawn at 138 %: the window shows at BASE_SCALE times the user's size.
 local _, ns = ...
 local L = ns.L
 local W = ns.W
@@ -16,14 +18,34 @@ local WIDTH, HEIGHT = 768, 512
 local HEADER_H = 64
 local RAIL_X = 188               -- margin rule after the tabs
 local CONTENT_X, CONTENT_Y = 204, 78
-local TABS = { "general", "ore", "herb", "skin", "alert", "about" }
-local SAMPLE = { ore = 65, herb = 50, skin = 35 }
+local TABS = { "general", "ore", "herb", "skin", "map", "alert", "about" }
+local SAMPLE = { ore = 65, herb = 100, skin = 35 }
 local SAMPLE_NAME = { ore = "SAMPLE_NODE", herb = "PROF_herb", skin = "PROF_skin" }
+-- What the previews show: what you gather, not the profession's icon
+-- (Tin Ore for the level 65 vein, Bruiseweed for the level 100 herb, Light
+-- Leather). The plates show the node itself in 3D (UI/NodeModel.lua).
+local SAMPLE_ITEM = { ore = 2771, herb = 2453, skin = 2318 }
+
+local function SampleIcon(cat)
+    return Data.ItemIcon(SAMPLE_ITEM[cat]) or Data.CATEGORY_ICONS[cat]
+end
+
+-- The sample herb's name as the game writes it, once the item is loaded.
+local function SampleName(cat)
+    if cat == "ore" then return L.SAMPLE_NODE end
+    if cat == "herb" and C_Item and C_Item.GetItemNameByID then
+        local ok, name = pcall(C_Item.GetItemNameByID, SAMPLE_ITEM.herb)
+        if ok and type(name) == "string" and name ~= "" then return name end
+        if C_Item.RequestLoadItemDataByID then pcall(C_Item.RequestLoadItemDataByID, SAMPLE_ITEM.herb) end
+    end
+    return L["CAT_" .. cat]
+end
 local ICONS = {
     general = ns.ART .. "emblem",
     ore = Data.CATEGORY_ICONS.ore,
     herb = Data.CATEGORY_ICONS.herb,
     skin = Data.CATEGORY_ICONS.skin,
+    map = "Interface\\Icons\\INV_Misc_Map_01",
     alert = "Interface\\Icons\\INV_Letter_15",
     about = "Interface\\Icons\\INV_Misc_Book_09",
 }
@@ -56,13 +78,23 @@ local function BuildPlate(page, cat)
     node:SetPoint("CENTER", 0, -50)
     local icon = node:CreateTexture(nil, "ARTWORK")
     icon:SetAllPoints()
-    icon:SetTexture(ICONS[cat])
+    icon:SetTexture(SampleIcon(cat))
     icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+
+    -- the node in 3D, turning; the icon stays if the model can't show
+    local stage = CreateFrame("Frame", nil, plate)
+    stage:SetSize(194, 184)
+    stage:SetPoint("CENTER", node, "CENTER", 0, 8)
+    stage:SetFrameLevel(node:GetFrameLevel())
+    local model = ns.NodeModel and ns.NodeModel.New(stage, cat, function(shown)
+        icon:SetShown(not shown)
+    end)
+    if model then icon:Hide() end
 
     local anchor = CreateFrame("Frame", nil, plate)
     anchor:SetSize(1, 1)
     anchor:SetPoint("CENTER", node, "CENTER")
-    anchor:SetFrameLevel(node:GetFrameLevel() + 1)
+    anchor:SetFrameLevel(node:GetFrameLevel() + 2)
     local glow = Glow.New(anchor)
     local state = "ready"
 
@@ -114,19 +146,19 @@ local function BuildCategoryPage(page, cat)
     local cfg = function() return ns.db[cat] end
     local function setter(key) return function(v) ns.SetCat(cat, key, v) end end
 
-    local glow = W.Section(page, L.CARD_GLOW, 300, 250)
+    local glow = W.Section(page, L.CARD_GLOW, 300, 272)
     glow:SetPoint("TOPLEFT", 236, -2)
     glow:Add(W.Check(glow, L.GLOW_ON, L.GLOW_ON_TIP, function() return cfg().enabled end, setter("enabled")), 28)
     glow:Add(W.ColorRow(glow, L.COLOR, L.COLOR_TIP, function() return cfg().color end, function(r, g, b)
         ns.SetCat(cat, "color", { r = r, g = g, b = b })
     end), 44)
-    glow:Add(W.Slider(glow, L.INTENSITY, 0.5, 3, 0.1, function() return cfg().intensity end, setter("intensity"), Pct), 46)
-    glow:Add(W.Slider(glow, L.SIZE, 0.5, 2, 0.05, function() return cfg().size end, setter("size"), Pct), 48)
+    glow:Add(W.Slider(glow, L.INTENSITY, 0.5, 3, 0.1, function() return cfg().intensity end, setter("intensity"), Pct), 42)
+    glow:Add(W.Slider(glow, L.SIZE, 0.5, 2, 0.05, function() return cfg().size end, setter("size"), Pct), 44)
     glow:Add(W.Check(glow, L.PULSE, L.PULSE_TIP, function() return cfg().pulse end, setter("pulse")), 26)
     glow:Add(W.Check(glow, L.BEAM, L.BEAM_TIP, function() return cfg().beam end, setter("beam")), 26)
 
     local sound = W.Section(page, L.CARD_SOUND, 300, 130)
-    sound:SetPoint("TOPLEFT", 236, -270)
+    sound:SetPoint("TOPLEFT", 236, -282)
     sound:Add(W.Check(sound, L.SOUND_ON, L.SOUND_ON_TIP, function() return cfg().soundOn end, setter("soundOn")), 28)
     local sel = sound:Add(W.Selector(sound, L.SOUND, Sounds.LIST, function(k) return L["SND_" .. k] end,
         function() return cfg().sound end, function(v)
@@ -172,7 +204,7 @@ local function BuildGeneralPage(page)
     }
     for i, item in ipairs(items) do
         local col, row = (i - 1) % 2, math.floor((i - 1) / 2)
-        local dab = W.Tex(legend, "blot", "ARTWORK")
+        local dab = W.Tex(legend, "f_gem", "ARTWORK")
         dab:SetSize(16, 16)
         dab:SetPoint("TOPLEFT", 2 + col * 126, -32 - row * 19)
         dab:SetVertexColor(item[1][1], item[1][2], item[1][3], 0.95)
@@ -225,7 +257,7 @@ local function BuildGeneralPage(page)
         local other = ns.ConflictingAddon()
         if other then out[#out + 1] = "|cffffa448" .. L.STATUS_CONFLICT:format(other) .. "|r" end
         out[#out + 1] = L.STATUS_LEARNED:format(Skills.LearnedCount())
-        out[#out + 1] = "|cffb4a68c" .. L.STATUS_LIMIT .. "|r"
+        out[#out + 1] = "|cffd8caae" .. L.STATUS_LIMIT .. "|r"
         lines:SetText(table.concat(out, "\n"))
     end
 end
@@ -244,7 +276,7 @@ local function BuildAlertPage(page)
     sample:SetScale(0.92)
     local sampleCat = "ore"
     local function fill()
-        sample:Fill({ category = sampleCat, name = sampleCat == "ore" and L.SAMPLE_NODE or L["CAT_" .. sampleCat],
+        sample:Fill({ category = sampleCat, name = SampleName(sampleCat), icon = SampleIcon(sampleCat),
             required = SAMPLE[sampleCat], skill = SAMPLE[sampleCat] + 10, hasProf = true, state = "ready" })
     end
     local stamps = W.Stamps(page, {
@@ -325,7 +357,7 @@ local function BuildAboutPage(page)
     what:SetPoint("TOPLEFT", 6, -58)
     local y = -30
     for i = 1, 5 do
-        local dot = W.Tex(what, "blot", "ARTWORK")
+        local dot = W.Tex(what, "f_gem", "ARTWORK")
         dot:SetSize(9, 9)
         dot:SetPoint("TOPLEFT", 2, y - 3)
         W.OnAccent(function() dot:SetVertexColor(W.AccentInk(0.8)) end)
@@ -407,14 +439,14 @@ local function SelectTab(id)
     if page.UpdateStatus then page:UpdateStatus() end
 end
 
--- a paper index tab; the open one gets a wash of its colour and sits proud
+-- an iron plaque; the open one is lit with its colour and sits proud
 local function BuildTab(parent, id, index)
     local b = CreateFrame("Button", nil, parent)
     b:SetSize(162, 40)
     b:SetPoint("TOPLEFT", 22, -HEADER_H - 16 - (index - 1) * 46)
-    local paper = W.Tex(b, "tab", "BACKGROUND", 0)
+    local paper = W.Tex(b, "f_tab", "BACKGROUND", 0)
     paper:SetAllPoints()
-    local wash = W.Tex(b, "tab_wash", "BACKGROUND", 1)
+    local wash = W.Tex(b, "f_tab_glow", "BACKGROUND", 1)
     wash:SetAllPoints()
     local icon = b:CreateTexture(nil, "ARTWORK")
     icon:SetSize(22, 22)
@@ -424,12 +456,15 @@ local function BuildTab(parent, id, index)
     local text = W.Text(b, 15, W.INK, W.TITLE_FONT)
     text:SetPoint("LEFT", icon, "RIGHT", 8, 0)
     text:SetText(L["TAB_" .. id])
+    text:SetShadowColor(0, 0, 0, 1)
+    text:SetShadowOffset(1, -1)
     local hover = false
     function b:Paint()
         local on = current == id
         local r, g, bb = AccentFor(id)
-        wash:SetVertexColor(r, g, bb, on and 0.55 or (hover and 0.2 or 0))
-        paper:SetVertexColor(on and 1 or 0.88, on and 1 or 0.86, on and 1 or 0.82)
+        wash:SetVertexColor(r, g, bb, on and 0.42 or (hover and 0.16 or 0))
+        local k = on and 1 or (hover and 0.92 or 0.78)
+        paper:SetVertexColor(k, k, k)
         text:SetTextColor(unpack((on or hover) and W.INK or W.INK_SOFT))
         icon:SetDesaturated(not on and not hover)
         icon:SetAlpha(on and 1 or 0.75)
@@ -452,9 +487,166 @@ local function SavePosition(f)
     ns.db.window = { point = point, rel = rel, x = x, y = y }
 end
 
+---------------------------------------------------------------------------
+-- Window scale, the way KullThranUI does it: the window keeps one size and is
+-- zoomed, 50-150 % in 5 % steps, never past 95 % of the screen. A change
+-- glides for 0.15 s and the window's centre stays where it is.
+---------------------------------------------------------------------------
+
+local SCALE_MIN, SCALE_MAX, SCALE_STEP = 0.5, 1.5, 0.05
+local BASE_SCALE = 1.38 -- the window's 100 %: the art is drawn at this size
+local SCREEN_FIT = 0.95
+local GLIDE = 0.15
+
+local function SnapScale(v)
+    v = tonumber(v) or 1
+    v = math.floor(v / SCALE_STEP + 0.5) * SCALE_STEP
+    return math.max(SCALE_MIN, math.min(SCALE_MAX, v))
+end
+Window.SnapScale = SnapScale
+
+local function TargetScale(user)
+    local scale = SnapScale(user) * BASE_SCALE
+    local sw, sh = UIParent:GetWidth(), UIParent:GetHeight()
+    if type(sw) == "number" and type(sh) == "number" and sw > 0 and sh > 0 then
+        scale = math.min(scale, sw * SCREEN_FIT / WIDTH, sh * SCREEN_FIT / HEIGHT)
+    end
+    return scale
+end
+
+local function PlaceAtScale(f, scale, sx, sy)
+    f:SetScale(scale)
+    if sx and sy then
+        f:ClearAllPoints()
+        f:SetPoint("CENTER", UIParent, "BOTTOMLEFT", sx / scale, sy / scale)
+    end
+end
+
+local glider
+function Window:SetScale(user, animate)
+    user = SnapScale(user)
+    ns.db.windowScale = user
+    if not frame then return end
+    local f = frame
+    local target = TargetScale(user)
+    local from = f:GetScale() or target
+    local cx, cy = f:GetCenter()
+    local sx, sy = cx and cx * from, cy and cy * from
+    if glider then glider:SetScript("OnUpdate", nil) end
+    if not animate or math.abs(from - target) < 0.0005 then
+        PlaceAtScale(f, target, sx, sy)
+        if sx then SavePosition(f) end
+        return
+    end
+    glider = glider or CreateFrame("Frame", nil, f)
+    local elapsedTotal = 0
+    glider:SetScript("OnUpdate", function(self, elapsed)
+        elapsedTotal = elapsedTotal + elapsed
+        local t = math.min(1, elapsedTotal / GLIDE)
+        local eased = 1 - (1 - t) * (1 - t)
+        PlaceAtScale(f, from + (target - from) * eased, sx, sy)
+        if t >= 1 then
+            self:SetScript("OnUpdate", nil)
+            if sx then SavePosition(f) end
+        end
+    end)
+end
+
+-- "Window size  [ruler]  100%" in the margin under the tabs. Dragging only
+-- previews the percentage, the scale changes on release; the mouse wheel
+-- steps one notch at once; the percentage can be typed (Enter applies).
+local function BuildScaleControl(f)
+    local minP = math.floor(SCALE_MIN * 100 + 0.5)
+    local maxP = math.floor(SCALE_MAX * 100 + 0.5)
+    local stepP = math.floor(SCALE_STEP * 100 + 0.5)
+
+    local caption = W.Text(f, 11, W.INK_SOFT)
+    caption:SetPoint("BOTTOMLEFT", 30, 78)
+    caption:SetText(L.WINDOW_SCALE)
+
+    local s = CreateFrame("Slider", nil, f)
+    s:SetOrientation("HORIZONTAL")
+    s:SetSize(100, 20)
+    s:SetPoint("BOTTOMLEFT", 28, 52)
+    s:SetMinMaxValues(minP, maxP)
+    s:SetValueStep(stepP)
+    if s.SetObeyStepOnDrag then s:SetObeyStepOnDrag(true) end
+    s:EnableMouseWheel(true)
+    local fillTo = W.SliderTrack(s, 18)
+
+    local value = CreateFrame("EditBox", nil, f)
+    value:SetSize(44, 20)
+    value:SetPoint("LEFT", s, "RIGHT", 8, 0)
+    value:SetFont(W.FONT, 11, "")
+    value:SetTextColor(unpack(W.INK))
+    value:SetJustifyH("RIGHT")
+    value:SetTextInsets(2, 5, 0, 0)
+    value:SetAutoFocus(false)
+    value:SetMaxLetters(5)
+    W.NineSlice(value, "f_inset", 128, 24, 7, "BACKGROUND", 0)
+
+    local syncing, dragging
+    local function Paint(v)
+        fillTo((v - minP) / (maxP - minP))
+        if not value:HasFocus() then value:SetText(("%d%%"):format(v)) end
+    end
+    local function Sync()
+        local v = math.floor(SnapScale(ns.db.windowScale) * 100 + 0.5)
+        syncing = true
+        s:SetValue(v)
+        syncing = false
+        Paint(v)
+    end
+    local function Apply()
+        Window:SetScale(s:GetValue() / 100, true)
+        Sync()
+    end
+    s:SetScript("OnValueChanged", function(_, v)
+        Paint(math.floor(v + 0.5))
+        if syncing or dragging then return end
+        Apply()
+    end)
+    s:SetScript("OnMouseDown", function() dragging = true end)
+    s:SetScript("OnMouseUp", function()
+        dragging = false
+        Apply()
+    end)
+    s:SetScript("OnMouseWheel", function(self, delta)
+        self:SetValue(math.max(minP, math.min(maxP, self:GetValue() + (delta > 0 and stepP or -stepP))))
+    end)
+    value:SetScript("OnEditFocusGained", function(self)
+        self:SetText(tostring(math.floor(s:GetValue() + 0.5)))
+        self:HighlightText()
+    end)
+    value:SetScript("OnEditFocusLost", function() Paint(math.floor(s:GetValue() + 0.5)) end)
+    value:SetScript("OnEnterPressed", function(self)
+        local typed = tonumber((self:GetText() or ""):match("%d+"))
+        self:ClearFocus()
+        if typed then
+            s:SetValue(math.max(minP, math.min(maxP, typed))) -- OnValueChanged applies it
+        end
+        Sync()
+    end)
+    value:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+    W.Tooltip(s, L.WINDOW_SCALE, L.WINDOW_SCALE_TIP)
+    W.Tooltip(value, L.WINDOW_SCALE, L.WINDOW_SCALE_TIP)
+
+    -- Ctrl + mouse wheel anywhere on the window, as in KullThranUI
+    f:EnableMouseWheel(true)
+    f:SetScript("OnMouseWheel", function(_, delta)
+        if IsControlKeyDown and IsControlKeyDown() then
+            Window:SetScale(ns.db.windowScale + (delta > 0 and SCALE_STEP or -SCALE_STEP), true)
+            Sync()
+        end
+    end)
+    f.SyncScale = Sync
+end
+
 local function Build()
     local f = CreateFrame("Frame", "GlowingNodesWindow", UIParent)
     f:SetSize(WIDTH, HEIGHT)
+    -- the scale first: the saved position is in the window's own units
+    f:SetScale(TargetScale(ns.db.windowScale))
     f:SetFrameStrata("DIALOG")
     f:SetToplevel(true)
     f:SetClampedToScreen(true)
@@ -476,11 +668,11 @@ local function Build()
     shadow:SetPoint("TOPLEFT", -60, 50)
     shadow:SetPoint("BOTTOMRIGHT", 60, -70)
     shadow:SetVertexColor(0, 0, 0, 0.7)
-    local book = W.Tex(f, "window", "BACKGROUND", -7)
+    local book = W.Tex(f, "f_window", "BACKGROUND", -7)
     book:SetAllPoints()
-    book:SetTexCoord(0, 0.75, 0, 1)
+    book:SetTexCoord(0, 1060 / 2048, 0, 707 / 1024)
 
-    -- cover: gold-stamped emblem and title
+    -- the iron plate: emblem and title in gold
     local emblem = W.Tex(f, "emblem", "ARTWORK")
     emblem:SetSize(52, 52)
     emblem:SetPoint("CENTER", f, "TOPLEFT", 50, -34)
@@ -494,10 +686,11 @@ local function Build()
     local close = CreateFrame("Button", nil, f)
     close:SetSize(30, 30)
     close:SetPoint("TOPRIGHT", -56, -17)
-    local x = W.Tex(close, "close", "ARTWORK")
+    local x = W.Tex(close, "f_close", "ARTWORK")
     x:SetAllPoints()
-    close:SetScript("OnEnter", function() x:SetVertexColor(1.25, 1.15, 0.95) end)
-    close:SetScript("OnLeave", function() x:SetVertexColor(1, 1, 1) end)
+    x:SetVertexColor(0.88, 0.88, 0.88)
+    close:SetScript("OnEnter", function() x:SetVertexColor(1, 1, 1) end)
+    close:SetScript("OnLeave", function() x:SetVertexColor(0.88, 0.88, 0.88) end)
     close:SetScript("OnClick", function() f:Hide() end)
     W.Tooltip(close, CLOSE or "Close")
 
@@ -505,10 +698,28 @@ local function Build()
     master:SetWidth(110)
     master:SetPoint("RIGHT", close, "LEFT", -20, 0)
 
+    -- the addon's language, on the cover; it applies after a /reload
+    local languages = { "auto" }
+    for _, code in ipairs(ns.LANGUAGES) do languages[#languages + 1] = code end
+    local language = W.Selector(f, L.LANGUAGE, languages, function(code)
+        if code == "auto" then
+            return L.LANG_AUTO:format(ns.LANGUAGE_NAMES[ns.CLIENT_LOCALE] or ns.CLIENT_LOCALE)
+        end
+        return ns.LANGUAGE_NAMES[code] or code
+    end, function() return ns.global.language or "auto" end, function(code)
+        ns.SetLanguage(code)
+    end, 0, { leather = true, boxWidth = 150, fontOf = function(code)
+        return (W.FontsFor(ns.ResolveLanguage(code)))
+    end })
+    language:SetWidth(222)
+    language:SetPoint("RIGHT", master, "LEFT", -18, 0)
+    W.Tooltip(language.box, L.LANGUAGE, L.LANGUAGE_TIP)
+
     for i, id in ipairs(TABS) do BuildTab(f, id, i) end
     local version = W.Text(f, 10, W.INK_SOFT)
     version:SetPoint("BOTTOMLEFT", 30, 30)
     version:SetText("v" .. ns.VERSION .. "  ·  " .. L.FOOTER)
+    BuildScaleControl(f)
 
     for _, id in ipairs(TABS) do
         local page = CreateFrame("Frame", nil, f)
@@ -518,12 +729,16 @@ local function Build()
         if id == "general" then BuildGeneralPage(page)
         elseif id == "alert" then BuildAlertPage(page)
         elseif id == "about" then BuildAboutPage(page)
+        elseif id == "map" then ns.BuildMapPage(page)
         else BuildCategoryPage(page, id) end
         pages[id] = page
     end
 
     f:SetScript("OnShow", function()
         PlaySound(SOUNDKIT and SOUNDKIT.IG_SPELLBOOK_OPEN or 829)
+        -- the screen may have changed size since: fit again, centre kept
+        Window:SetScale(ns.db.windowScale, false)
+        f.SyncScale()
         W.RefreshAll()
         SelectTab(ns.db.lastTab and pages[ns.db.lastTab] and ns.db.lastTab or "ore")
     end)
@@ -549,6 +764,10 @@ end
 
 ns.On("Changed", function(key)
     if not (frame and frame:IsShown()) then return end
+    if key == "*" then -- profile reset or change: its window size too
+        Window:SetScale(ns.db.windowScale, true)
+        frame.SyncScale()
+    end
     W.RefreshAll()
     if current and type(key) == "string" and (key == "*" or key:find("^" .. current .. "%.color")) then
         W.SetAccent(AccentFor(current))
@@ -557,6 +776,14 @@ ns.On("Changed", function(key)
     local page = pages[current]
     if page and page.preview then page.preview.apply() end
     if page and page.UpdateStatus then page:UpdateStatus() end
+end)
+
+-- a different language takes a /reload: offer it
+ns.On("LanguageChanged", function(differs)
+    W.RefreshAll()
+    if differs then
+        W.Confirm(L.LANG_RELOAD, function() ReloadUI() end, L.RELOAD_NOW)
+    end
 end)
 
 ns.On("Learned", function()
