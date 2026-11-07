@@ -346,6 +346,25 @@ local function ReadState(unit, locked)
     return "ready"
 end
 
+-- At the edge of reach the game's answer flips from one poll to the next: a
+-- new state shows once it has held a moment, or the glow would flare and
+-- change on every poll. A node just picked shows its state at once.
+local STATE_HOLD = 0.2
+
+local function Settle(target, state)
+    if target.shownState == nil or state == target.shownState then
+        target.shownState, target.nextState = state, nil
+        return state
+    end
+    local now = GetTime()
+    if target.nextState ~= state then
+        target.nextState, target.nextSince = state, now
+    elseif now - target.nextSince >= STATE_HOLD then
+        target.shownState, target.nextState = state, nil
+    end
+    return target.shownState
+end
+
 local function GlowOptions()
     local db = ns.db
     return { numberSize = db.numberSize, greyLocked = db.greyLocked, dimFar = db.dimFar, scale = 1 }
@@ -511,7 +530,7 @@ function ST:Evaluate()
     local required, source = Skills.Required(target)
     target.required, target.source, target.skill = required, source, skill
     local locked = target.blocked or not hasProf or (required and skill < required) or false
-    local state = ReadState(unit, locked)
+    local state = Settle(target, ReadState(unit, locked))
     target.state = state
     local inRange = state ~= "far"
 

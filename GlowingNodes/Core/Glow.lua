@@ -86,6 +86,10 @@ function Glow.New(parent)
     self.label = small
 
     self.t = random() * 10
+    -- the pulse and the turning parts move by phases of their own, stepped on
+    -- each frame: worked out as time × speed, a change of speed (the blend
+    -- into "ready" or "locked") made them leap, more the longer you played
+    self.beatPhase, self.ringAngle, self.burstAngle = random() * TAU, random() * TAU, random() * TAU
     self.appear, self.ready, self.locked, self.burstAge = 0, 0, 0, BURST_TIME
     self.state = "ready"
     for _, g in ipairs(self.glints) do self:Respawn(g) end
@@ -214,7 +218,10 @@ function Glow:Update(elapsed)
 
     local scale = (cfg.size or 1) * (opts.scale or 1)
     local power = cfg.intensity or 1.5
-    local t = self.t
+    local speed = 1 - 0.5 * self.locked
+    self.beatPhase = (self.beatPhase + elapsed * TAU * (0.75 + 0.35 * self.ready)) % TAU
+    self.ringAngle = (self.ringAngle + elapsed * 0.55 * speed) % TAU
+    self.burstAngle = (self.burstAngle - elapsed * 0.18 * speed) % TAU
 
     -- colour: the player's, or grey on a node they can't gather yet
     local c = cfg.color
@@ -228,8 +235,7 @@ function Glow:Update(elapsed)
     local far = 1 - self.ready - self.locked
     if far < 0 then far = 0 end
     local strength = self.appear * (1 - (opts.dimFar and 0.45 or 0) * far) * (1 - 0.25 * self.locked)
-    local beat = cfg.pulse and (0.78 + 0.22 * sin(t * TAU * (0.75 + 0.35 * self.ready))) or 1
-    local speed = 1 - 0.5 * self.locked
+    local beat = cfg.pulse and (0.78 + 0.22 * sin(self.beatPhase)) or 1
 
     local a1 = min(power, 1) * strength * beat
     local a2 = max(power - 1, 0) * 0.6 * strength * beat
@@ -248,9 +254,9 @@ function Glow:Update(elapsed)
     self.halo2:SetShown(a2 > 0.01)
     paint(self.core, 70 * (0.9 + 0.1 * beat), (a1 + a2) * 0.9, 0.55)
     paint(self.ring, 150, (a1 * 0.85 + a2 * 0.5))
-    self.ring:SetRotation(t * 0.55 * speed)
+    self.ring:SetRotation(self.ringAngle)
     paint(self.burst, 250, (a1 * 0.45 + a2 * 0.35))
-    self.burst:SetRotation(-t * 0.18 * speed)
+    self.burst:SetRotation(self.burstAngle)
 
     if cfg.beam then
         self.beam:SetSize(84 * scale, 620 * scale) -- tall, to show over trees and rocks

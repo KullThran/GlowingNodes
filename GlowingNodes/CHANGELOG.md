@@ -1,5 +1,9 @@
 # Glowing Nodes Changelog
 
+## 1.1.1 (2026-11-07)
+- Fixed: the glow could jump and flash wildly, worse the longer you played. Its pulse and turning ring leapt whenever it changed between out of reach, in reach and too low a level; they now move smoothly.
+- Fixed: standing at the edge of a node's reach, the glow flared over and over as the game kept changing its mind. A change now shows once it holds for a moment.
+
 ## 1.1.0 (2026-11-07)
 - Gathering map: every node you mine, pick or skin is logged on the zone's map, like GatherMate2. A node gathered again counts up instead of adding a point.
 - Nodes are logged as soon as the glow finds them, even if you walk past: first roughly, where you stood, then on the spot once you're in reach of it. Their tooltip says "Seen, not gathered yet" and the level needed.
