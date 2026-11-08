@@ -29,6 +29,20 @@ local function When(t)
 end
 Pins.When = When
 
+-- what dropped there, most first, each in its quality's colour
+local function DropLines(node)
+    local drops = ns.Gather.Drops(node)
+    if #drops == 0 then return end
+    GameTooltip:AddLine(L.PIN_DROPS, 0.8, 0.8, 0.8)
+    for _, d in ipairs(drops) do
+        local r, g, b = 1, 1, 1
+        local c = d.quality and ITEM_QUALITY_COLORS and ITEM_QUALITY_COLORS[d.quality]
+        if c then r, g, b = c.r, c.g, c.b end
+        GameTooltip:AddDoubleLine("  " .. d.name, "x" .. d.times, r, g, b, 0.8, 0.8, 0.8)
+    end
+end
+Pins.DropLines = DropLines
+
 -- the tooltip of a hide area: the creatures skinned there
 local function AreaTooltip(node)
     local r, g, b = Pins.Color("skin")
@@ -45,6 +59,7 @@ local function AreaTooltip(node)
     else
         GameTooltip:AddLine(L.PIN_SEEN, 0.8, 0.8, 0.8)
     end
+    DropLines(node)
     if node.t then GameTooltip:AddLine(L.PIN_LAST:format(When(node.t)), 0.7, 0.7, 0.7) end
     GameTooltip:Show()
 end
@@ -63,6 +78,7 @@ function Pins.Tooltip(owner, node)
     end
     if node.r then GameTooltip:AddLine(L.PIN_LEVEL:format(node.r), 0.8, 0.8, 0.8) end
     if node.p == false then GameTooltip:AddLine(L.PIN_ROUGH, 0.7, 0.7, 0.7) end
+    DropLines(node)
     local last = node.t or node.v
     if last then GameTooltip:AddLine(L.PIN_LAST:format(When(last)), 0.7, 0.7, 0.7) end
     GameTooltip:Show()
@@ -275,9 +291,17 @@ ns.On("Changed", function(key)
     end
 end)
 
+-- the minimap shows the player's map's points: redrawn when that map
+-- changes, sub-maps too (a cave, a town), not on every sub-zone name
 local zoneEvents = CreateFrame("Frame")
-zoneEvents:RegisterEvent("ZONE_CHANGED_NEW_AREA")
-zoneEvents:RegisterEvent("PLAYER_ENTERING_WORLD")
-zoneEvents:SetScript("OnEvent", function()
-    if ns.db then Pins:RefreshMinimap() end
+for _, event in ipairs({ "ZONE_CHANGED_NEW_AREA", "ZONE_CHANGED", "ZONE_CHANGED_INDOORS", "PLAYER_ENTERING_WORLD" }) do
+    zoneEvents:RegisterEvent(event)
+end
+local lastMap
+zoneEvents:SetScript("OnEvent", function(_, event)
+    if not ns.db then return end
+    local mapID = C_Map and C_Map.GetBestMapForUnit and C_Map.GetBestMapForUnit("player")
+    if mapID == lastMap and event ~= "PLAYER_ENTERING_WORLD" then return end
+    lastMap = mapID
+    Pins:RefreshMinimap()
 end)

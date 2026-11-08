@@ -1,7 +1,7 @@
 -- SoftTarget.lua
 -- Addons can't see world objects, with one exception: the game's soft
 -- targeting picks one interaction target ("softinteract", the node or corpse
--- the Interact Key would use, the nearest one within ~15 yards) and, with
+-- the Interact Key would use, the nearest one up to about 40 yards) and, with
 -- SoftTargetNameplateInteract on, gives it a nameplate. The glow hangs on that
 -- nameplate. The nameplate is only switched on ("the gate") for targets that
 -- glow, so NPCs, mailboxes and chairs keep working as usual.
@@ -27,15 +27,17 @@ local OBJECT_PLATE_RANGE = 60
 local CVARS = {
     "SoftTargetInteract", "SoftTargetIconGameObject", "SoftTargetInteractRange",
     "SoftTargetInteractArc", "SoftTargetInteractOnlyInRange", "SoftTargetNameplateInteract",
-    "nameplateGameObjectMaxDistance",
+    "nameplateGameObjectMaxDistance", "SoftTargetMatchLocked",
 }
 
 local CURSOR_KEYWORDS = {
     { "gather", "herb" }, { "herb", "herb" },
     { "mine", "ore" }, { "mining", "ore" },
     { "skin", "skin" },
-    { "lootall", "other" }, { "pickup", "other" }, { "picklock", "other" },
-    { "interact", "other" }, { "quest", "other" },
+    -- chests, lockboxes and the things quests send you to pick up; a plain
+    -- "interact" (mailboxes, doors, chairs) is not one
+    { "lootall", "chest" }, { "pickup", "chest" }, { "picklock", "chest" }, { "quest", "chest" },
+    { "interact", "other" },
 }
 
 local glow             -- the one in-world glow
@@ -87,8 +89,8 @@ local gateWant, gateWantSince, gateWritten = nil, 0, -100
 
 local function FlushGate(force)
     if gateWant == nil or InCombatLockdown() then return end
-    -- the setting as it really is: another addon (ForeverLootSparkles closes
-    -- it for every target it doesn't sparkle) or the game's options may have
+    -- the setting as it really is: another addon that drives the same
+    -- nameplate, or the game's options, may have
     -- changed it behind our back, and a remembered "open" would keep the glow
     -- off while the game has already picked the node
     local actual = GetCV("SoftTargetNameplateInteract")
@@ -133,6 +135,14 @@ function ST:ApplyCVars(force)
     SetCV("SoftTargetInteractArc", 2)        -- all around, not only ahead
     SetCV("SoftTargetInteractOnlyInRange", 0) -- also nodes a few steps away
     SetCV("nameplateGameObjectMaxDistance", math.max(ST.Range(), OBJECT_PLATE_RANGE))
+    -- By default the game moves the Interact Key to whatever you have
+    -- selected (the mob you just killed, an NPC), and the node by you loses
+    -- its pick, and its glow. Off, the key stays on what's nearest.
+    if ns.db.keepOnNode then
+        SetCV("SoftTargetMatchLocked", 0)
+    elseif saved.SoftTargetMatchLocked then
+        SetCV("SoftTargetMatchLocked", saved.SoftTargetMatchLocked)
+    end
     gateOpen = nil
 end
 
@@ -174,8 +184,8 @@ local function CursorIDs()
     if cursorIDs then return cursorIDs end
     cursorIDs = {}
     if GetFileIDFromPath then
-        for _, pair in ipairs({ { "Mine", "ore" }, { "GatherHerbs", "herb" }, { "Skin", "skin" }, { "Pickup", "other" },
-            { "LootAll", "other" }, { "Interact", "other" }, { "PickLock", "other" }, { "Quest", "other" } }) do
+        for _, pair in ipairs({ { "Mine", "ore" }, { "GatherHerbs", "herb" }, { "Skin", "skin" }, { "Pickup", "chest" },
+            { "LootAll", "chest" }, { "Interact", "other" }, { "PickLock", "chest" }, { "Quest", "chest" } }) do
             for _, prefix in ipairs({ "", "Unable" }) do
                 local path = "Interface\\Cursor\\" .. prefix .. pair[1]
                 local id = Safe(GetFileIDFromPath, path) or Safe(GetFileIDFromPath, path .. ".blp")
@@ -426,6 +436,25 @@ local function Describe(t)
         t.blocked and " unable" or "")
 end
 
+-- for the debug log: what the game hides about a node it won't name (in
+-- instances it may keep the GUID, name and position secret)
+local function Hidden(unit)
+    local function What(fn, ...)
+        if not fn then return "absent" end
+        local ok, v = pcall(fn, ...)
+        if not ok then return "error" end
+        if IsSecret(v) then return "secret" end
+        return tostring(v)
+    end
+    local lines = TooltipLines(unit)
+    local instanceType = IsInInstance and select(2, IsInInstance())
+    local mapID = C_Map and C_Map.GetBestMapForUnit and What(C_Map.GetBestMapForUnit, "player")
+    local onMap = ns.Gather and ns.Gather.PlayerPosition and ns.Gather.PlayerPosition()
+    return ("HIDDEN guid=%s name=%s tooltip %d lines [%s] instance=%s map=%s map position=%s"):format(
+        What(UnitGUID, unit), What(UnitName, unit), #lines, table.concat(lines, " | "),
+        tostring(instanceType), tostring(mapID), onMap and "yes" or "no")
+end
+
 -- Where the player stands, in yards (nil where the game hides it)
 PlayerPosition = function()
     if not UnitPosition then return nil end
@@ -449,19 +478,32 @@ function ST:Evaluate()
     end
 
     local guid = Safe(UnitGUID, unit)
+    -- what tells this target from the last one: its GUID, or, where the game
+    -- keeps that secret, its name and kind (else it would be a new node on
+    -- every poll: fade-in, sound and alert over and over)
+    local name = Safe(UnitName, unit)
+    local isObject = Safe(UnitIsGameObject, unit) == true
+    -- an object's name the game keeps secret (in instances): its tooltip's
+    -- first line, if that is readable
+    if not guid and not name and isObject then name = TooltipLines(unit)[1] end
+    local id = guid or ("?" .. tostring(name) .. (isObject and "|o" or "|u"))
     local previous = ST.current
     local target
-    if previous and guid and previous.guid == guid then
+    if previous and previous.id == id then
         target = previous
     else
-        target = { guid = guid, name = Safe(UnitName, unit) }
-        local kind, id = ParseGUID(guid)
+        -- hidden: the game gives neither its GUID nor its name (in dungeons)
+        target = { id = id, guid = guid, name = name, hidden = isObject and not guid and not name }
+        local kind, objectID = ParseGUID(guid)
+        -- a GUID the game keeps secret still leaves its kind
+        isObject = isObject or kind == "GameObject"
+        if not kind and isObject then kind = "GameObject" end
         target.kind = kind
-        if Safe(UnitIsGameObject, unit) == true or kind == "GameObject" then
-            target.objectID = id
+        if isObject then
+            target.objectID = objectID
             local cat, blocked = CursorCategory(unit)
             if cat ~= "ore" and cat ~= "herb" then
-                local dataCat = Data.Lookup(id, target.name, nil)
+                local dataCat = Data.Lookup(objectID, target.name, nil)
                 cat = dataCat or cat
             end
             target.category, target.blocked = cat, blocked
@@ -479,12 +521,13 @@ function ST:Evaluate()
             ns.Debug(("PICK %s (%s) at %.1f, nameplate setting %s%s"):format(tostring(target.name), target.category,
                 target.pickedTime, tostring(GetCV("SoftTargetNameplateInteract")),
                 InCombatLockdown() and ", IN COMBAT: the setting can't change until it ends" or ""))
+            if not (guid and target.name) then ns.Debug(Hidden(unit)) end
         end
         -- where the game picked it, to tell its range from the nameplate's
         if target.category == "ore" or target.category == "herb" then
             target.pickedAt = { PlayerPosition() }
         end
-        local memory = guid and seen[guid]
+        local memory = seen[id]
         if memory and GetTime() - memory.t < SEEN_FOR then
             target.found, target.sounded, target.logged = true, true, true
             target.foundAt, target.measured = memory.foundAt, memory.measured
@@ -502,9 +545,11 @@ function ST:Evaluate()
     end
 
     local cfg = target.category and db[target.category]
-    local skill = target.category and Skills.Get(target.category)
+    local profession = ns.PROFESSIONS[target.category] == true
+    local skill = profession and Skills.Get(target.category) or nil
     local hasProf = skill ~= nil
-    local wanted = cfg ~= nil and cfg.enabled and not (db.onlyKnown and not hasProf)
+    -- "only professions I have" is about professions: chests always count
+    local wanted = cfg ~= nil and cfg.enabled and not (profession and db.onlyKnown and not hasProf)
     SetGate(wanted)
     ST.current = target
     if not wanted or not plate then
@@ -529,9 +574,27 @@ function ST:Evaluate()
 
     local required, source = Skills.Required(target)
     target.required, target.source, target.skill = required, source, skill
-    local locked = target.blocked or not hasProf or (required and skill < required) or false
+    -- The game greys the cursor ("Unable…") for a node out of reach too, so
+    -- what it showed when the node was picked far off says nothing: it is read
+    -- again on every poll, and it only means "level too low" for a node whose
+    -- level isn't known; a known level is trusted over it.
+    if target.kind == "GameObject" then
+        local cat, blocked = CursorCategory(unit)
+        if cat then target.blocked = blocked end
+    end
+    local locked = profession and not hasProf or false
+    if hasProf then
+        if required then
+            locked = skill < required
+        else
+            locked = target.blocked or false
+        end
+    end
     local state = Settle(target, ReadState(unit, locked))
     target.state = state
+    -- in reach as the client says it: the map log takes the spot as exact
+    -- only then (an unanswered question is not a yes)
+    target.inReach = UnitIsInInteractRange ~= nil and Safe(UnitIsInInteractRange, unit) == true
     local inRange = state ~= "far"
 
     if not glow then glow = Glow.New(nil) end
@@ -544,7 +607,7 @@ function ST:Evaluate()
     else
         glow:SetState(state)
     end
-    if db.showNumber then
+    if db.showNumber and profession and not target.hidden then
         local text, r, g, b = Glow.NumberFor(required, skill, db.showMine, hasProf)
         glow:SetNumber(text, r, g, b)
     else
@@ -569,9 +632,7 @@ function ST:Evaluate()
         target.measured = true
         ST:Measure(target)
     end
-    if guid then
-        seen[guid] = { t = GetTime(), foundAt = target.foundAt, pickedAt = target.pickedAt, measured = target.measured }
-    end
+    seen[id] = { t = GetTime(), foundAt = target.foundAt, pickedAt = target.pickedAt, measured = target.measured }
     if not target.logged then
         target.logged = true
         ns.Debug(Describe(target))
@@ -804,7 +865,7 @@ for event in pairs(handlers) do
     pcall(events.RegisterEvent, events, event)
 end
 
-local HARD = { enabled = true, keepInteract = true, onlyKnown = true, ["*"] = true }
+local HARD = { enabled = true, keepInteract = true, keepOnNode = true, onlyKnown = true, ["*"] = true }
 
 ns.On("Changed", function(key)
     local hard = HARD[key] or (type(key) == "string" and key:find("%.enabled$") ~= nil and not key:find("^alert%."))

@@ -296,7 +296,8 @@ function ns.BuildMapPage(page)
         if not shown then
             msg = L.MAP_NO_ZONE
         elseif n == 0 then
-            msg = L.MAP_EMPTY
+            -- points there, all filtered out, is not "nothing gathered"
+            msg = next(ns.Gather.Zone(shown) or {}) and L.MAP_FILTERED or L.MAP_EMPTY
         elseif not hasArt then
             msg = L.MAP_NO_ART
         end

@@ -189,7 +189,9 @@ end
 
 -- target: { category, objectID, name, level }  ->  required, source
 function Skills.Required(target)
-    local learned = Skills.Learned(target.objectID, target.name)
+    -- corpses aren't looked up by name: the level a hide needs follows the
+    -- mob's level, and two mobs of one name can differ
+    local learned = not target.corpse and Skills.Learned(target.objectID, target.name)
     if learned then return learned, "learned" end
     if target.tooltipLevel then return target.tooltipLevel, "tooltip" end
     if target.category == "skin" or target.corpse then
@@ -212,12 +214,18 @@ events:SetScript("OnEvent", function(_, event, ...)
     elseif event == "UI_ERROR_MESSAGE" then
         local a, b = ...
         local text = type(b) == "string" and b or a
-        local cat, level = Skills.ParseRequirement(text)
+        if type(text) ~= "string" or (issecretvalue and issecretvalue(text)) then return end
+        local ok, cat, level = pcall(Skills.ParseRequirement, text)
+        if not ok then return end
         local target = ns.SoftTarget and ns.SoftTarget.current
         -- only for the node the interact key is on, and the same profession
         -- (a mouse click on another node would teach the wrong one)
         if cat and level and target and cat == target.category and (target.objectID or target.name) then
-            Skills.Remember(target.objectID, target.name, level, cat)
+            if target.corpse then
+                target.tooltipLevel = level -- this corpse only, not its name
+            else
+                Skills.Remember(target.objectID, target.name, level, cat)
+            end
         end
     else
         Skills.Invalidate()

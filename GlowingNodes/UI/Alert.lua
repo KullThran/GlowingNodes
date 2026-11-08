@@ -81,12 +81,27 @@ function Alert.NewCard(parent)
         self.halo:SetVertexColor(col.r, col.g, col.b)
         self.title:SetText(L["ALERT_TITLE_" .. cat])
         self.icon:SetTexture(info.icon or Data.IconFor(cat, info.required, info.name))
-        self.name:SetText(info.name or "")
-        local text, r, g, b = Glow.NumberFor(info.required, info.skill, false, info.hasProf)
-        self.level:SetText(L.ALERT_LEVEL:format("|cff" .. Hex(r, g, b) .. text .. "|r"))
+        if info.hidden then
+            self.name:SetText("|cff9aa4a8" .. L.ALERT_HIDDEN .. "|r")
+        else
+            self.name:SetText(info.name or "")
+        end
+        local state = L["ALERT_STATE_" .. (info.state or "ready")]
+        if not ns.PROFESSIONS[cat] then
+            -- a chest: nothing to level, only whether it's in reach
+            self.level:SetText("")
+            self.info:SetText(state)
+            return
+        end
+        if info.hidden then
+            self.level:SetText("")
+        else
+            local text, r, g, b = Glow.NumberFor(info.required, info.skill, false, info.hasProf)
+            self.level:SetText(L.ALERT_LEVEL:format("|cff" .. Hex(r, g, b) .. text .. "|r"))
+        end
         local mine = info.hasProf and L.ALERT_MINE:format(info.skill or 0)
             or L.ALERT_NOPROF:format(L["PROF_" .. cat])
-        self.info:SetText(mine .. "  ·  " .. L["ALERT_STATE_" .. (info.state or "ready")])
+        self.info:SetText(mine .. "  ·  " .. state)
     end
 
     function c:Flash()
@@ -131,6 +146,7 @@ local function Build()
     frame:Hide()
     card = Alert.NewCard(frame)
     card:SetAllPoints()
+    frame.card = card
 
     local close = CreateFrame("Button", nil, frame)
     close:SetSize(24, 24)
@@ -169,7 +185,7 @@ local function Build()
             end
         elseif not Alert.preview and shownGuid then
             local cur = ns.SoftTarget.current
-            if cur and cur.guid == shownGuid then
+            if cur and (cur.id or cur.guid) == shownGuid then
                 lastSeen = GetTime()
             elseif GetTime() - (lastSeen or 0) > (Settings().duration or 10) then
                 fading, fadeT = "out", self:GetAlpha() or 1
@@ -192,7 +208,7 @@ end
 local function InfoFor(target)
     return {
         category = target.category, name = target.name, required = target.required,
-        skill = target.skill, hasProf = target.skill ~= nil, state = target.state,
+        skill = target.skill, hasProf = target.skill ~= nil, state = target.state, hidden = target.hidden,
     }
 end
 
@@ -207,7 +223,7 @@ function Alert:Show(target)
     Alert.preview = nil
     card:Fill(InfoFor(target))
     card:Flash()
-    shownGuid, lastSeen = target.guid, GetTime()
+    shownGuid, lastSeen = target.id or target.guid, GetTime()
     if not frame:IsShown() or fading == "out" then
         fadeT = fading == "out" and fadeT or 0
         fading = "in"
@@ -217,7 +233,7 @@ function Alert:Show(target)
 end
 
 function Alert:Update(target)
-    if frame and frame:IsShown() and shownGuid and target.guid == shownGuid and fading ~= "out" then
+    if frame and frame:IsShown() and shownGuid and (target.id or target.guid) == shownGuid and fading ~= "out" then
         card:Fill(InfoFor(target))
     end
 end

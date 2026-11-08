@@ -1,5 +1,26 @@
 # Glowing Nodes Changelog
 
+## 1.1.2 (2026-11-08)
+- Chests glow too: treasure chests, lockboxes and other things you open in the world, in gold, with their own tab and alert. No level or number on them.
+- New option, off by default: "Switch Find Herbs and Find Minerals". With both professions, the minimap tracks herbs and minerals by turns every 3 seconds while you move. Not in combat, towns or instances, never over another tracking you picked, and its sound is muted.
+- When Mining or Herbalism goes up, the chat names the nodes you saw but couldn't gather yet that you now can: what, its level, how many and in which zones. It can be switched off on the Alert page.
+- Fixed: in dungeons, where the game hides a node's name, identity and your position, a herb or vein picked from afar stayed "Level too low" with a "?" even once you stood at it. Its cursor is now read again as you walk up, so the glow turns to "in reach". The alert says "Name and level hidden here" instead of a blank name, and the glow shows no "?". Where the tooltip is readable, the name (and so the level) comes from it.
+- Each node remembers what it dropped (ore, stones, gems, rare herbs): the map tooltip lists it, most often first, in the item's quality colour.
+- New option, on by default: "Keep the Interact Key on the node". The game moves the Interact Key to whatever you have selected (the mob you just killed, an NPC), and the node next to you lost its glow; now the key stays on what's nearest. Switched off, or with the addon off, your own setting comes back.
+- The window size ruler zooms the window as you drag it, about the mouse, so the ruler stays under it. Before, nothing changed until you let go, and then the window grew from its centre and ran off from under the mouse. The mouse wheel on the ruler also zooms about the mouse.
+- Sliders fill up to the knob's centre, no longer past it.
+- Fixed: a node first seen from far off left a "rough" point beside the real one on the map. The game picks nodes up to about 40 yards away, and the rough spot only merged within 25; it now merges from 45.
+- Fixed: one vein mined in several pulls counted as several gathers. Pulls of the same vein within a minute are one gather.
+- The maps are no longer redrawn every time the Interact Key comes back to a node it just held; only when a point is added, moves or counts up.
+- A node is only placed exactly on the map when the game says you're in reach of it.
+- Fixed: "Requires Skinning 105" learned on one mob made every mob of that name show that level. A corpse's level now follows its own mob level.
+- Minimap points follow you into caves and towns with a map of their own, not only into a new zone.
+- The Map page says your filters hide the points, instead of "Nothing gathered here yet", when they do.
+- The texts now give the real reach (about 40 yards, not 15 or 20), and the help and About page list /gn range and /gn debug.
+- The warning about other addons that use the same nameplate is gone: Glowing Nodes works on its own whatever else is installed.
+- Steadier with targets whose identity the game keeps secret, and with secret error messages.
+- Fixed: a node found from afar could say "Level too low" (and glow grey) even with your level well above what it needs, such as a level 1 Silverleaf at Herbalism 68. The game greys its cursor on a node out of reach too, and that was taken for "too low". A node's known level now decides, and the cursor is read again as you walk up to it.
+
 ## 1.1.1 (2026-11-07)
 - Fixed: the glow could jump and flash wildly, worse the longer you played. Its pulse and turning ring leapt whenever it changed between out of reach, in reach and too low a level; they now move smoothly.
 - Fixed: standing at the edge of a node's reach, the glow flared over and over as the game kept changing its mind. A change now shows once it holds for a moment.

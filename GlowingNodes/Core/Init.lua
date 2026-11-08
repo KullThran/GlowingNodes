@@ -11,7 +11,10 @@ ns.MEDIA = "Interface\\AddOns\\" .. ADDON_NAME .. "\\Media\\"
 ns.ART = ns.MEDIA .. "Art\\"
 ns.VERSION = (C_AddOns and C_AddOns.GetAddOnMetadata or GetAddOnMetadata)(ADDON_NAME, "Version") or "?"
 
-ns.CATEGORIES = { "ore", "herb", "skin" }
+ns.CATEGORIES = { "ore", "herb", "skin", "chest" }
+-- the kinds a gathering profession goes with (a level to show, a skill to
+-- have); chests and quest objects have none
+ns.PROFESSIONS = { ore = true, herb = true, skin = true }
 
 local function Category(r, g, b, sound)
     return {
@@ -33,6 +36,7 @@ ns.DEFAULTS = {
         ore = Category(1.00, 0.58, 0.12, "ore_ping"),
         herb = Category(0.22, 1.00, 0.38, "herb_chime"),
         skin = Category(0.78, 0.38, 1.00, "skin_thump"),
+        chest = Category(1.00, 0.84, 0.36, "bell"),
         showNumber = true,
         showMine = false,
         numberSize = 26,
@@ -41,6 +45,8 @@ ns.DEFAULTS = {
         greyLocked = false,
         height = -45,
         keepInteract = true,
+        trackSwitch = false, -- Find Herbs and Find Minerals take turns
+        keepOnNode = true, -- the Interact Key stays on the node, not on what you have selected
         channel = "SFX",
         soundOnReady = false,
         debug = false,
@@ -49,7 +55,8 @@ ns.DEFAULTS = {
         lastTab = "ore",
         alert = {
             enabled = true,
-            ore = true, herb = true, skin = true,
+            ore = true, herb = true, skin = true, chest = true,
+            unlock = true, -- a profession up: say which nodes seen can now be gathered
             duration = 10,
             scale = 1,
             onlyCan = false,
@@ -70,6 +77,7 @@ ns.DEFAULTS = {
         nodes = {},     -- [uiMapID][x*1e4 .. y*1e4] = { k = kind, n = name, c = gathered, s = seen, t = last gathered,
                         --   v = last met, o = objectID, r = level needed, p = false while only seen from afar }
         gatherLog = {}, -- last gathers, newest last: { t, k, n, m = uiMapID, x, y }
+        items = {},     -- itemID -> { n = name, q = quality } of what nodes dropped (node.x[itemID] = times)
     },
 }
 
@@ -116,27 +124,6 @@ function ns.Debug(text)
     if ns.db and ns.db.debug then
         print("|cff3fe0c5GN|r|cff8899aa " .. tostring(text) .. "|r")
         ns.Log(text)
-    end
-end
-
--- The other addon that drives the same soft-target nameplate.
-ns.CONFLICTS = { "ForeverLootSparkles", "Lueur" }
-
-function ns.ConflictingAddon()
-    local loaded = C_AddOns and C_AddOns.IsAddOnLoaded or IsAddOnLoaded
-    if not loaded then return nil end
-    for _, name in ipairs(ns.CONFLICTS) do
-        local ok, isLoaded = pcall(loaded, name)
-        if ok and isLoaded then
-            if name == "ForeverLootSparkles" then
-                local db = _G.ForeverLootSparklesDB
-                if not db or db.sparkleOre ~= false or db.sparkleHerbs ~= false or db.sparkleCorpseLoot ~= false then
-                    return name
-                end
-            else
-                return name
-            end
-        end
     end
 end
 
@@ -191,10 +178,6 @@ function Addon:OnEnable()
         -- other addons set the same ranges as they log in (their own values):
         -- ours again, written only where they differ
         if ns.db.enabled and ns.SoftTarget then ns.SoftTarget:ApplyCVars() end
-        local other = ns.ConflictingAddon()
-        if other and ns.db.enabled then
-            ns.Print(L.MSG_CONFLICT:format(other))
-        end
     end, 6)
 end
 

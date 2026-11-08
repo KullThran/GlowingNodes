@@ -16,9 +16,10 @@ ns.Window = Window
 
 local WIDTH, HEIGHT = 768, 512
 local HEADER_H = 64
+local TAB_STEP = 44 -- eight tabs down the side, clear of the size ruler
 local RAIL_X = 188               -- margin rule after the tabs
 local CONTENT_X, CONTENT_Y = 204, 78
-local TABS = { "general", "ore", "herb", "skin", "map", "alert", "about" }
+local TABS = { "general", "ore", "herb", "skin", "chest", "map", "alert", "about" }
 local SAMPLE = { ore = 65, herb = 100, skin = 35 }
 local SAMPLE_NAME = { ore = "SAMPLE_NODE", herb = "PROF_herb", skin = "PROF_skin" }
 -- What the previews show: what you gather, not the profession's icon
@@ -45,6 +46,7 @@ local ICONS = {
     ore = Data.CATEGORY_ICONS.ore,
     herb = Data.CATEGORY_ICONS.herb,
     skin = Data.CATEGORY_ICONS.skin,
+    chest = Data.CATEGORY_ICONS.chest,
     map = "Interface\\Icons\\INV_Misc_Map_01",
     alert = "Interface\\Icons\\INV_Letter_15",
     about = "Interface\\Icons\\INV_Misc_Book_09",
@@ -107,12 +109,14 @@ local function BuildPlate(page, cat)
         glow:Configure(db[cat], { numberSize = db.numberSize, greyLocked = db.greyLocked, dimFar = db.dimFar, scale = 0.78 })
         local required = SAMPLE[cat]
         local skill = Skills.Get(cat)
-        if state == "locked" then
+        if not required then
+            skill = nil
+        elseif state == "locked" then
             skill = required - 15
         elseif not skill or skill < required then
             skill = required + 10
         end
-        if db.showNumber then
+        if db.showNumber and required then
             glow:SetNumber(Glow.NumberFor(required, skill, db.showMine, true))
         else
             glow:SetNumber("")
@@ -128,9 +132,9 @@ local function BuildPlate(page, cat)
         glow.textFrame:SetFrameLevel(anchor:GetFrameLevel() + 8)
     end
 
-    local stamps = W.Stamps(page, {
-        { "far", L.STATE_FAR }, { "ready", L.STATE_READY }, { "locked", L.STATE_LOCKED },
-    }, function() return state end, function(v)
+    local states = { { "far", L.STATE_FAR }, { "ready", L.STATE_READY }, { "locked", L.STATE_LOCKED } }
+    if not ns.PROFESSIONS[cat] then states[3] = nil end -- a chest is never "too low"
+    local stamps = W.Stamps(page, states, function() return state end, function(v)
         state = v
         apply()
         if v == "ready" then glow:Flare() end
@@ -220,15 +224,17 @@ local function BuildGeneralPage(page)
     qt:SetWidth(112)
     qt:SetText(L.LEG_GOLD)
 
-    local behaviour = W.Section(page, L.CARD_BEHAVIOUR, 256, 160)
+    local behaviour = W.Section(page, L.CARD_BEHAVIOUR, 256, 212)
     behaviour:SetPoint("TOPLEFT", 280, -2)
     behaviour:Add(W.Check(behaviour, L.DIM_FAR, L.DIM_FAR_TIP, get("dimFar"), set("dimFar")), 26)
     behaviour:Add(W.Check(behaviour, L.GREY_LOCKED, L.GREY_LOCKED_TIP, get("greyLocked"), set("greyLocked")), 26)
     behaviour:Add(W.Slider(behaviour, L.HEIGHT, -140, 60, 1, get("height"), set("height"), nil, L.HEIGHT_TIP), 48)
     behaviour:Add(W.Check(behaviour, L.KEEP_INTERACT, L.KEEP_INTERACT_TIP, get("keepInteract"), set("keepInteract")), 26)
+    behaviour:Add(W.Check(behaviour, L.KEEP_ON_NODE, L.KEEP_ON_NODE_TIP, get("keepOnNode"), set("keepOnNode")), 26)
+    behaviour:Add(W.Check(behaviour, L.TRACK_SWITCH, L.TRACK_SWITCH_TIP, get("trackSwitch"), set("trackSwitch")), 26)
 
-    local status = W.Section(page, L.CARD_STATUS, 256, 230)
-    status:SetPoint("TOPLEFT", 280, -170)
+    local status = W.Section(page, L.CARD_STATUS, 256, 178)
+    status:SetPoint("TOPLEFT", 280, -222)
     local lines = W.Text(status, 11)
     lines:SetPoint("TOPLEFT", 2, -30)
     lines:SetPoint("RIGHT", 0, 0)
@@ -254,8 +260,6 @@ local function BuildGeneralPage(page)
         local ok = ns.SoftTarget:InteractKeyOn()
         out[#out + 1] = (ok and "|cff8fdc78" or "|cffff7058") .. (ok and L.STATUS_INTERACT_ON or L.STATUS_INTERACT_OFF) .. "|r"
         if InCombatLockdown() then out[#out + 1] = "|cffffc848" .. L.STATUS_COMBAT .. "|r" end
-        local other = ns.ConflictingAddon()
-        if other then out[#out + 1] = "|cffffa448" .. L.STATUS_CONFLICT:format(other) .. "|r" end
         out[#out + 1] = L.STATUS_LEARNED:format(Skills.LearnedCount())
         out[#out + 1] = "|cffd8caae" .. L.STATUS_LIMIT .. "|r"
         lines:SetText(table.concat(out, "\n"))
@@ -276,11 +280,12 @@ local function BuildAlertPage(page)
     sample:SetScale(0.92)
     local sampleCat = "ore"
     local function fill()
+        local need = SAMPLE[sampleCat]
         sample:Fill({ category = sampleCat, name = SampleName(sampleCat), icon = SampleIcon(sampleCat),
-            required = SAMPLE[sampleCat], skill = SAMPLE[sampleCat] + 10, hasProf = true, state = "ready" })
+            required = need, skill = need and need + 10, hasProf = need ~= nil, state = "ready" })
     end
     local stamps = W.Stamps(page, {
-        { "ore", L.TAB_ore }, { "herb", L.TAB_herb }, { "skin", L.TAB_skin },
+        { "ore", L.TAB_ore }, { "herb", L.TAB_herb }, { "skin", L.TAB_skin }, { "chest", L.TAB_chest },
     }, function() return sampleCat end, function(v)
         sampleCat = v
         fill()
@@ -289,18 +294,19 @@ local function BuildAlertPage(page)
     stamps:SetPoint("TOPLEFT", 16, -258)
     stamps:SetSize(206, 22)
 
-    local main = W.Section(page, L.CARD_ALERT, 300, 220)
+    local main = W.Section(page, L.CARD_ALERT, 300, 246)
     main:SetPoint("TOPLEFT", 236, -2)
     main:Add(W.Check(main, L.ALERT_ON, L.ALERT_ON_TIP, get("enabled"), set("enabled")), 28)
     main:Add(W.Slider(main, L.DURATION, 3, 30, 1, get("duration"), set("duration"), function(v) return L.SECONDS:format(v) end), 48)
     main:Add(W.Slider(main, L.SCALE, 0.6, 1.5, 0.05, get("scale"), set("scale"), Pct), 48)
     main:Add(W.Check(main, L.ONLY_CAN, L.ONLY_CAN_TIP, get("onlyCan"), set("onlyCan")), 26)
     main:Add(W.Check(main, L.HIDE_COMBAT, nil, get("hideCombat"), set("hideCombat")), 26)
+    main:Add(W.Check(main, L.ALERT_UNLOCK, L.ALERT_UNLOCK_TIP, get("unlock"), set("unlock")), 26)
 
-    local kinds = W.Section(page, L.CARD_ALERT_KINDS, 300, 110)
-    kinds:SetPoint("TOPLEFT", 236, -230)
+    local kinds = W.Section(page, L.CARD_ALERT_KINDS, 300, 118)
+    kinds:SetPoint("TOPLEFT", 236, -254)
     for _, cat in ipairs(ns.CATEGORIES) do
-        kinds:Add(W.Check(kinds, L["CAT_" .. cat], nil, get(cat), set(cat)), 24)
+        kinds:Add(W.Check(kinds, L["CAT_" .. cat], nil, get(cat), set(cat)), 22)
     end
 
     local move = W.Button(page, L.MOVE, 130, function(self)
@@ -312,7 +318,7 @@ local function BuildAlertPage(page)
             self.text:SetText(L.MOVE_DONE)
         end
     end)
-    move:SetPoint("TOPLEFT", 238, -350)
+    move:SetPoint("TOPLEFT", 238, -378)
     local resetPos = W.Button(page, L.RESET_POS, 130, function() ns.Alert:ResetPosition() end)
     resetPos:SetPoint("LEFT", move, "RIGHT", 12, 0)
     page:SetScript("OnHide", function()
@@ -443,7 +449,7 @@ end
 local function BuildTab(parent, id, index)
     local b = CreateFrame("Button", nil, parent)
     b:SetSize(162, 40)
-    b:SetPoint("TOPLEFT", 22, -HEADER_H - 16 - (index - 1) * 46)
+    b:SetPoint("TOPLEFT", 22, -HEADER_H - 16 - (index - 1) * TAB_STEP)
     local paper = W.Tex(b, "f_tab", "BACKGROUND", 0)
     paper:SetAllPoints()
     local wash = W.Tex(b, "f_tab_glow", "BACKGROUND", 1)
@@ -469,7 +475,7 @@ local function BuildTab(parent, id, index)
         icon:SetDesaturated(not on and not hover)
         icon:SetAlpha(on and 1 or 0.75)
         b:ClearAllPoints()
-        b:SetPoint("TOPLEFT", on and 26 or 20, -HEADER_H - 16 - (index - 1) * 46)
+        b:SetPoint("TOPLEFT", on and 26 or 20, -HEADER_H - 16 - (index - 1) * TAB_STEP)
     end
     b:SetScript("OnEnter", function() hover = true b:Paint() end)
     b:SetScript("OnLeave", function() hover = false b:Paint() end)
@@ -522,8 +528,28 @@ local function PlaceAtScale(f, scale, sx, sy)
     end
 end
 
+-- Where the window's centre (cx, cy, in UIParent's units) goes as its scale
+-- goes from `from` to `to`, zoomed about the point px, py: that point stays
+-- where it is. With no point, the centre stays.
+local function ScaledCenter(cx, cy, from, to, px, py)
+    if not (cx and cy and px and py) or not from or from <= 0 then return cx, cy end
+    local k = to / from
+    return px + (cx - px) * k, py + (cy - py) * k
+end
+Window.ScaledCenter = ScaledCenter
+
+-- the mouse, in UIParent's units
+local function CursorPoint()
+    if not GetCursorPosition then return nil end
+    local x, y = GetCursorPosition()
+    local s = UIParent:GetEffectiveScale()
+    if type(x) ~= "number" or type(y) ~= "number" or not s or s <= 0 then return nil end
+    return x / s, y / s
+end
+
 local glider
-function Window:SetScale(user, animate)
+-- px, py: a point (UIParent's units) to zoom about, kept still; else the centre
+function Window:SetScale(user, animate, px, py)
     user = SnapScale(user)
     ns.db.windowScale = user
     if not frame then return end
@@ -534,7 +560,7 @@ function Window:SetScale(user, animate)
     local sx, sy = cx and cx * from, cy and cy * from
     if glider then glider:SetScript("OnUpdate", nil) end
     if not animate or math.abs(from - target) < 0.0005 then
-        PlaceAtScale(f, target, sx, sy)
+        PlaceAtScale(f, target, ScaledCenter(sx, sy, from, target, px, py))
         if sx then SavePosition(f) end
         return
     end
@@ -544,7 +570,8 @@ function Window:SetScale(user, animate)
         elapsedTotal = elapsedTotal + elapsed
         local t = math.min(1, elapsedTotal / GLIDE)
         local eased = 1 - (1 - t) * (1 - t)
-        PlaceAtScale(f, from + (target - from) * eased, sx, sy)
+        local scale = from + (target - from) * eased
+        PlaceAtScale(f, scale, ScaledCenter(sx, sy, from, scale, px, py))
         if t >= 1 then
             self:SetScript("OnUpdate", nil)
             if sx then SavePosition(f) end
@@ -552,9 +579,11 @@ function Window:SetScale(user, animate)
     end)
 end
 
--- "Window size  [ruler]  100%" in the margin under the tabs. Dragging only
--- previews the percentage, the scale changes on release; the mouse wheel
--- steps one notch at once; the percentage can be typed (Enter applies).
+-- "Window size  [ruler]  100%" in the margin under the tabs. Dragging zooms
+-- the window as it goes, about the mouse, so the ruler stays under it (zoomed
+-- about its centre, the window ran off from under the mouse, and only on
+-- release); the mouse wheel steps one notch, also about the mouse; the
+-- percentage can be typed (Enter applies, about the window's centre).
 local function BuildScaleControl(f)
     local minP = math.floor(SCALE_MIN * 100 + 0.5)
     local maxP = math.floor(SCALE_MAX * 100 + 0.5)
@@ -597,23 +626,43 @@ local function BuildScaleControl(f)
         syncing = false
         Paint(v)
     end
-    local function Apply()
-        Window:SetScale(s:GetValue() / 100, true)
-        Sync()
-    end
+    local wheeling
     s:SetScript("OnValueChanged", function(_, v)
         Paint(math.floor(v + 0.5))
-        if syncing or dragging then return end
-        Apply()
+        if syncing then return end
+        -- the button held counts too, in case the game skipped OnMouseDown
+        local held = not wheeling and IsMouseButtonDown and IsMouseButtonDown("LeftButton")
+        if dragging or held then
+            -- at once and about the mouse: the ruler doesn't move under it,
+            -- so the value it reads doesn't change as the window grows
+            Window:SetScale(v / 100, false, CursorPoint())
+            return
+        end
+        if wheeling then
+            Window:SetScale(v / 100, true, CursorPoint())
+        else
+            Window:SetScale(v / 100, true)
+        end
+        Sync()
     end)
-    s:SetScript("OnMouseDown", function() dragging = true end)
+    s:SetScript("OnMouseDown", function()
+        dragging = true
+        -- held to the screen, a window pushed back from its edge would move
+        -- the ruler under the mouse; it is held again on release
+        f:SetClampedToScreen(false)
+    end)
     s:SetScript("OnMouseUp", function()
         dragging = false
-        Apply()
+        f:SetClampedToScreen(true)
+        SavePosition(f)
+        Sync()
     end)
     s:SetScript("OnMouseWheel", function(self, delta)
+        wheeling = true
         self:SetValue(math.max(minP, math.min(maxP, self:GetValue() + (delta > 0 and stepP or -stepP))))
+        wheeling = false
     end)
+    f.scaleSlider = s
     value:SetScript("OnEditFocusGained", function(self)
         self:SetText(tostring(math.floor(s:GetValue() + 0.5)))
         self:HighlightText()
@@ -746,6 +795,10 @@ local function Build()
         PlaySound(SOUNDKIT and SOUNDKIT.IG_SPELLBOOK_CLOSE or 830)
     end)
     frame = f
+end
+
+function Window.ScaleSlider()
+    return frame and frame.scaleSlider
 end
 
 function Window:Select(id)

@@ -296,8 +296,11 @@ function W.SliderTrack(s, knobSize)
     s:SetThumbTexture(ART .. "f_knob")
     s:GetThumbTexture():SetSize(knobSize or 20, knobSize or 20)
     W.OnAccent(function(r, g, b) paint:SetVertexColor(r, g, b, 1) end)
+    local knob = knobSize or 20
     return function(p)
-        local w = (s:GetWidth() - 2) * math.max(0, math.min(1, p))
+        -- up to the knob's centre, where the game draws it: the knob's centre
+        -- runs from half a knob in to half a knob short of the end
+        local w = knob / 2 + (s:GetWidth() - knob) * math.max(0, math.min(1, p)) - 1
         fill:SetShown(w >= 12)
         fill:SetWidth(math.max(w, 12))
     end

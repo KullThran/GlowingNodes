@@ -26,6 +26,8 @@ G.AREA_YARDS = AREA_YARDS
 local MAX_MOBS = 6
 local LOG_SIZE = 100
 local PENDING_FOR = 30
+-- a vein is mined in several pulls, a few seconds apart: one gather
+local PULLS_WITHIN = 60
 
 local function IsSecret(v)
     return issecretvalue ~= nil and issecretvalue(v)
@@ -129,10 +131,10 @@ function G.Zone(mapID)
 end
 
 -- Spots the glow saw but nobody stood on are rough (p = false): the game
--- picks a node within ~15-20 yards and the spot is where the player stood.
--- They merge from further off and settle on the node once the player is in
--- reach of it or gathers it.
-local LOOSE_YARDS = 25
+-- picks a node up to about 40 yards off and the spot is where the player
+-- stood. They merge from that far off and settle on the node once the player
+-- is in reach of it or gathers it.
+local LOOSE_YARDS = 45
 G.LOOSE_YARDS = LOOSE_YARDS
 
 -- the point of this kind at that spot, if there is one (rough: the spot is
@@ -168,18 +170,23 @@ end
 -- rough points of that kind round a spot now known exactly: the same node
 -- seen from elsewhere, folded into it
 local function Absorb(zone, mapID, kind, keep, x, y)
+    local folded = false
     for key, node in pairs(zone) do
         if node ~= keep and node.k == kind and node.p == false then
             local nx, ny = G.Decode(key)
             if G.Distance(mapID, x, y, nx, ny) <= LOOSE_YARDS then
                 keep.s = (keep.s or 0) + (node.s or 0)
                 zone[key] = nil
+                folded = true
             end
         end
     end
+    return folded
 end
 
 -- how: { gathered = true } or { seen = count it, precise = in reach }
+-- returns the node, whether it is new, its key, and whether anything the
+-- maps draw changed (a point added, moved, settled or counted)
 local function Put(kind, name, objectID, mapID, x, y, how)
     local nodes = ns.global.nodes
     nodes[mapID] = nodes[mapID] or {}
@@ -188,12 +195,20 @@ local function Put(kind, name, objectID, mapID, x, y, how)
     local precise = how.gathered or how.precise
     local key, node = G.Near(mapID, kind, x, y, not precise and kind ~= "skin")
     local isNew = node == nil
+    local startKey, wasRough = key, node and node.p == false
+    local changed = isNew
     if node then
         if how.gathered then
-            node.c = (node.c or 0) + 1
+            if kind == "ore" and node.t and now - node.t < PULLS_WITHIN then
+                how.pull = true -- the same vein's next pull
+            else
+                node.c = (node.c or 0) + 1
+                changed = true
+            end
             node.t = now
         elseif how.seen then
             node.s = (node.s or 0) + 1
+            changed = true
         end
         node.v = now
         if name then node.n = name end
@@ -229,7 +244,8 @@ local function Put(kind, name, objectID, mapID, x, y, how)
         if not precise and kind ~= "skin" then node.p = false end
         zone[key] = node
     end
-    if precise and kind ~= "skin" then Absorb(zone, mapID, kind, node, x, y) end
+    if precise and kind ~= "skin" and Absorb(zone, mapID, kind, node, x, y) then changed = true end
+    if key ~= startKey or wasRough ~= (node.p == false) then changed = true end
     if kind == "skin" and name and (how.gathered or how.seen) then
         -- the creatures skinned in the area, most skinned kept
         node.mobs = node.mobs or {}
@@ -244,7 +260,7 @@ local function Put(kind, name, objectID, mapID, x, y, how)
             if least then node.mobs[least] = nil end
         end
     end
-    return node, isNew, key
+    return node, isNew, key, changed
 end
 
 function G.Record(kind, name, objectID, mapID, x, y)
@@ -254,7 +270,13 @@ function G.Record(kind, name, objectID, mapID, x, y)
         ns.Debug("GATHER " .. tostring(name) .. ": no map position here")
         return
     end
-    local node, isNew = Put(kind, name, objectID, mapID, x, y, { gathered = true })
+    local how = { gathered = true }
+    local node, isNew = Put(kind, name, objectID, mapID, x, y, how)
+    G.lastGather = { node = node, kind = kind, mapID = mapID, at = GetTime() }
+    if how.pull then
+        ns.Debug(("GATHER %s %s: the same vein's next pull"):format(kind, tostring(name)))
+        return node, false
+    end
     local now = time()
     local log = ns.global.gatherLog
     log[#log + 1] = { t = now, k = kind, n = name, m = mapID, x = math.floor(x * 1000 + 0.5) / 1000, y = math.floor(y * 1000 + 0.5) / 1000 }
@@ -274,7 +296,13 @@ function G.Seen(target)
     local kind = target and target.category
     if not kind or target.gnPrecise or not (ns.db and ns.db.map.record[kind]) then return end
     if kind == "skin" and not target.corpse then return end
-    local inReach = kind ~= "skin" and target.state ~= nil and target.state ~= "far"
+    -- in reach: as the client said it (inReach), else from the glow's state
+    local inReach
+    if target.inReach ~= nil then
+        inReach = kind ~= "skin" and target.inReach == true
+    else
+        inReach = kind ~= "skin" and target.state ~= nil and target.state ~= "far"
+    end
     if target.gnSeen and not inReach then return end
     local mapID, x, y = G.PlayerPosition()
     if not mapID then return end
@@ -295,9 +323,13 @@ function G.Seen(target)
     if IsSecret(name) then name = nil end
     local objectID = target.objectID
     if IsSecret(objectID) then objectID = nil end
-    local node, isNew = Put(kind, name, objectID, mapID, x, y, { seen = count, precise = inReach })
+    local node, isNew, _, changed = Put(kind, name, objectID, mapID, x, y, { seen = count, precise = inReach })
     local required = target.required
-    if type(required) == "number" and not IsSecret(required) then node.r = required end
+    if type(required) == "number" and not IsSecret(required) and node.r ~= required then
+        node.r = required
+        changed = true
+    end
+    if not changed then return end -- picked again where it was: the maps stay as they are
     ns.Debug(("SEEN %s %s %.1f, %.1f %s%s"):format(kind, tostring(name), x * 100, y * 100,
         isNew and "new" or "known", inReach and " (in reach)" or ""))
     ns.Fire("NodesChanged", mapID)
@@ -400,3 +432,95 @@ events:SetScript("OnEvent", function(_, event, unit, ...)
         if castGUID then pending[castGUID] = nil end
     end
 end)
+
+---------------------------------------------------------------------------
+-- What a node dropped
+---------------------------------------------------------------------------
+-- The loot window that opens right after a gather is that node's: each item
+-- in it counted on the node (node.x[itemID] = times), its name and quality
+-- kept once for all (global.items). A node keeps its MAX_DROPS items seen
+-- most; the one just looted always stays.
+
+local LOOT_WITHIN = 3 -- seconds from the gather to its loot window
+local MAX_DROPS = 8
+
+-- the loot's source fits the gather: an object for veins and herbs, a
+-- creature for hides. A client that won't say is believed.
+local SOURCE_TYPE = { ore = "GameObject", herb = "GameObject", chest = "GameObject", skin = "Creature" }
+local function SourceFits(slot, kind)
+    if not GetLootSourceInfo then return true end
+    local ok, guid = pcall(GetLootSourceInfo, slot)
+    if not ok or type(guid) ~= "string" or IsSecret(guid) then return true end
+    local want = SOURCE_TYPE[kind]
+    return not want or guid:match("^(%a+)") == want
+end
+
+local function ItemOf(slot)
+    local ok, link = pcall(GetLootSlotLink, slot)
+    if not ok or type(link) ~= "string" or IsSecret(link) then return nil end
+    local id = tonumber(link:match("item:(%d+)"))
+    if not id then return nil end
+    local name, quality
+    local ok2, _, n, _, _, q = pcall(GetLootSlotInfo, slot)
+    if ok2 then
+        if type(n) == "string" and not IsSecret(n) then name = n end
+        if type(q) == "number" and not IsSecret(q) then quality = q end
+    end
+    return id, name or link:match("%[(.-)%]"), quality
+end
+
+function G.Loot()
+    local last = G.lastGather
+    G.lastGather = nil
+    if not (last and last.node and GetTime() - last.at <= LOOT_WITHIN) then return end
+    local n = tonumber(GetNumLootItems and GetNumLootItems()) or 0
+    local node, got = last.node, false
+    for slot = 1, n do
+        if SourceFits(slot, last.kind) then
+            local id, name, quality = ItemOf(slot)
+            if id then
+                node.x = node.x or {}
+                node.x[id] = (node.x[id] or 0) + 1
+                local items = ns.global.items
+                items[id] = items[id] or {}
+                if name then items[id].n = name end
+                if quality then items[id].q = quality end
+                got = true
+                local count = 0
+                for _ in pairs(node.x) do count = count + 1 end
+                if count > MAX_DROPS then
+                    local least, leastN
+                    for other, times in pairs(node.x) do
+                        if other ~= id and (not leastN or times < leastN) then least, leastN = other, times end
+                    end
+                    if least then node.x[least] = nil end
+                end
+            end
+        end
+    end
+    if got then ns.Debug(("LOOT %s: %d slots on the node"):format(last.kind, n)) end
+end
+
+-- the items a node dropped, most first: { id, name, quality, times }
+function G.Drops(node)
+    local list = {}
+    local items = ns.global.items or {}
+    for id, times in pairs(node.x or {}) do
+        local item = items[id] or {}
+        list[#list + 1] = { id = id, name = item.n or ("item:" .. id), quality = item.q, times = times }
+    end
+    table.sort(list, function(a, b) return a.times > b.times or (a.times == b.times and a.name < b.name) end)
+    return list
+end
+
+local loot = CreateFrame("Frame")
+local looted = false -- one loot window counted once (LOOT_READY and LOOT_OPENED both come)
+loot:SetScript("OnEvent", function(_, event)
+    if event == "LOOT_CLOSED" then looted = false return end
+    if looted or not ns.global then return end
+    looted = true
+    G.Loot()
+end)
+for _, event in ipairs({ "LOOT_READY", "LOOT_OPENED", "LOOT_CLOSED" }) do
+    pcall(loot.RegisterEvent, loot, event)
+end

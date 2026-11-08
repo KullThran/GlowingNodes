@@ -174,6 +174,7 @@ Data.CATEGORY_ICONS = {
     ore = "Interface\\Icons\\Trade_Mining",
     herb = "Interface\\Icons\\Trade_Herbalism",
     skin = "Interface\\Icons\\INV_Misc_Pelt_Wolf_01",
+    chest = "Interface\\Icons\\INV_Box_02",
 }
 
 local function ItemIcon(itemID)
