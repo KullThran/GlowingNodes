@@ -122,6 +122,7 @@ local function Pool()
 end
 
 local worldPool, miniPool = Pool(), Pool()
+local SHOW_PARENT = 1 -- HBD_PINS_WORLDMAP_SHOW_PARENT
 
 -- beads: ore and herbs (hides are drawn as areas)
 local function Visible(node)
@@ -138,15 +139,26 @@ function Pins:RefreshWorld()
     worldPool:ReleaseAll()
     if not (ns.db and ns.db.map.worldMap) then return end
     local mapID = WorldMapFrame and WorldMapFrame.GetMapID and WorldMapFrame:GetMapID()
-    local zone = mapID and ns.Gather.Zone(mapID)
-    if not zone then return end
+    if not mapID then return end
+    local zone = ns.Gather.Zone(mapID)
     local size = ns.db.map.pinSize
-    for key, node in pairs(zone) do
+    for key, node in pairs(zone or {}) do
         if Visible(node) then
             local x, y = ns.Gather.Decode(key)
             local pin = worldPool:Acquire(node, size)
             HBDP:AddWorldMapIconMap(REF, pin, mapID, x, y, 0)
         end
+    end
+    -- Open Map's stitched map shows the zones round this one too: their beads,
+    -- on their own maps, marked to show beyond them (it places them)
+    if ns.OpenMap.Stitched() and not ns.SkinZones.IsOverview(mapID) then
+        ns.OpenMap.Neighbours(mapID, function(nodeMap, key, node)
+            if Visible(node) then
+                local x, y = ns.Gather.Decode(key)
+                local pin = worldPool:Acquire(node, size)
+                HBDP:AddWorldMapIconMap(REF, pin, nodeMap, x, y, SHOW_PARENT)
+            end
+        end)
     end
 end
 
@@ -171,6 +183,7 @@ local function SetupAreaLayer()
         self.tex:SetVertexColor(Pins.Color("skin"))
         self:SetPosition(x, y)
         self:Show()
+        ns.OpenMap.Lift(self, 2)
     end
     function pinMixin:OnReleased() self.node = nil end
     pinMixin.SetPassThroughButtons = function() end -- as HereBeDragons: no combat error
@@ -213,16 +226,25 @@ local function SetupAreaLayer()
         if not (map and map.worldMap and map.show.skin) then return end
         local canvasMap = self:GetMap()
         local mapID = canvasMap:GetMapID()
-        local zone = mapID and ns.Gather.Zone(mapID)
-        if not zone then return end
+        if not mapID then return end
         local canvas = canvasMap:GetCanvas()
         local cw, ch = canvas:GetWidth(), canvas:GetHeight()
         local rw, rh = ns.Gather.AreaRadius(mapID)
-        for key, node in pairs(zone) do
+        for key, node in pairs(ns.Gather.Zone(mapID) or {}) do
             if node.k == "skin" then
                 local x, y = ns.Gather.Decode(key)
                 canvasMap:AcquirePin(AREA, node, x, y, 2 * rw * cw, 2 * rh * ch)
             end
+        end
+        -- Open Map's stitched map: the zones round this one too, sized in
+        -- their own map's yards
+        if ns.OpenMap.Stitched() and not ns.SkinZones.IsOverview(mapID) then
+            ns.OpenMap.Neighbours(mapID, function(nodeMap, _, node, x, y, sx, sy)
+                if node.k == "skin" then
+                    local nw, nh = ns.Gather.AreaRadius(nodeMap)
+                    canvasMap:AcquirePin(AREA, node, x, y, 2 * nw * sx * cw, 2 * nh * sy * ch)
+                end
+            end)
         end
     end
     WorldMapFrame:AddDataProvider(areaProvider)

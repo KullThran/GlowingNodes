@@ -1,5 +1,14 @@
 # Glowing Nodes Changelog
 
+## 1.2.0 (2026-11-11)
+- Skinning zones on the Map page: purple areas where skinnable creatures roam, outlined the way the game marks a quest's area, each with the skinning it needs (its colour: how hard it is for you). Hover the label for the creatures' level and how many there are. They come from the 1.12 world database, so Forever may differ here and there. They show on the game's world map too. Off by default: the Skinning filter under the map (or on the filter button) shows them along with your hide areas. Labels that would cover each other are left out until you zoom in.
+- Switch what the maps show from the map itself: a button on the Map page and one in the top right corner of the game's world map open the same little panel with ore veins, herbs and skinning (and, on the world map, its master switch).
+- Works with Open Map. Its menu gets a Glowing Nodes section with the same switches (on the world map, ore, herbs, skinning), and our corner button stays away from its buttons. On its stitched map, the zones around the one you are looking at show too: their beads, hide areas and skinning zones, each in its place on the stitched world and above its art.
+- The map zooms: mouse wheel over it (about the pointer) or the + and - buttons; drag to move a zoomed map.
+- Back: the button (or a right-click on the map) goes to the map you saw before, or up to the continent. A continent shows a badge on every zone with points, names the zone under the pointer, and opens it with a click.
+- Search box on the Map page: zones, nodes, creatures and drops. Results list the zones and where each match is logged; picking one opens its map with the matches standing out. A number (a skinning level) lights the skinning zones that need it.
+- Fixed: a dark streak above the window's top left corner (and stray marks round the glow) came from specks left on the edges of the glow textures.
+
 ## 1.1.2 (2026-11-08)
 - Chests glow too: treasure chests, lockboxes and other things you open in the world, in gold, with their own tab and alert. No level or number on them.
 - New option, off by default: "Switch Find Herbs and Find Minerals". With both professions, the minimap tracks herbs and minerals by turns every 3 seconds while you move. Not in combat, towns or instances, never over another tracking you picked, and its sound is muted.

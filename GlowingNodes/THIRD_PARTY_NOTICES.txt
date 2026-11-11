@@ -17,6 +17,12 @@ Technique credit
   GPL-3.0). Glowing Nodes uses its own implementation of that approach;
   no code from it is included.
 
+Skinning zones (Data/SkinAreas.lua)
+  Summarised by tools/skinning/build_skin_areas.py from the VMaNGOS world
+  database (https://github.com/brotalnia/database, GPL-2.0): which creatures
+  can be skinned, their levels and where they spawn in patch 1.12, reduced to
+  coarse areas. No code or tables from it are included.
+
 Node names
   The Spanish node names in Core/NodeData.lua are the game's own texts
   (Blizzard Entertainment), checked against the client's tables.

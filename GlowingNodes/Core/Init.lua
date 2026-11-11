@@ -65,7 +65,9 @@ ns.DEFAULTS = {
         },
         map = {
             record = { ore = true, herb = true, skin = true }, -- what goes in the log
-            show = { ore = true, herb = true, skin = true },   -- what the maps draw
+            -- what the maps draw; skinning (your hide areas and the purple
+            -- skinning zones of Data/SkinAreas.lua) starts off
+            show = { ore = true, herb = true, skin = false },
             worldMap = true,
             minimap = true,
             pinSize = 12,
