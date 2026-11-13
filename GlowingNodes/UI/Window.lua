@@ -16,10 +16,12 @@ ns.Window = Window
 
 local WIDTH, HEIGHT = 768, 512
 local HEADER_H = 64
-local TAB_STEP = 44 -- eight tabs down the side, clear of the size ruler
+local TAB_STEP = 39 -- nine tabs down the side, clear of the size ruler
+local TAB_H = 36
+local TAB_TOP = HEADER_H + 12 -- the first tab's top
 local RAIL_X = 188               -- margin rule after the tabs
 local CONTENT_X, CONTENT_Y = 204, 78
-local TABS = { "general", "ore", "herb", "skin", "chest", "map", "alert", "about" }
+local TABS = { "general", "ore", "herb", "skin", "chest", "map", "alert", "profiles", "about" }
 local SAMPLE = { ore = 65, herb = 100, skin = 35 }
 local SAMPLE_NAME = { ore = "SAMPLE_NODE", herb = "PROF_herb", skin = "PROF_skin" }
 -- What the previews show: what you gather, not the profession's icon
@@ -49,6 +51,7 @@ local ICONS = {
     chest = Data.CATEGORY_ICONS.chest,
     map = "Interface\\Icons\\INV_Misc_Map_01",
     alert = "Interface\\Icons\\INV_Letter_15",
+    profiles = "Interface\\Icons\\INV_Misc_Note_01",
     about = "Interface\\Icons\\INV_Misc_Book_09",
 }
 
@@ -150,7 +153,7 @@ local function BuildCategoryPage(page, cat)
     local cfg = function() return ns.db[cat] end
     local function setter(key) return function(v) ns.SetCat(cat, key, v) end end
 
-    local glow = W.Section(page, L.CARD_GLOW, 300, 272)
+    local glow = W.Section(page, L.CARD_GLOW, 300, 288)
     glow:SetPoint("TOPLEFT", 236, -2)
     glow:Add(W.Check(glow, L.GLOW_ON, L.GLOW_ON_TIP, function() return cfg().enabled end, setter("enabled")), 28)
     glow:Add(W.ColorRow(glow, L.COLOR, L.COLOR_TIP, function() return cfg().color end, function(r, g, b)
@@ -158,11 +161,13 @@ local function BuildCategoryPage(page, cat)
     end), 44)
     glow:Add(W.Slider(glow, L.INTENSITY, 0.5, 3, 0.1, function() return cfg().intensity end, setter("intensity"), Pct), 42)
     glow:Add(W.Slider(glow, L.SIZE, 0.5, 2, 0.05, function() return cfg().size end, setter("size"), Pct), 44)
+    glow:Add(W.Slider(glow, L.GLOW_TIME, 0, 60, 1, function() return cfg().glowTime or 0 end, setter("glowTime"),
+        function(v) return v == 0 and L.GLOW_TIME_ALWAYS or L.SECONDS:format(v) end, L.GLOW_TIME_TIP), 44)
     glow:Add(W.Check(glow, L.PULSE, L.PULSE_TIP, function() return cfg().pulse end, setter("pulse")), 26)
     glow:Add(W.Check(glow, L.BEAM, L.BEAM_TIP, function() return cfg().beam end, setter("beam")), 26)
 
     local sound = W.Section(page, L.CARD_SOUND, 300, 130)
-    sound:SetPoint("TOPLEFT", 236, -282)
+    sound:SetPoint("TOPLEFT", 236, -296)
     sound:Add(W.Check(sound, L.SOUND_ON, L.SOUND_ON_TIP, function() return cfg().soundOn end, setter("soundOn")), 28)
     local sel = sound:Add(W.Selector(sound, L.SOUND, Sounds.LIST, function(k) return L["SND_" .. k] end,
         function() return cfg().sound end, function(v)
@@ -330,6 +335,135 @@ local function BuildAlertPage(page)
 end
 
 ---------------------------------------------------------------------------
+-- Profiles page: which settings this character uses (the shared ones, its
+-- own or a named profile), new profiles, copying and deleting
+---------------------------------------------------------------------------
+
+local function BuildProfilesPage(page)
+    local P = ns.Profiles
+    -- the selectors' lists, kept as the same tables and filled again on
+    -- each refresh (a profile made, deleted or switched)
+    local all, others = {}, {}
+    local copyFrom, deleteName
+    local function Fill()
+        wipe(all)
+        for _, n in ipairs(P.List()) do all[#all + 1] = n end
+        wipe(others)
+        for _, n in ipairs(P.Others()) do others[#others + 1] = n end
+        local function valid(n)
+            for _, o in ipairs(others) do if o == n then return n end end
+            return others[1] or false
+        end
+        copyFrom, deleteName = valid(copyFrom), valid(deleteName)
+    end
+    Fill()
+    local function nameOf(n) return n and P.Label(n) or L.PROFILE_NONE end
+    local selectors = {}
+    local function Filled(widget)
+        local base = widget.Refresh
+        function widget:Refresh()
+            Fill()
+            base(self)
+        end
+        selectors[#selectors + 1] = widget
+        return widget
+    end
+    local function note(parent, text)
+        local t = W.Text(parent, 10, W.INK_SOFT)
+        t:SetJustifyH("LEFT")
+        t:SetSpacing(2)
+        t:SetText(text)
+        return t
+    end
+
+    -- left: the profile in use
+    local use = W.Section(page, L.CARD_PROFILE, 256, 172)
+    use:SetPoint("TOPLEFT", 6, -2)
+    local current = W.Text(use, 12)
+    current:SetPoint("TOPLEFT", 2, -32)
+    current:SetPoint("RIGHT", 0, 0)
+    current:SetJustifyH("LEFT")
+    if current.SetWordWrap then current:SetWordWrap(false) end
+    use.y = -54
+    use:Add(W.Check(use, L.PROFILE_PER_CHAR, L.PROFILE_PER_CHAR_TIP, P.IsPerChar, P.PerChar), 30)
+    local picker = use:Add(Filled(W.Selector(use, L.PROFILE_USE, all, nameOf, P.Current, P.Use, 0,
+        { boxWidth = 170 })), 34)
+    W.Tooltip(picker.box, L.PROFILE_USE, L.PROFILE_USE_TIP)
+    use:Add(note(use, L.PROFILE_NOTE), 0)
+
+    local new = W.Section(page, L.CARD_PROFILE_NEW, 256, 100)
+    new:SetPoint("TOPLEFT", 6, -184)
+    local box = CreateFrame("EditBox", nil, new)
+    box:SetPoint("TOPLEFT", 2, -32)
+    box:SetSize(150, 24)
+    box:SetAutoFocus(false)
+    box:SetMaxLetters(32)
+    box:SetFont(W.CLIENT_FONT, 12, "") -- a name in any alphabet
+    box:SetTextColor(unpack(W.INK))
+    box:SetTextInsets(8, 8, 0, 0)
+    W.NineSlice(box, "f_inset", 128, 24, 9, "BACKGROUND", 0)
+    local hint = W.Text(box, 11, W.INK_SOFT)
+    hint:SetPoint("LEFT", 8, 0)
+    hint:SetText(L.PROFILE_NEW_HINT)
+    local function create()
+        local n = strtrim(box:GetText() or "")
+        box:ClearFocus()
+        if n == "" then return end
+        box:SetText("")
+        P.Use(n)
+    end
+    box:SetScript("OnTextChanged", function(self) hint:SetShown((self:GetText() or "") == "") end)
+    box:SetScript("OnEnterPressed", create)
+    box:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+    local make = W.Button(new, L.PROFILE_CREATE, 96, create)
+    make:SetPoint("LEFT", box, "RIGHT", 8, 0)
+    local newNote = note(new, L.PROFILE_NEW_NOTE)
+    newNote:SetPoint("TOPLEFT", 2, -64)
+    newNote:SetPoint("RIGHT", 0, 0)
+
+    -- right: copying, deleting, back to the defaults
+    local copy = W.Section(page, L.CARD_PROFILE_COPY, 256, 104)
+    copy:SetPoint("TOPLEFT", 280, -2)
+    copy:Add(Filled(W.Selector(copy, L.PROFILE_FROM, others, nameOf, function() return copyFrom end,
+        function(v) copyFrom = v W.RefreshAll() end, 0, { boxWidth = 170 })), 34)
+    local copyButton = W.Button(copy, L.PROFILE_COPY, 120, function()
+        local from = copyFrom
+        if not from then return end
+        W.Confirm(L.PROFILE_COPY_CONFIRM:format(P.Label(from), P.Label(P.Current())), function() P.CopyFrom(from) end)
+    end)
+    copyButton:SetPoint("TOPRIGHT", 0, -66)
+
+    local delete = W.Section(page, L.CARD_PROFILE_DELETE, 256, 104)
+    delete:SetPoint("TOPLEFT", 280, -116)
+    delete:Add(Filled(W.Selector(delete, L.PROFILE_WHICH, others, nameOf, function() return deleteName end,
+        function(v) deleteName = v W.RefreshAll() end, 0, { boxWidth = 170 })), 34)
+    local deleteButton = W.Button(delete, L.PROFILE_DELETE, 120, function()
+        local name = deleteName
+        if not name then return end
+        W.Confirm(L.PROFILE_DELETE_CONFIRM:format(P.Label(name)), function() P.Delete(name) end)
+    end)
+    deleteButton:SetPoint("TOPRIGHT", 0, -66)
+
+    local reset = W.Section(page, L.CARD_PROFILE_RESET, 256, 104)
+    reset:SetPoint("TOPLEFT", 280, -230)
+    local resetNote = note(reset, L.PROFILE_RESET_NOTE)
+    resetNote:SetPoint("TOPLEFT", 2, -32)
+    resetNote:SetPoint("RIGHT", 0, 0)
+    local resetButton = W.Button(reset, L.RESET, 120, function()
+        W.Confirm(L.PROFILE_RESET_CONFIRM:format(P.Label(P.Current())), function()
+            ns.Addon.db:ResetProfile()
+            ns.Print(L.MSG_RESET)
+        end)
+    end)
+    resetButton:SetPoint("TOPRIGHT", 0, -70)
+
+    function page:UpdateStatus()
+        current:SetText(L.PROFILE_CURRENT:format("|cffffd27f" .. P.Label(P.Current()) .. "|r"))
+        for _, s in ipairs(selectors) do s:Refresh() end
+    end
+end
+
+---------------------------------------------------------------------------
 -- About page: what the addon does, its commands, the recommended addon by
 -- the same author (KullThranUI) and the credits
 ---------------------------------------------------------------------------
@@ -448,8 +582,8 @@ end
 -- an iron plaque; the open one is lit with its colour and sits proud
 local function BuildTab(parent, id, index)
     local b = CreateFrame("Button", nil, parent)
-    b:SetSize(162, 40)
-    b:SetPoint("TOPLEFT", 22, -HEADER_H - 16 - (index - 1) * TAB_STEP)
+    b:SetSize(162, TAB_H)
+    b:SetPoint("TOPLEFT", 22, -TAB_TOP - (index - 1) * TAB_STEP)
     local paper = W.Tex(b, "f_tab", "BACKGROUND", 0)
     paper:SetAllPoints()
     local wash = W.Tex(b, "f_tab_glow", "BACKGROUND", 1)
@@ -475,7 +609,7 @@ local function BuildTab(parent, id, index)
         icon:SetDesaturated(not on and not hover)
         icon:SetAlpha(on and 1 or 0.75)
         b:ClearAllPoints()
-        b:SetPoint("TOPLEFT", on and 26 or 20, -HEADER_H - 16 - (index - 1) * TAB_STEP)
+        b:SetPoint("TOPLEFT", on and 26 or 20, -TAB_TOP - (index - 1) * TAB_STEP)
     end
     b:SetScript("OnEnter", function() hover = true b:Paint() end)
     b:SetScript("OnLeave", function() hover = false b:Paint() end)
@@ -590,13 +724,14 @@ local function BuildScaleControl(f)
     local stepP = math.floor(SCALE_STEP * 100 + 0.5)
 
     local caption = W.Text(f, 11, W.INK_SOFT)
-    caption:SetPoint("BOTTOMLEFT", 30, 78)
+    -- (under the last tab, which ends 88 up from the bottom)
+    caption:SetPoint("BOTTOMLEFT", 30, 68)
     caption:SetText(L.WINDOW_SCALE)
 
     local s = CreateFrame("Slider", nil, f)
     s:SetOrientation("HORIZONTAL")
     s:SetSize(100, 20)
-    s:SetPoint("BOTTOMLEFT", 28, 52)
+    s:SetPoint("BOTTOMLEFT", 28, 46)
     s:SetMinMaxValues(minP, maxP)
     s:SetValueStep(stepP)
     if s.SetObeyStepOnDrag then s:SetObeyStepOnDrag(true) end
@@ -778,6 +913,7 @@ local function Build()
         if id == "general" then BuildGeneralPage(page)
         elseif id == "alert" then BuildAlertPage(page)
         elseif id == "about" then BuildAboutPage(page)
+        elseif id == "profiles" then BuildProfilesPage(page)
         elseif id == "map" then ns.BuildMapPage(page)
         else BuildCategoryPage(page, id) end
         pages[id] = page

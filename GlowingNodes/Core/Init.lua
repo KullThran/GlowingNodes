@@ -24,6 +24,7 @@ local function Category(r, g, b, sound)
         size = 1.2,
         pulse = true,
         beam = true,
+        glowTime = 0, -- seconds a node glows once lit; 0: as long as it is the target
         soundOn = true,
         sound = sound,
         volume = 2,
@@ -68,6 +69,9 @@ ns.DEFAULTS = {
             -- what the maps draw; skinning (your hide areas and the purple
             -- skinning zones of Data/SkinAreas.lua) starts off
             show = { ore = true, herb = true, skin = false },
+            -- the spots of Data/NodeSpawns.lua (where ore and herbs can
+            -- spawn, from the 1.12 world database), fainter than your own
+            database = false,
             worldMap = true,
             minimap = true,
             pinSize = 12,

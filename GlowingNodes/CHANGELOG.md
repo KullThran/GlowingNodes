@@ -1,5 +1,12 @@
 # Glowing Nodes Changelog
 
+## 1.3.0 (2026-11-13)
+- Profiles: a new Profiles tab. Each character can keep its own settings ("Own settings for this character") or use the shared ones, as before; you can also make named profiles, use another character's, copy settings from one profile to another, delete one, or reset the one in use. A new profile starts as a copy of the settings in use. What you have gathered, the levels learned and the language stay account-wide.
+- "Glow lasts" on the Ore, Herbs, Skinning and Chests pages: how many seconds a node glows once it lights up (up to 60), after which the glow goes out softly. Back at the same node after half a minute, it glows again. "Always" (the default) keeps it as before: as long as the node is your interact target.
+- Database spots, off by default: a switch in the map filters (and in Open Map's menu) shows where ore veins and herbs can spawn, from the 1.12 world database, on the world map, the minimap and the Map page. They are fainter and smaller than your own points, each spot only on its own zone's map, and a spot you have gathered shows as yours instead. Only the classic zones: Forever's new zones (Zephras Isle, the Riverglades, Shen'dralas, Mount Hyjal) are not in any open database, so there the maps show what you gather.
+- Fixed: the "Window size" caption sat on the bottom tab (About).
+- Fixed: the filters under the map cut their names short ("Ore veins ..."); each is now as wide as its name and count, in every language.
+
 ## 1.2.0 (2026-11-11)
 - Skinning zones on the Map page: purple areas where skinnable creatures roam, outlined the way the game marks a quest's area, each with the skinning it needs (its colour: how hard it is for you). Hover the label for the creatures' level and how many there are. They come from the 1.12 world database, so Forever may differ here and there. They show on the game's world map too. Off by default: the Skinning filter under the map (or on the filter button) shows them along with your hide areas. Labels that would cover each other are left out until you zoom in.
 - Switch what the maps show from the map itself: a button on the Map page and one in the top right corner of the game's world map open the same little panel with ore veins, herbs and skinning (and, on the world map, its master switch).

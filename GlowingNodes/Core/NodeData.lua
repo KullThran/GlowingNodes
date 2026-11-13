@@ -186,19 +186,22 @@ local function ItemIcon(itemID)
 end
 Data.ItemIcon = ItemIcon
 
-function Data.IconFor(category, required, name)
-    local item
+-- the item a node gives (nil if not known)
+function Data.ItemFor(category, required, name)
     local lname = Data.NormalizeName(name)
     if lname and category ~= "skin" then
         for _, entry in ipairs(NAME_ITEMS) do
-            if lname:find(entry[1], 1, true) then item = entry[2] break end
+            if lname:find(entry[1], 1, true) then return entry[2] end
         end
     end
-    if not item and required then
-        if category == "ore" then item = ORE_ITEMS[required]
-        elseif category == "herb" then item = HERB_ITEMS[required] end
+    if required then
+        if category == "ore" then return ORE_ITEMS[required] end
+        if category == "herb" then return HERB_ITEMS[required] end
     end
-    return ItemIcon(item) or Data.CATEGORY_ICONS[category] or Data.CATEGORY_ICONS.ore
+end
+
+function Data.IconFor(category, required, name)
+    return ItemIcon(Data.ItemFor(category, required, name)) or Data.CATEGORY_ICONS[category] or Data.CATEGORY_ICONS.ore
 end
 
 -- Skinning: what the classic formula asks for a corpse of that level.

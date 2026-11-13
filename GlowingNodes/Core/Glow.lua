@@ -17,6 +17,7 @@ local FONT = STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF" -- has the client's gly
 local GLINTS = 6
 local BURST_TIME = 0.55
 local FADE_IN = 0.25
+local FADE_OUT = 0.8 -- the glow going out when its time is up
 local BLEND = 0.3
 
 local sin, cos, pi, random, min, max, sqrt = math.sin, math.cos, math.pi, math.random, math.min, math.max, math.sqrt
@@ -174,10 +175,17 @@ function Glow:Show(state, instant)
     self.ready = self.state == "ready" and 1 or 0
     self.locked = self.state == "locked" and 1 or 0
     self.burstAge = BURST_TIME
+    self.fading = false
     self.frame:Show()
 end
 
+-- its time on the node is up: it goes out softly, then hides
+function Glow:FadeOut()
+    self.fading = true
+end
+
 function Glow:Hide()
+    self.fading = false
     self.frame:Hide()
     self.frame:ClearAllPoints()
     self.anchor = nil
@@ -212,7 +220,15 @@ function Glow:Update(elapsed)
         end
     end
     self.t = self.t + elapsed
-    self.appear = Approach(self.appear, 1, elapsed / FADE_IN)
+    if self.fading then
+        self.appear = Approach(self.appear, 0, elapsed / FADE_OUT)
+        if self.appear <= 0 then
+            self.frame:Hide()
+            return
+        end
+    else
+        self.appear = Approach(self.appear, 1, elapsed / FADE_IN)
+    end
     self.ready = Approach(self.ready, self.state == "ready" and 1 or 0, elapsed / BLEND)
     self.locked = Approach(self.locked, self.state == "locked" and 1 or 0, elapsed / BLEND)
 

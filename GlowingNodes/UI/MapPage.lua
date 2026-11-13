@@ -156,6 +156,7 @@ function ns.BuildMapPage(page)
     local function MatchName(node, q)
         if q == "" then return nil end
         if Has(node.n, q) then return node.n end
+        if node.en and Has(node.en, q) then return node.n or node.en end -- a database spot's English name
         if node.mobs then
             for mob in pairs(node.mobs) do
                 if Has(mob, q) then return mob end
@@ -200,12 +201,15 @@ function ns.BuildMapPage(page)
         p:RegisterForClicks("LeftButtonUp", "RightButtonUp")
         p:SetScript("OnEnter", function(self)
             Pins.Tooltip(self, self.node)
-            GameTooltip:AddLine(L.PIN_DELETE_HINT, 0.6, 0.6, 0.6)
-            GameTooltip:Show()
+            if not self.node.db then
+                GameTooltip:AddLine(L.PIN_DELETE_HINT, 0.6, 0.6, 0.6)
+                GameTooltip:Show()
+            end
         end)
         p:SetScript("OnLeave", function() GameTooltip:Hide() end)
         p:SetScript("OnClick", function(self, button)
-            if button == "RightButton" then
+            -- the database's spots aren't yours to forget: its switch hides them
+            if button == "RightButton" and not self.node.db then
                 GameTooltip:Hide()
                 G.Remove(self.mapID, self.key)
             end
@@ -247,6 +251,27 @@ function ns.BuildMapPage(page)
                     p:Show()
                 end
             end
+        end
+        -- the database's spots (Core/NodeDB.lua): fainter and smaller
+        if mapID then
+            local size = math.max(ns.db.map.pinSize - Pins.DB_SMALLER, 6)
+            local cw, ch = CW(), CH()
+            ns.NodeDB.Each(mapID, function(key, node)
+                if ns.db.map.show[node.k] then
+                    local hit = query ~= "" and MatchName(node, query) ~= nil
+                    n = n + 1
+                    local p = Pin(n)
+                    local s = hit and math.floor(size * 1.4 + 0.5) or size
+                    p:SetSize(s, s)
+                    local x, y = G.Decode(key)
+                    p.node, p.key, p.mapID = node, key, mapID
+                    p.tex:SetVertexColor(Pins.Color(node.k))
+                    p:SetAlpha((query == "" or hit) and Pins.DB_ALPHA or 0.12)
+                    p:ClearAllPoints()
+                    p:SetPoint("CENTER", content, "TOPLEFT", x * cw, -y * ch)
+                    p:Show()
+                end
+            end)
         end
         return n + a
     end
@@ -892,6 +917,9 @@ function ns.BuildMapPage(page)
     -----------------------------------------------------------------------
 
     local filters = {}
+    -- each chip as wide as its text, up to the Log button (see FitFilters)
+    local measure = W.Text(page, 11)
+    measure:Hide()
     for i, kind in ipairs(KINDS) do
         local b = CreateFrame("Button", nil, page)
         b:SetSize(100, 26)
@@ -917,6 +945,33 @@ function ns.BuildMapPage(page)
     optBtn:SetPoint("TOPRIGHT", plate, "BOTTOMRIGHT", 0, -6)
     local logBtn = W.Button(page, L.MAP_LOG_BTN, 90, function() Toggle(logPanel) end)
     logBtn:SetPoint("RIGHT", optBtn, "LEFT", -6, 0)
+
+    -- The chips take the width their text needs ("Vene di minerale  12" is
+    -- twice "Erbe  3"); if all of them don't fit before the Log button, each
+    -- gives up a share of what's missing, and only then is a text cut short.
+    local CHIP_GAP, CHIP_PAD = 6, 33 -- dot, its gap and the margins
+    local CHIPS_W = MAP_W + 10 - 2 * 90 - 6 - 8
+    local function FitFilters()
+        local widths, total = {}, 0
+        for i, b in ipairs(filters) do
+            measure:SetText(b.text:GetText() or "")
+            local tw = (measure.GetUnboundedStringWidth or measure.GetStringWidth)(measure)
+            widths[i] = math.ceil(type(tw) == "number" and tw or 60) + CHIP_PAD
+            total = total + widths[i]
+        end
+        local over = total + CHIP_GAP * (#filters - 1) - CHIPS_W
+        for i, b in ipairs(filters) do
+            local w = widths[i]
+            if over > 0 then w = w - math.ceil(over * widths[i] / total) end
+            b:SetWidth(math.max(w, 40))
+            b:ClearAllPoints()
+            if i == 1 then
+                b:SetPoint("TOPLEFT", plate, "BOTTOMLEFT", 0, -6)
+            else
+                b:SetPoint("LEFT", filters[i - 1], "RIGHT", CHIP_GAP, 0)
+            end
+        end
+    end
 
     -----------------------------------------------------------------------
 
@@ -952,6 +1007,7 @@ function ns.BuildMapPage(page)
             b.text:SetTextColor(unpack(on and W.INK or W.INK_SOFT))
             b:SetAlpha(on and 1 or 0.7)
         end
+        FitFilters()
 
         local log = ns.global.gatherLog
         for i, row in ipairs(rows) do

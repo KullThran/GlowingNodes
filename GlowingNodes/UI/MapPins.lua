@@ -71,6 +71,13 @@ function Pins.Tooltip(owner, node)
     local r, g, b = Pins.Color(node.k)
     GameTooltip:AddLine(node.n or L["CAT_" .. node.k], r, g, b)
     GameTooltip:AddLine(L["PROF_" .. node.k], 0.8, 0.8, 0.8)
+    if node.db then
+        -- a spot of the 1.12 database: maybe there, never gathered by you
+        if node.r then GameTooltip:AddLine(L.PIN_LEVEL:format(node.r), 0.8, 0.8, 0.8) end
+        GameTooltip:AddLine(L.PIN_DATABASE, 0.7, 0.7, 0.7, true)
+        GameTooltip:Show()
+        return
+    end
     if (node.c or 1) > 0 then
         GameTooltip:AddLine(L.PIN_COUNT:format(node.c or 1), 1, 1, 1)
     else
@@ -99,6 +106,10 @@ local function NewPin()
     return f
 end
 
+-- the database's spots: fainter and smaller than the points you gathered
+local DB_ALPHA, DB_SMALLER = 0.55, 3
+Pins.DB_ALPHA, Pins.DB_SMALLER = DB_ALPHA, DB_SMALLER
+
 local function Pool()
     local pool = { free = {}, used = {} }
     function pool:Acquire(node, size)
@@ -106,6 +117,7 @@ local function Pool()
         pin.node = node
         pin:SetSize(size, size)
         pin.tex:SetVertexColor(Pins.Color(node.k))
+        pin:SetAlpha(node.db and DB_ALPHA or 1)
         self.used[#self.used + 1] = pin
         return pin
     end
@@ -149,6 +161,13 @@ function Pins:RefreshWorld()
             HBDP:AddWorldMapIconMap(REF, pin, mapID, x, y, 0)
         end
     end
+    ns.NodeDB.Each(mapID, function(key, node)
+        if Visible(node) then
+            local x, y = ns.Gather.Decode(key)
+            local pin = worldPool:Acquire(node, math.max(size - DB_SMALLER, 5))
+            HBDP:AddWorldMapIconMap(REF, pin, mapID, x, y, 0)
+        end
+    end)
     -- Open Map's stitched map shows the zones round this one too: their beads,
     -- on their own maps, marked to show beyond them (it places them)
     if ns.OpenMap.Stitched() and not ns.SkinZones.IsOverview(mapID) then
@@ -264,16 +283,22 @@ function Pins:RefreshMinimap()
     miniPool:ReleaseAll()
     if not (ns.db and ns.db.map.minimap) then return end
     local mapID = ns.Gather.PlayerPosition()
-    local zone = mapID and ns.Gather.Zone(mapID)
-    if not zone then return end
+    if not mapID then return end
     local size = math.max(ns.db.map.pinSize - 2, 6)
-    for key, node in pairs(zone) do
+    for key, node in pairs(ns.Gather.Zone(mapID) or {}) do
         if Visible(node) then
             local x, y = ns.Gather.Decode(key)
             local pin = miniPool:Acquire(node, size)
             HBDP:AddMinimapIconMap(REF, pin, mapID, x, y, false, false)
         end
     end
+    ns.NodeDB.Each(mapID, function(key, node)
+        if Visible(node) then
+            local x, y = ns.Gather.Decode(key)
+            local pin = miniPool:Acquire(node, math.max(size - DB_SMALLER, 5))
+            HBDP:AddMinimapIconMap(REF, pin, mapID, x, y, false, false)
+        end
+    end)
 end
 
 function Pins:Refresh()

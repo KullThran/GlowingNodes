@@ -29,6 +29,8 @@ local function Items(worldMap)
         items[#items + 1] = { L["CAT_" .. kind], kind == "skin" and L.MAP_SKINZ_TIP or L.MAP_FILTER_TIP,
             function() return map().show[kind] end, function(v) ns.SetMap("show", v, kind) end, kind }
     end
+    items[#items + 1] = { L.MAP_DATABASE, L.MAP_DATABASE_TIP,
+        function() return map().database end, function(v) ns.SetMap("database", v) end }
     return items
 end
 

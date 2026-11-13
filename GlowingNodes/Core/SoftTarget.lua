@@ -532,6 +532,7 @@ function ST:Evaluate()
             target.found, target.sounded, target.logged = true, true, true
             target.foundAt, target.measured = memory.foundAt, memory.measured
             target.pickedAt = memory.pickedAt
+            target.glowSince = memory.glowSince
         end
     end
     -- a corpse looted just now becomes skinnable: look again
@@ -599,7 +600,16 @@ function ST:Evaluate()
 
     if not glow then glow = Glow.New(nil) end
     local anchor = PlateAnchor(plate)
-    if glow.anchor ~= anchor or target.isNew then
+    -- how long the glow stays on a node (0: as long as it's the target),
+    -- counted from when it first lit up; back on it within SEEN_FOR seconds
+    -- the count goes on, later it starts again
+    target.glowSince = target.glowSince or GetTime()
+    local lasts = cfg.glowTime or 0
+    if lasts > 0 and GetTime() - target.glowSince >= lasts then
+        if glow:IsShown() then
+            if glow.anchor == anchor then glow:FadeOut() else Release("its time is up") end
+        end
+    elseif glow.anchor ~= anchor or target.isNew or not glow:IsShown() then
         glow:Configure(cfg, GlowOptions())
         glow:Attach(anchor, 0, db.height, true)
         shownAt = GetTime()
@@ -632,7 +642,8 @@ function ST:Evaluate()
         target.measured = true
         ST:Measure(target)
     end
-    seen[id] = { t = GetTime(), foundAt = target.foundAt, pickedAt = target.pickedAt, measured = target.measured }
+    seen[id] = { t = GetTime(), foundAt = target.foundAt, pickedAt = target.pickedAt, measured = target.measured,
+        glowSince = target.glowSince }
     if not target.logged then
         target.logged = true
         ns.Debug(Describe(target))

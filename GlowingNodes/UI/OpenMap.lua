@@ -136,6 +136,8 @@ function O.RegisterMenu()
         ok = Add(kind, L["CAT_" .. kind], ICONS[kind] or ns.SkinZones.ICON,
             function() return ns.db.map.show[kind] end, function(v) ns.SetMap("show", v and true or false, kind) end) and ok
     end
+    ok = Add("database", L.MAP_DATABASE, "Interface\\Icons\\INV_Misc_Book_09",
+        function() return ns.db.map.database end, function(v) ns.SetMap("database", v and true or false) end) and ok
     registered = ok
     return ok
 end

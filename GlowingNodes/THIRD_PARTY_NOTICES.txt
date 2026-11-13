@@ -23,6 +23,11 @@ Skinning zones (Data/SkinAreas.lua)
   can be skinned, their levels and where they spawn in patch 1.12, reduced to
   coarse areas. No code or tables from it are included.
 
+Ore and herb spots (Data/NodeSpawns.lua)
+  Summarised by tools/nodes/build_node_spawns.py from the same VMaNGOS world
+  database: where ore veins and herbs can spawn in patch 1.12, as positions
+  only. No code or tables from it are included.
+
 Node names
   The Spanish node names in Core/NodeData.lua are the game's own texts
   (Blizzard Entertainment), checked against the client's tables.
