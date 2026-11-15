@@ -238,6 +238,47 @@ Add({
 })
 
 ---------------------------------------------------------------------------
+-- Spark shower: no ring, a cloud of sparks born round the node, rising and
+-- twinkling as they go out; a faint halo
+---------------------------------------------------------------------------
+
+local SPARKS = 14
+
+local function RespawnSpark(s, now)
+    local a, d = random() * TAU, sqrt(random())
+    s.x, s.y = cos(a) * 55 * d, sin(a) * 20 * d
+    s.life = 0.8 + 0.8 * random()
+    s.age = now and 0 or -s.life * random()
+    s.size = 8 + 8 * random()
+    s.phase = random() * TAU
+end
+
+Add({
+    id = "sparks",
+    Build = function(glow)
+        for i, s in ipairs(glow:Parts("sparks", SPARKS, "fx_sparkle", "OVERLAY", 2)) do
+            s.white = i % 3 == 0
+            RespawnSpark(s)
+        end
+    end,
+    Paint = function(glow, f)
+        local scale, r, g, b, t = f.scale, f.r, f.g, f.b, glow.t
+        Halo(glow, f, false, 0.5)
+        for _, s in ipairs(glow.sparks) do
+            s.age = s.age + f.elapsed * f.speed * (0.8 + 0.4 * f.ready)
+            if s.age >= s.life then RespawnSpark(s, true) end
+            local shine = s.age > 0 and sin(pi * s.age / s.life) or 0
+            local twinkle = 0.6 + 0.4 * sin(t * 12 + s.phase)
+            local size = s.size * (0.6 + 0.4 * shine) * scale
+            local tex = s.tex
+            tex:ClearAllPoints()
+            tex:SetPoint("CENTER", glow.frame, "CENTER", s.x * scale, (s.y + 40 * max(s.age, 0) / s.life) * scale)
+            Tint(tex, size, size, r, g, b, f.strength * shine * twinkle * min(f.power, 1.6), s.white and 0.85 or nil)
+        end
+    end,
+})
+
+---------------------------------------------------------------------------
 -- Flames: a ring of six tongues of magic fire round the node, each growing
 -- and shrinking at its own pace; a warm core
 ---------------------------------------------------------------------------
@@ -269,6 +310,49 @@ Add({
             tex:SetPoint("BOTTOM", glow.frame, "CENTER", cos(a) * 60 * scale, (sin(a) * 22 - 10) * scale)
             local height = 56 * (0.8 + 0.25 * sin(t * 7 + p.phase)) * scale
             Tint(tex, 28 * scale, height, r, g, b, alpha * (back and 0.6 or 1))
+        end
+    end,
+})
+
+---------------------------------------------------------------------------
+-- Fireflies: five small lights circling the node on an ellipse, each at its
+-- own height and pace, a short trail fading behind them
+---------------------------------------------------------------------------
+
+local FIREFLIES, TRAIL = 5, 3
+local TRAIL_AGO = { 0.06, 0.12, 0.18 }   -- seconds behind
+local TRAIL_ALPHA = { 0.5, 0.3, 0.15 }
+local TRAIL_SIZE = { 0.8, 0.65, 0.5 }
+
+Add({
+    id = "fireflies",
+    Build = function(glow)
+        local trails = glow:Parts("fireflyTrails", FIREFLIES * TRAIL, "fx_firefly", "OVERLAY", 1)
+        for i, p in ipairs(glow:Parts("fireflies", FIREFLIES, "fx_firefly", "OVERLAY", 2)) do
+            p.trail = {}
+            for k = 1, TRAIL do p.trail[k] = trails[(i - 1) * TRAIL + k].tex end
+            p.angle = random() * TAU
+            p.lift = -10 + 40 * random()
+            p.pace = (0.6 + 0.6 * random()) * (i % 2 == 0 and -1 or 1)
+            p.phase = random() * TAU
+        end
+    end,
+    Paint = function(glow, f)
+        local scale, r, g, b, t = f.scale, f.r, f.g, f.b, glow.t
+        Halo(glow, f, false, 0.6)
+        local function place(tex, a, lift, size, alpha)
+            tex:ClearAllPoints()
+            tex:SetPoint("CENTER", glow.frame, "CENTER", cos(a) * 70 * scale, (sin(a) * 26 + lift) * scale)
+            Tint(tex, size, size, r, g, b, alpha, 0.3)
+        end
+        for _, p in ipairs(glow.fireflies) do
+            p.angle = (p.angle + f.elapsed * p.pace * f.speed) % TAU
+            local alpha = f.strength * min(f.power, 1.6) * (0.75 + 0.25 * sin(t * 5 + p.phase))
+            local size = 12 * scale
+            place(p.tex, p.angle, p.lift, size, alpha)
+            for k, tex in ipairs(p.trail) do
+                place(tex, p.angle - p.pace * f.speed * TRAIL_AGO[k], p.lift, size * TRAIL_SIZE[k], alpha * TRAIL_ALPHA[k])
+            end
         end
     end,
 })
