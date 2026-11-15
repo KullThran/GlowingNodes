@@ -553,7 +553,10 @@ function ST:Evaluate()
         if target.category == "ore" or target.category == "herb" then
             target.pickedAt = { PlayerPosition() }
         end
-        local memory = seen[id]
+        -- a bobber whose GUID is secret has a name-based id shared by every
+        -- cast: each cast is a new bobber, never one seen before
+        target.noMemory = target.category == "fish" and not guid
+        local memory = not target.noMemory and seen[id]
         if memory and GetTime() - memory.t < SEEN_FOR then
             target.found, target.sounded, target.logged = true, true, true
             target.foundAt, target.measured = memory.foundAt, memory.measured
@@ -670,8 +673,10 @@ function ST:Evaluate()
         target.measured = true
         ST:Measure(target)
     end
-    seen[id] = { t = GetTime(), foundAt = target.foundAt, pickedAt = target.pickedAt, measured = target.measured,
-        glowSince = target.glowSince }
+    if not target.noMemory then
+        seen[id] = { t = GetTime(), foundAt = target.foundAt, pickedAt = target.pickedAt, measured = target.measured,
+            glowSince = target.glowSince }
+    end
     if not target.logged then
         target.logged = true
         ns.Debug(Describe(target))
