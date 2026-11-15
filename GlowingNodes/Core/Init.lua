@@ -76,6 +76,16 @@ ns.DEFAULTS = {
             minimap = true,
             pinSize = 12,
         },
+        -- the arrow to the nearest known spot (UI/Arrow.lua, Core/Navigator.lua)
+        arrow = {
+            enabled = false,
+            ore = true, herb = true, -- what it leads to
+            database = nil, -- the database's spots too; nil: as the maps (map.database)
+            scale = 1,
+            locked = true,
+            showDistance = true,
+            point = nil, -- { point, relPoint, x, y } once dragged
+        },
     },
     global = {
         learned = {}, -- "o<objectID>" / "n<lower name>" -> required skill seen in game
@@ -212,6 +222,30 @@ function ns.SetMap(key, value, kind)
     ns.Fire("Changed", "map." .. key)
 end
 
+function ns.SetArrow(key, value)
+    ns.db.arrow[key] = value
+    ns.Fire("Changed", "arrow." .. key)
+end
+
+-- the arrow uses the database's spots: its own choice, else as the maps
+function ns.ArrowUsesDatabase()
+    local own = ns.db.arrow.database
+    if own ~= nil then return own == true end
+    return ns.db.map.database == true
+end
+
+function ns.ToggleArrow()
+    local on = not ns.db.arrow.enabled
+    ns.SetArrow("enabled", on)
+    ns.Print(on and L.MSG_ARROW_ON or L.MSG_ARROW_OFF)
+    return on
+end
+
+-- the key binding (Bindings.xml)
+function GlowingNodes_ToggleArrow()
+    if ns.db then ns.ToggleArrow() end
+end
+
 -- the addon's language; it takes a /reload, as the texts are built once
 function ns.SetLanguage(code)
     ns.global.language = code
@@ -238,6 +272,8 @@ function Addon:Slash(input)
         ns.SoftTarget:PrintRange()
     elseif cmd:match("^rango %d+$") or cmd:match("^range %d+$") then
         ns.SoftTarget:SetRange(tonumber(cmd:match("%d+")))
+    elseif cmd == "flecha" or cmd == "arrow" then
+        ns.ToggleArrow()
     elseif cmd == "info" then
         ns.SoftTarget:PrintInfo()
     else

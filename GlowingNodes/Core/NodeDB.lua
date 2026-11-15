@@ -86,9 +86,11 @@ function DB.Reset()
 end
 
 -- this map's spots: { [key] = node } as the log keeps them (Gather.Key), or
--- nil (off, a continent or the world, or no part of the two continents)
-function DB.Zone(mapID)
-    if not (DB.Enabled() and mapID) then return nil end
+-- nil (off, a continent or the world, or no part of the two continents).
+-- force: even with the maps' database off (the arrow's own choice)
+function DB.Zone(mapID, force)
+    local on = force and ns.db ~= nil and ns.NodeSpawns ~= nil or DB.Enabled()
+    if not (on and mapID) then return nil end
     if cache[mapID] ~= nil then return cache[mapID] or nil end
     local zone = false
     local SZ = ns.SkinZones
@@ -136,8 +138,8 @@ function DB.Zone(mapID)
 end
 
 -- the database's spots on a map: fn(key, node)
-function DB.Each(mapID, fn)
-    local zone = DB.Zone(mapID)
+function DB.Each(mapID, fn, force)
+    local zone = DB.Zone(mapID, force)
     if not zone then return end
     for key, node in pairs(zone) do fn(key, node) end
 end
