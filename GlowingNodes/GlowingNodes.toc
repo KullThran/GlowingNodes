@@ -46,6 +46,7 @@ Data\SkinAreas.lua
 Core\SkinZones.lua
 Data\NodeSpawns.lua
 Core\NodeDB.lua
+Core\Navigator.lua
 Core\Tracking.lua
 Core\Unlock.lua
 
