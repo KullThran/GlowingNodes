@@ -6,6 +6,7 @@
 - "Also above my skill" on the Arrow tab (off by default): the arrow also leads to veins and herbs you can't gather yet, so you know where they are. Off, it leads only to what you can gather now.
 - The points on the minimap, the world map and the Map page show the icon of what the node gives, cut round: Tin Ore, Silver Ore, Peacebloom, Silverleaf... no longer one bead per kind.
 - A Catalog tab lists every ore and herb with its icon and level: switch one off and it no longer glows, shows on the maps or draws the arrow.
+- Fishing: a new Fishing tab (off by default) puts a pale blue swirl on your bobber, turning on the water with sparkles, so it's easy to spot. Its colour, size, brightness, height and sound are yours to pick.
 
 ## 1.3.0 (2026-11-13)
 - Profiles: a new Profiles tab. Each character can keep its own settings ("Own settings for this character") or use the shared ones, as before; you can also make named profiles, use another character's, copy settings from one profile to another, delete one, or reset the one in use. A new profile starts as a copy of the settings in use. What you have gathered, the levels learned and the language stay account-wide.
