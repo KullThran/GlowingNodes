@@ -31,6 +31,15 @@ local function Category(r, g, b, sound)
     }
 end
 
+-- the fishing bobber: off by default (nothing changes for who doesn't fish),
+-- no column of light, and its swirl lower than a node's ring, on the water
+local function Bobber(cfg)
+    cfg.enabled = false
+    cfg.beam = false
+    cfg.height = -60
+    return cfg
+end
+
 ns.DEFAULTS = {
     profile = {
         enabled = true,
@@ -38,6 +47,7 @@ ns.DEFAULTS = {
         herb = Category(0.22, 1.00, 0.38, "herb_chime"),
         skin = Category(0.78, 0.38, 1.00, "skin_thump"),
         chest = Category(1.00, 0.84, 0.36, "bell"),
+        fish = Bobber(Category(0.55, 0.82, 1.00, "drop")),
         showNumber = true,
         showMine = false,
         numberSize = 26,

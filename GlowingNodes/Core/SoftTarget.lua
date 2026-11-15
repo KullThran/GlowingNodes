@@ -63,6 +63,17 @@ local function Safe(fn, ...)
     return v
 end
 
+-- the fishing bobber: its object ID, and the Fishing channel's icon (the
+-- same in every language) to know it when the game keeps the GUID secret
+local BOBBER = 35591
+local FISHING_ICON = 136245
+
+local function Fishing()
+    if not UnitChannelInfo then return false end
+    local ok, _, _, icon = pcall(UnitChannelInfo, "player")
+    return ok and not IsSecret(icon) and icon == FISHING_ICON
+end
+
 ---------------------------------------------------------------------------
 -- CVars
 ---------------------------------------------------------------------------
@@ -375,9 +386,18 @@ local function Settle(target, state)
     return target.shownState
 end
 
-local function GlowOptions()
+-- the bobber's swirl lies on the water; everything else wears the ring
+local function GlowOptions(category)
     local db = ns.db
-    return { numberSize = db.numberSize, greyLocked = db.greyLocked, dimFar = db.dimFar, scale = 1 }
+    return { numberSize = db.numberSize, greyLocked = db.greyLocked, dimFar = db.dimFar, scale = 1,
+        look = category == "fish" and "swirl" or nil }
+end
+
+-- a category may keep its own height over the nameplate (the bobber's swirl
+-- sits on the water, lower than a node's ring)
+local function Height(cfg)
+    if cfg and cfg.height ~= nil then return cfg.height end
+    return ns.db.height
 end
 
 ---------------------------------------------------------------------------
@@ -506,6 +526,12 @@ function ST:Evaluate()
                 local dataCat = Data.Lookup(objectID, target.name, nil)
                 cat = dataCat or cat
             end
+            -- the bobber: by its ID, or, with the GUID secret, any object
+            -- picked while fishing that is nothing we know
+            if objectID == BOBBER or (objectID == nil and cat ~= "ore" and cat ~= "herb" and cat ~= "skin"
+                and cat ~= "chest" and Fishing()) then
+                cat, blocked = "fish", false
+            end
             target.category, target.blocked = cat, blocked
             target.tooltipLevel = target.name and tooltipLevels[Data.NormalizeName(target.name)]
         else
@@ -612,8 +638,8 @@ function ST:Evaluate()
             if glow.anchor == anchor then glow:FadeOut() else Release("its time is up") end
         end
     elseif glow.anchor ~= anchor or target.isNew or not glow:IsShown() then
-        glow:Configure(cfg, GlowOptions())
-        glow:Attach(anchor, 0, db.height, true)
+        glow:Configure(cfg, GlowOptions(target.category))
+        glow:Attach(anchor, 0, Height(cfg), true)
         shownAt = GetTime()
         glow:Show(state, target.found)
     else
@@ -770,8 +796,8 @@ function ST:Refresh(force, hard)
     end
     if glow and glow.anchor and ST.current and ST.current.category then
         local cfg = ns.db[ST.current.category]
-        if cfg then glow:Configure(cfg, GlowOptions()) end
-        glow:Attach(glow.anchor, 0, ns.db.height, true)
+        if cfg then glow:Configure(cfg, GlowOptions(ST.current.category)) end
+        glow:Attach(glow.anchor, 0, Height(cfg), true)
     end
 end
 

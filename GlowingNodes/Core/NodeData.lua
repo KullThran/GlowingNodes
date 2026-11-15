@@ -175,6 +175,7 @@ Data.CATEGORY_ICONS = {
     herb = "Interface\\Icons\\Trade_Herbalism",
     skin = "Interface\\Icons\\INV_Misc_Pelt_Wolf_01",
     chest = "Interface\\Icons\\INV_Box_02",
+    fish = "Interface\\Icons\\Trade_Fishing",
 }
 
 local function ItemIcon(itemID)
