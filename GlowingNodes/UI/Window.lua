@@ -16,12 +16,12 @@ ns.Window = Window
 
 local WIDTH, HEIGHT = 768, 512
 local HEADER_H = 64
-local TAB_STEP = 35 -- ten tabs down the side, clear of the size ruler
-local TAB_H = 32
+local TAB_STEP = 31 -- eleven tabs down the side, clear of the size ruler
+local TAB_H = 28
 local TAB_TOP = HEADER_H + 12 -- the first tab's top
 local RAIL_X = 188               -- margin rule after the tabs
 local CONTENT_X, CONTENT_Y = 204, 78
-local TABS = { "general", "ore", "herb", "skin", "chest", "map", "arrow", "alert", "profiles", "about" }
+local TABS = { "general", "ore", "herb", "skin", "chest", "catalog", "map", "arrow", "alert", "profiles", "about" }
 Window.TABS = TABS
 local SAMPLE = { ore = 65, herb = 100, skin = 35 }
 local SAMPLE_NAME = { ore = "SAMPLE_NODE", herb = "PROF_herb", skin = "PROF_skin" }
@@ -50,7 +50,8 @@ local ICONS = {
     herb = Data.CATEGORY_ICONS.herb,
     skin = Data.CATEGORY_ICONS.skin,
     chest = Data.CATEGORY_ICONS.chest,
-    map = "Interface\\Icons\\INV_Misc_Map_01",
+    catalog = "Interface\\Icons\\INV_Scroll_03",
+    map ="Interface\\Icons\\INV_Misc_Map_01",
     arrow = "Interface\\Icons\\INV_Ammo_Arrow_02",
     alert = "Interface\\Icons\\INV_Letter_15",
     profiles = "Interface\\Icons\\INV_Misc_Note_01",
@@ -924,6 +925,7 @@ local function Build()
         elseif id == "profiles" then BuildProfilesPage(page)
         elseif id == "map" then ns.BuildMapPage(page)
         elseif id == "arrow" then ns.BuildArrowPage(page)
+        elseif id == "catalog" then ns.BuildCatalogPage(page)
         else BuildCategoryPage(page, id) end
         pages[id] = page
     end

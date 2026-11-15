@@ -358,6 +358,80 @@ function W.Slider(parent, label, minV, maxV, step, get, set, fmt, tip)
 end
 
 ---------------------------------------------------------------------------
+-- ScrollList: a column that scrolls with the wheel (24 px a step) or by
+-- dragging the bronze rivet down a dark groove on its right. Rows go on
+-- list.content, which is the list's width less the groove.
+---------------------------------------------------------------------------
+
+local SCROLL_STEP, BAR_W, KNOB = 24, 14, 14
+
+function W.ScrollList(parent, w, h)
+    local list = CreateFrame("Frame", nil, parent)
+    list:SetSize(w, h)
+    local view = CreateFrame("ScrollFrame", nil, list)
+    view:SetPoint("TOPLEFT", 0, 0)
+    view:SetPoint("BOTTOMRIGHT", -BAR_W, 0)
+    local content = CreateFrame("Frame", nil, view)
+    content:SetSize(w - BAR_W, 1)
+    view:SetScrollChild(content)
+    list.content = content
+
+    local bar = CreateFrame("Frame", nil, list)
+    bar:SetPoint("TOPRIGHT", 0, 0)
+    bar:SetPoint("BOTTOMRIGHT", 0, 0)
+    bar:SetWidth(BAR_W)
+    local groove = bar:CreateTexture(nil, "BACKGROUND")
+    groove:SetColorTexture(0.06, 0.035, 0.015, 0.55)
+    groove:SetPoint("TOP", 0, -2)
+    groove:SetPoint("BOTTOM", 0, 2)
+    groove:SetWidth(4)
+    local knob = CreateFrame("Button", nil, bar)
+    knob:SetSize(KNOB, KNOB)
+    local rivet = W.Tex(knob, "f_knob", "ARTWORK")
+    rivet:SetAllPoints()
+
+    local contentH, offset = 0, 0
+    local function Max() return math.max(0, contentH - h) end
+    local function Place()
+        local max = Max()
+        bar:SetShown(max > 0)
+        view:SetVerticalScroll(offset)
+        knob:ClearAllPoints()
+        knob:SetPoint("TOP", bar, "TOP", 0, max > 0 and -(offset / max) * (h - KNOB) or 0)
+    end
+    function list:SetOffset(v)
+        offset = math.min(math.max(v, 0), Max())
+        Place()
+    end
+    function list:GetOffset() return offset end
+    function list:Scroll(delta) self:SetOffset(offset - delta * SCROLL_STEP) end
+    function list:SetContentHeight(v)
+        contentH = v
+        content:SetHeight(math.max(v, 1))
+        self:SetOffset(offset)
+    end
+
+    list:EnableMouseWheel(true)
+    list:SetScript("OnMouseWheel", function(self, delta) self:Scroll(delta) end)
+    -- the rivet follows the cursor while held
+    local drag
+    local function CursorY()
+        local _, y = GetCursorPosition()
+        return y / (knob:GetEffectiveScale() or 1)
+    end
+    knob:SetScript("OnMouseDown", function() drag = { y = CursorY(), from = offset } end)
+    knob:SetScript("OnMouseUp", function() drag = nil end)
+    knob:SetScript("OnHide", function() drag = nil end)
+    knob:SetScript("OnUpdate", function()
+        if not drag then return end
+        local track = h - KNOB
+        if track > 0 then list:SetOffset(drag.from + (drag.y - CursorY()) / track * Max()) end
+    end)
+    Place()
+    return list
+end
+
+---------------------------------------------------------------------------
 -- Button: an iron plate in a bronze rim; lit in the page's colour on hover
 ---------------------------------------------------------------------------
 

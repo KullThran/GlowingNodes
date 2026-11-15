@@ -59,5 +59,6 @@ UI\OpenMap.lua
 UI\MapPage.lua
 UI\NodeModel.lua
 UI\Arrow.lua
+UI\CatalogPage.lua
 UI\Window.lua
 UI\Settings.lua
