@@ -2,10 +2,11 @@
 
 ## 1.4.0 (2026-11-15)
 - The arrow: a leather and bronze arrowhead on screen that points to the nearest ore vein or herb you can gather, with the item's icon and the yards under it. Once you are there and the node glows, the arrow steps aside for the glow. A spot you reach and find empty is skipped for 10 minutes, and the arrow fades while nothing is left to lead to. It hides in combat, in instances, on flight paths and while dead. It is our own frame, not a map waypoint.
-- Turn it on and off with a key (Key Bindings > AddOns > Glowing Nodes), with /gn arrow (or /gn flecha), or on the new Arrow tab, where you also pick ore, herbs or both, whether it uses the spawn database spots too (off by default, like on the maps), its size, and whether it can be dragged.
+- Turn it on and off with a key (Key Bindings > AddOns > Glowing Nodes), with /gn arrow (or /gn flecha), or on the new Arrow tab, where you also pick ore, herbs or both, whether it uses the spawn database spots too, its size, and whether it can be dragged.
 - "Also above my skill" on the Arrow tab (off by default): the arrow also leads to veins and herbs you can't gather yet, so you know where they are. Off, it leads only to what you can gather now.
 - The points on the minimap, the world map and the Map page show the icon of what the node gives, cut round: Tin Ore, Silver Ore, Peacebloom, Silverleaf... no longer one bead per kind.
 - A Catalog tab lists every ore and herb with its icon and level: switch one off and it no longer glows, shows on the maps or draws the arrow.
+- Database spots are one switch for the maps and the arrow (off by default): turned on anywhere (the General tab, the Map page's options and filters, the world map's filters, Open Map's menu or the Arrow tab), the maps show the spots and the arrow uses them. If you had turned it on for the arrow only, the maps now show them too.
 - "My gathered spots", on by default: switch off your own points (and hide areas) on the world map, the minimap and the Map page, to see only the database's spots, or both off for a clean map. It sits next to "Database spots" in the Map page's Options (now in two columns), in the map filters and in Open Map's menu. With your points off, a database spot you have gathered shows as the database's again. What you gather is still logged.
 - Fishing: a new Fishing tab (off by default) puts a pale blue swirl on your bobber, turning on the water with sparkles, so it's easy to spot. Its colour, size, brightness, height and sound are yours to pick.
 

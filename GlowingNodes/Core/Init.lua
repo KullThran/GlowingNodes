@@ -91,7 +91,6 @@ ns.DEFAULTS = {
         arrow = {
             enabled = false,
             ore = true, herb = true, -- what it leads to
-            database = false, -- the database's spots too (its own switch, off like the maps')
             unskilled = false, -- veins and herbs above your skill too (the profession is still needed)
             scale = 1,
             locked = true,
@@ -165,11 +164,13 @@ function Addon:OnInitialize()
     self.db = LibStub("AceDB-3.0"):New("GlowingNodesDB", ns.DEFAULTS, true)
     ns.db = self.db.profile
     ns.global = self.db.global
+    ns.MigrateProfile(ns.db)
     -- the language picked in the window (the window is built later, on use)
     ns.UseLanguage(ns.global.language)
     if ns.W then ns.W.SetFonts(ns.LOCALE) end
     local function Reload()
         ns.db = self.db.profile
+        ns.MigrateProfile(ns.db)
         ns.Fire("Changed", "*")
     end
     self.db.RegisterCallback(self, "OnProfileChanged", Reload)
@@ -247,9 +248,23 @@ function ns.SetHidden(key, hidden)
     ns.Fire("Changed", "catalog")
 end
 
--- the arrow uses the database's spots (its own switch, off by default)
+-- the arrow uses the database's spots when the maps show them: one switch
+-- (map.database, off by default) for both
 function ns.ArrowUsesDatabase()
-    return ns.db.arrow.database == true
+    return ns.db.map.database == true
+end
+
+-- A profile from before: the arrow had a database switch of its own. Turned
+-- on, it is carried to the one switch (which also shows the spots on the
+-- maps); either way the old one goes.
+function ns.MigrateProfile(profile)
+    local arrow = profile and profile.arrow
+    if not (arrow and arrow.database ~= nil) then return end
+    if arrow.database == true then
+        profile.map = profile.map or {}
+        profile.map.database = true
+    end
+    arrow.database = nil
 end
 
 function ns.ToggleArrow()

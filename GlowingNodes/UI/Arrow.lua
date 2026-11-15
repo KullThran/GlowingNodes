@@ -190,7 +190,9 @@ function ns.BuildArrowPage(page)
     main:Add(W.Check(main, L.ARROW_ORE, nil, get("ore"), set("ore")), 24)
     main:Add(W.Check(main, L.ARROW_HERB, nil, get("herb"), set("herb")), 24)
     page.unskilled = main:Add(W.Check(main, L.ARROW_UNSKILLED, L.ARROW_UNSKILLED_TIP, get("unskilled"), set("unskilled")), 24)
-    main:Add(W.Check(main, L.ARROW_DATABASE, L.ARROW_DATABASE_TIP, ns.ArrowUsesDatabase, set("database")), 30)
+    -- the maps' database switch: one for both
+    page.database = main:Add(W.Check(main, L.ARROW_DATABASE, L.ARROW_DATABASE_TIP, ns.ArrowUsesDatabase,
+        function(v) ns.SetMap("database", v) end), 30)
     main:Add(W.Slider(main, L.ARROW_SCALE, 0.5, 2, 0.05, get("scale"), set("scale"),
         function(v) return ("%d%%"):format(v * 100 + 0.5) end), 48)
     main:Add(W.Check(main, L.ARROW_LOCKED, L.ARROW_LOCKED_TIP, get("locked"), set("locked")), 24)

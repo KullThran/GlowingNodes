@@ -249,7 +249,7 @@ local function BuildGeneralPage(page)
     qt:SetWidth(112)
     qt:SetText(L.LEG_GOLD)
 
-    local behaviour = W.Section(page, L.CARD_BEHAVIOUR, 256, 212)
+    local behaviour = W.Section(page, L.CARD_BEHAVIOUR, 256, 238)
     behaviour:SetPoint("TOPLEFT", 280, -2)
     behaviour:Add(W.Check(behaviour, L.DIM_FAR, L.DIM_FAR_TIP, get("dimFar"), set("dimFar")), 26)
     behaviour:Add(W.Check(behaviour, L.GREY_LOCKED, L.GREY_LOCKED_TIP, get("greyLocked"), set("greyLocked")), 26)
@@ -257,9 +257,13 @@ local function BuildGeneralPage(page)
     behaviour:Add(W.Check(behaviour, L.KEEP_INTERACT, L.KEEP_INTERACT_TIP, get("keepInteract"), set("keepInteract")), 26)
     behaviour:Add(W.Check(behaviour, L.KEEP_ON_NODE, L.KEEP_ON_NODE_TIP, get("keepOnNode"), set("keepOnNode")), 26)
     behaviour:Add(W.Check(behaviour, L.TRACK_SWITCH, L.TRACK_SWITCH_TIP, get("trackSwitch"), set("trackSwitch")), 26)
+    -- the database's spots: one switch for the maps and the arrow (also on the
+    -- Map page's options, its filters and the Arrow tab)
+    page.database = behaviour:Add(W.Check(behaviour, L.MAP_DATABASE, L.MAP_DATABASE_TIP,
+        function() return ns.db.map.database end, function(v) ns.SetMap("database", v) end), 26)
 
     local status = W.Section(page, L.CARD_STATUS, 256, 178)
-    status:SetPoint("TOPLEFT", 280, -222)
+    status:SetPoint("TOPLEFT", 280, -248)
     local lines = W.Text(status, 11)
     lines:SetPoint("TOPLEFT", 2, -30)
     lines:SetPoint("RIGHT", 0, 0)
