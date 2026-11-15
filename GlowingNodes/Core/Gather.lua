@@ -509,7 +509,8 @@ end
 -- pool's GUID, its template ID sixth); a pool of Data/NodeSpawns.lua goes on
 -- your map where you stand, and its catch on it (G.Loot, right after). Open
 -- water (the bobber's loot), a creature or a source the game keeps secret
--- log nothing. Returns the pool's point.
+-- log nothing. A database spot of that pool within reach is where the point
+-- goes (the pool, not your feet); else where you stand. Returns the point.
 function G.FishLoot()
     if not (IsFishingLoot and IsFishingLoot()) then return nil end
     local S = ns.NodeSpawns
@@ -535,7 +536,19 @@ function G.FishLoot()
     ns.Debug("FISH loot source: " .. (said or "none"))
     if not entry then return nil end
     local t = S.nodes[pools[entry]]
-    return (G.Record("fish", t and t[3], entry))
+    local name = t and t[3]
+    local mapID, x, y = G.PlayerPosition()
+    if mapID and ns.NodeDB then
+        local bestD
+        ns.NodeDB.Each(mapID, function(key, node)
+            if node.k == "fish" and node.en == name then
+                local nx, ny = G.Decode(key)
+                local d = G.Distance(mapID, x, y, nx, ny)
+                if d <= MERGE_YARDS.fish and (not bestD or d < bestD) then bestD, x, y = d, nx, ny end
+            end
+        end, true)
+    end
+    return (G.Record("fish", name, entry, mapID, x, y))
 end
 
 -- the items a node dropped, most first: { id, name, quality, times }
@@ -556,7 +569,8 @@ loot:SetScript("OnEvent", function(_, event)
     if event == "LOOT_CLOSED" then looted = false return end
     if looted or not ns.global then return end
     looted = true
-    G.FishLoot()
+    local ok, err = pcall(G.FishLoot) -- whatever Forever says of fishing, the node's loot still counts
+    if not ok then ns.Debug("FISH loot: " .. tostring(err)) end
     G.Loot()
 end)
 for _, event in ipairs({ "LOOT_READY", "LOOT_OPENED", "LOOT_CLOSED" }) do

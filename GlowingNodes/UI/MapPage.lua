@@ -460,6 +460,7 @@ function ns.BuildMapPage(page)
         GameTooltip:Hide()
         page:UpdateStatus()
     end
+    page.Go = function(id) Go(id) end
 
     local function Parent(id)
         local info = MapInfo(id)
@@ -960,6 +961,11 @@ function ns.BuildMapPage(page)
     local CHIP_GAP, CHIP_PAD = 6, 33 -- dot, its gap and the margins
     local CHIPS_W = MAP_W + 10 - 2 * 90 - 6 - 8
     local function FitFilters()
+        local shownChips = {}
+        for _, b in ipairs(filters) do
+            if b:IsShown() then shownChips[#shownChips + 1] = b end
+        end
+        local filters = shownChips
         local widths, total = {}, 0
         for i, b in ipairs(filters) do
             measure:SetText(b.text:GetText() or "")
@@ -1007,7 +1013,14 @@ function ns.BuildMapPage(page)
         notice:SetShown(msg ~= nil)
 
         local counts = G.Counts(shown)
+        -- the pools chip only where the zone has pools to show: four chips
+        -- don't fit their texts
+        local pools = (counts.fish or 0) > 0
+        if not pools and shown and ns.NodeDB.Enabled() then
+            ns.NodeDB.Each(shown, function(_, node) if node.k == "fish" then pools = true end end)
+        end
         for _, b in ipairs(filters) do
+            if b.kind == "fish" then b:SetShown(pools) end
             local on = ns.db.map.show[b.kind]
             b.dot:SetVertexColor(Pins.Color(b.kind))
             b.dot:SetAlpha(on and 1 or 0.3)

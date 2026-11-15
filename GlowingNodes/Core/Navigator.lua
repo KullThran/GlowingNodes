@@ -314,6 +314,7 @@ local function Gathered()
         end
         return
     end
+    if Nav.FishMode() then return end -- a herb by the water: the pools round it are still there
     if px and py then MarkAt(last.mapID, px, py, Nav.GATHERED_YARDS, now) end
 end
 
