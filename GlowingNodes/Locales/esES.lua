@@ -111,6 +111,8 @@ ns.RegisterLocale("esES", {
     MSG_HELP = "/gn: opciones  ·  /gn mapa  ·  /gn flecha  ·  /gn on|off  ·  /gn info  ·  /gn rango  ·  /gn debug  ·  /gn reset",
     MSG_ARROW_ON = "flecha activada.",
     MSG_ARROW_OFF = "flecha desactivada.",
+    ARROW_YARDS = "%d yd",
+    BINDING_ARROW = "Mostrar u ocultar la flecha",
     MSG_UNLOCK = "Ya puedes recoger %s (%d): visto %d× en %s.",
     MSG_NO_TARGET = "ahora no hay objetivo de interacción.",
     UNKNOWN = "?",

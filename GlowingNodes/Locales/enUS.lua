@@ -111,6 +111,8 @@ ns.RegisterLocale("enUS", {
     MSG_HELP = "/gn: options  ·  /gn map  ·  /gn arrow  ·  /gn on|off  ·  /gn info  ·  /gn range  ·  /gn debug  ·  /gn reset",
     MSG_ARROW_ON = "arrow on.",
     MSG_ARROW_OFF = "arrow off.",
+    ARROW_YARDS = "%d yd",
+    BINDING_ARROW = "Show or hide the arrow",
     MSG_UNLOCK = "Now you can gather %s (%d): seen %d× in %s.",
     MSG_NO_TARGET = "no interact target right now.",
     UNKNOWN = "?",

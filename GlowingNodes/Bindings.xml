@@ -1,0 +1,5 @@
+<Bindings>
+    <Binding name="GLOWINGNODES_ARROW" header="GLOWINGNODES" category="ADDONS">
+        GlowingNodes_ToggleArrow()
+    </Binding>
+</Bindings>
