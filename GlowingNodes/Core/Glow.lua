@@ -3,6 +3,9 @@
 -- arcs, slow rays, an optional pillar of light, rising glints and a shock ring
 -- when the node comes into reach, all additive and tinted with the colour the
 -- player picked. The level number sits above it.
+-- A second look, "swirl" (the fishing bobber's), lies flat on the water
+-- instead: a flattened halo, a wave ring turning round the bobber and sparks
+-- leaping off its edge.
 -- The same object draws the in-world glow (hung on the soft-target nameplate)
 -- and the live preview in the options window.
 local _, ns = ...
@@ -15,6 +18,8 @@ ns.Glow = Glow
 local ART = ns.ART
 local FONT = STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF" -- has the client's glyphs
 local GLINTS = 6
+local SPARKLES = 8
+local SWIRL_SPEED = 0.6 -- radians a second
 local BURST_TIME = 0.55
 local FADE_IN = 0.25
 local FADE_OUT = 0.8 -- the glow going out when its time is up
@@ -58,7 +63,12 @@ function Glow.New(parent)
     for i = 1, GLINTS do
         self.glints[i] = { tex = Tex(f, "fx_glint", "OVERLAY", 1) }
     end
-    for _, t in ipairs({ self.beam, self.halo, self.halo2, self.burst, self.ring, self.core, self.shock }) do
+    self.swirl = Tex(f, "fx_swirl", "ARTWORK", 0)
+    self.sparkles = {}
+    for i = 1, SPARKLES do
+        self.sparkles[i] = { tex = Tex(f, "fx_sparkle", "OVERLAY", 2), white = i % 2 == 0 }
+    end
+    for _, t in ipairs({ self.beam, self.halo, self.halo2, self.burst, self.ring, self.core, self.shock, self.swirl }) do
         t:SetPoint("CENTER")
     end
     self.beam:ClearAllPoints()
@@ -91,9 +101,12 @@ function Glow.New(parent)
     -- each frame: worked out as time × speed, a change of speed (the blend
     -- into "ready" or "locked") made them leap, more the longer you played
     self.beatPhase, self.ringAngle, self.burstAngle = random() * TAU, random() * TAU, random() * TAU
+    self.swirlAngle = random() * TAU
+    self.shownLook = false -- neither look yet: the first Update sets one up
     self.appear, self.ready, self.locked, self.burstAge = 0, 0, 0, BURST_TIME
     self.state = "ready"
     for _, g in ipairs(self.glints) do self:Respawn(g) end
+    for _, s in ipairs(self.sparkles) do self:RespawnSparkle(s) end
 
     f:SetScript("OnUpdate", function(_, elapsed) self:Update(elapsed) end)
     return self
@@ -108,8 +121,17 @@ function Glow:Respawn(g, now)
     g.spin = (random() - 0.5) * 2
 end
 
+-- a spark leaps off the swirl's edge, rises a little and goes out
+function Glow:RespawnSparkle(s, now)
+    s.angle = random() * TAU
+    s.life = 0.6 + 0.6 * random()
+    s.age = now and 0 or -0.5 * random()
+    s.size = 10 + 8 * random()
+end
+
 -- cfg: the category settings (colour, intensity, size, pulse, beam)
--- opts: { scale = number, numberSize = n, greyLocked = bool, dimFar = bool }
+-- opts: { scale = number, numberSize = n, greyLocked = bool, dimFar = bool,
+--         look = "swirl" or nil (the ring) }
 function Glow:Configure(cfg, opts)
     self.cfg, self.opts = cfg, opts or {}
     local fontSize = (self.opts.numberSize or 26) * (self.opts.textScale or 1)
@@ -204,6 +226,60 @@ local function PlateRel(anchor)
 end
 Glow.PlateRel = PlateRel
 
+-- the swirl turns inside its flattened rectangle: turning the texture would
+-- turn the whole ellipse, so its texture coordinates turn instead, the four
+-- corners of the image round (0.5, 0.5); the art leaves its corners empty
+local CORNER_BASE = { 3 * pi / 4, 5 * pi / 4, pi / 4, 7 * pi / 4 } -- UL, LL, UR, LR
+local function Corner(a, k)
+    local base = CORNER_BASE[k + 1] + a
+    return 0.5 + cos(base) * 0.7071, 0.5 - sin(base) * 0.7071
+end
+
+-- what one look shows and the other hides, switched once on a change
+function Glow:ShowLook(look)
+    if self.shownLook == look then return end
+    self.shownLook = look
+    local swirl = look == "swirl"
+    for _, t in ipairs({ self.ring, self.core, self.burst }) do t:SetShown(not swirl) end
+    for _, gl in ipairs(self.glints) do gl.tex:SetShown(not swirl) end
+    if swirl then
+        self.beam:Hide()
+        self.shock:Hide()
+        self.halo2:Hide()
+    end
+    self.swirl:SetShown(swirl)
+    for _, s in ipairs(self.sparkles) do s.tex:SetShown(swirl) end
+end
+
+-- the bobber's look: halo and swirl flat on the water, sparks off its edge
+function Glow:UpdateSwirl(elapsed, scale, r, g, b, strength, beat, a1, a2, power)
+    local hs = 230 * (0.94 + 0.06 * beat) * scale
+    self.halo:SetSize(hs, hs * 0.42)
+    self.halo:SetVertexColor(r, g, b, min(a1 * 0.95, 1))
+    self.swirlAngle = (self.swirlAngle + elapsed * SWIRL_SPEED) % TAU
+    local a = self.swirlAngle
+    local ulx, uly = Corner(a, 0)
+    local llx, lly = Corner(a, 1)
+    local urx, ury = Corner(a, 2)
+    local lrx, lry = Corner(a, 3)
+    self.swirl:SetTexCoord(ulx, uly, llx, lly, urx, ury, lrx, lry)
+    self.swirl:SetSize(170 * scale, 64 * scale)
+    self.swirl:SetVertexColor(r, g, b, min((a1 * 0.9 + a2 * 0.5) * (0.85 + 0.15 * beat), 1))
+    for _, s in ipairs(self.sparkles) do
+        s.age = s.age + elapsed
+        if s.age >= s.life then self:RespawnSparkle(s, true) end
+        local shine = s.age > 0 and sin(pi * s.age / s.life) or 0
+        local size = max(s.size * (0.5 + 0.5 * shine) * scale, 0.01)
+        local rise = 18 * max(s.age, 0) / s.life
+        local tex = s.tex
+        tex:ClearAllPoints()
+        tex:SetPoint("CENTER", self.frame, "CENTER", cos(s.angle) * 80 * scale, (sin(s.angle) * 30 + rise) * scale)
+        tex:SetSize(size, size)
+        local w = s.white and 0.85 or 0
+        tex:SetVertexColor(r + (1 - r) * w, g + (1 - g) * w, b + (1 - b) * w, min(strength * shine * min(power, 1.6), 1))
+    end
+end
+
 function Glow:Update(elapsed)
     local cfg, opts = self.cfg, self.opts
     if not cfg then return end
@@ -255,6 +331,13 @@ function Glow:Update(elapsed)
 
     local a1 = min(power, 1) * strength * beat
     local a2 = max(power - 1, 0) * 0.6 * strength * beat
+
+    self:ShowLook(opts.look)
+    if opts.look == "swirl" then
+        self:UpdateSwirl(elapsed, scale, r, g, b, strength, beat, a1, a2, power)
+        self.textFrame:SetAlpha(self.appear)
+        return
+    end
 
     local function paint(tex, size, alpha, white)
         tex:SetSize(size * scale, size * scale)
