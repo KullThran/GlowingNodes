@@ -18,6 +18,7 @@ Nav.ARRIVE_YARDS = 25
 Nav.WAIT = 4              -- seconds in reach without a node: the spot is empty
 Nav.EMPTY_FOR = 600       -- an empty spot comes back after this long
 Nav.GATHERED_YARDS = 30
+Nav.EMPTY_YARDS = 20      -- a spot this close to one found empty is the same node
 Nav.GATHERED_WITHIN = 2
 Nav.DIM_ALPHA = 0.45
 
@@ -83,28 +84,45 @@ function Nav.Candidates(mapID)
     return list
 end
 
--- Empty spots: reached with no node to pick, or just gathered. Kept for this
--- session only, until a node may have spawned there again.
-local empty = {}   -- "mapID:key" -> when it was found empty
+-- Empty places: a spot reached with no node to pick, or where you just
+-- gathered. Kept by position, not by key, so a point that moves a few yards
+-- (a rough point made exact) or the same node twice (your log and the
+-- database) stays empty too. This session only, until a node may have
+-- spawned there again.
+local empty = {}   -- { mapID, wx, wy, r, at }
 local arrivedAt    -- when the player came within reach of the target
 
-local function SpotID(spot) return spot.mapID .. ":" .. spot.key end
+local function MarkAt(mapID, wx, wy, r, now)
+    empty[#empty + 1] = { mapID = mapID, wx = wx, wy = wy, r = r, at = now }
+end
 
 function Nav.MarkEmpty(spot, now)
-    empty[SpotID(spot)] = now
+    MarkAt(spot.mapID, spot.wx, spot.wy, Nav.EMPTY_YARDS, now)
 end
 
 function Nav.IsEmpty(spot, now)
-    local id = SpotID(spot)
-    local at = empty[id]
-    if not at then return false end
-    if now - at >= Nav.EMPTY_FOR then
-        empty[id] = nil
-        return false
+    for i = #empty, 1, -1 do
+        local e = empty[i]
+        if now - e.at >= Nav.EMPTY_FOR then
+            table.remove(empty, i)
+        elseif e.mapID == spot.mapID then
+            local dx, dy = spot.wx - e.wx, spot.wy - e.wy
+            if dx * dx + dy * dy <= e.r * e.r then return true end
+        end
     end
-    return true
+    return false
 end
 
+local function SameSpot(a, b)
+    return a ~= nil and b ~= nil and a.mapID == b.mapID and a.key == b.key
+end
+
+-- the spots are read again; the arrow keeps its target and its arrival
+function Nav.Refresh()
+    wipe(cache)
+end
+
+-- the settings changed: start over
 function Nav.Reset()
     wipe(cache)
     target, arrivedAt = nil, nil
@@ -122,6 +140,14 @@ local function Hidden(reason)
 end
 
 -- why the arrow stays out of sight now, or nil
+-- the glow has a node the arrow would lead to: it takes over from here
+local function HandsOver(current)
+    if not (current and KINDS[current.category] and not current.blocked) then return false end
+    local skill = Wanted(current.category)
+    if not skill then return false end
+    return not (current.required and current.required > (current.skill or skill))
+end
+
 local function Reason()
     if (InCombatLockdown and InCombatLockdown()) or Ask(UnitAffectingCombat, "player") then return "combat" end
     if Ask(IsInInstance) then return "instance" end
@@ -131,7 +157,7 @@ end
 
 function Nav.Update(now)
     view.reason, view.angle, view.yards, view.category, view.node = nil, nil, nil, nil, nil
-    if not (ns.db and ns.db.arrow.enabled) then
+    if not (ns.db and ns.db.enabled and ns.db.arrow.enabled) then
         view.state = "off"
         return view
     end
@@ -143,8 +169,7 @@ function Nav.Update(now)
     if mapID then px, py, instance = Ask(hbd.GetPlayerWorldPosition, hbd) end
     local facing = Ask(GetPlayerFacing)
     if not (px and py and type(facing) == "number") then return Hidden("position") end
-    local current = ns.SoftTarget and ns.SoftTarget.current
-    if current and current.category then
+    if HandsOver(ns.SoftTarget and ns.SoftTarget.current) then
         arrivedAt = nil -- the glow has it: the spot isn't empty
         return Hidden("glowing")
     end
@@ -168,7 +193,7 @@ function Nav.Update(now)
     local keep
     if target and target.mapID == mapID and not Nav.IsEmpty(target, now) then
         for _, spot in ipairs(list) do
-            if spot == target then keep = spot break end
+            if SameSpot(spot, target) then keep = spot break end
         end
     end
     if keep and best ~= keep then
@@ -177,7 +202,7 @@ function Nav.Update(now)
             best, bestAngle, bestYards = keep, angle, yards
         end
     end
-    if best ~= target then arrivedAt = nil end
+    if not SameSpot(best, target) then arrivedAt = nil end
     target = best
     if not best then
         view.state = "empty"
@@ -202,23 +227,22 @@ function Nav.Update(now)
     return view
 end
 
--- A gather just now within reach of the target: that spot is empty.
+-- A gather just now: every spot within reach of where you stand is empty.
 local function Gathered()
     local last = ns.Gather.lastGather
     local now = GetTime()
-    if not (target and last and last.at and now - last.at <= Nav.GATHERED_WITHIN) then return end
+    if not (last and last.mapID and last.at and now - last.at <= Nav.GATHERED_WITHIN) then return end
     local hbd = HBD()
-    local px, py, instance = Ask(hbd and hbd.GetPlayerWorldPosition, hbd)
-    if not (px and py) then return end
-    local _, yards = Ask(hbd.GetWorldVector, hbd, instance, px, py, target.wx, target.wy)
-    if yards and yards <= Nav.GATHERED_YARDS then Nav.MarkEmpty(target, now) end
+    local px, py = Ask(hbd and hbd.GetPlayerWorldPosition, hbd)
+    if px and py then MarkAt(last.mapID, px, py, Nav.GATHERED_YARDS, now) end
 end
 
 ns.On("NodesChanged", function()
     Gathered()
-    Nav.Reset()
+    Nav.Refresh()
 end)
-ns.On("Learned", function() Nav.Reset() end)
+ns.On("Learned", function() Nav.Refresh() end)
+ns.On("SkillsChanged", function() Nav.Refresh() end)
 ns.On("Changed", function(key)
     if key == "*" or key == "profiles" or key == "map.database" or key == "ore.enabled" or key == "herb.enabled"
         or (type(key) == "string" and key:find("^arrow%.")) then

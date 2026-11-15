@@ -229,6 +229,7 @@ events:SetScript("OnEvent", function(_, event, ...)
         end
     else
         Skills.Invalidate()
+        ns.Fire("SkillsChanged") -- a rank went up (or a profession came or went)
     end
 end)
 for _, event in ipairs({ "PLAYER_LOGIN", "SKILL_LINES_CHANGED", "CHAT_MSG_SKILL", "LEARNED_SPELL_IN_TAB", "UI_ERROR_MESSAGE" }) do
