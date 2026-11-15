@@ -20,13 +20,19 @@ BINDING_NAME_GLOWINGNODES_ARROW = L.BINDING_ARROW
 
 local function Settings() return ns.db.arrow end
 
+-- The place is kept in screen units (UIParent's), by the arrow's centre, so a
+-- bigger arrow grows about its centre and stays where it was. A frame's
+-- offsets are in its own scale: divided by it here.
+local DEFAULT_Y = -(120 + SIZE / 2) -- its centre, under the top of the screen
+
 local function Place(frame)
     local p = Settings().point
+    local s = frame:GetScale()
     frame:ClearAllPoints()
     if p and p[1] then
-        frame:SetPoint(p[1], UIParent, p[2] or p[1], p[3] or 0, p[4] or 0)
+        frame:SetPoint(p[1], UIParent, p[2] or p[1], (p[3] or 0) / s, (p[4] or 0) / s)
     else
-        frame:SetPoint("TOP", UIParent, "TOP", 0, -120)
+        frame:SetPoint("CENTER", UIParent, "TOP", 0, DEFAULT_Y / s)
     end
 end
 
@@ -60,8 +66,10 @@ local function Build()
     end)
     f:SetScript("OnDragStop", function(self)
         self:StopMovingOrSizing()
-        local point, _, rel, x, y = self:GetPoint(1)
-        ns.SetArrow("point", { point, rel, x, y })
+        local cx, cy = self:GetCenter()
+        if not (cx and cy) then return end
+        local s = self:GetScale()
+        ns.SetArrow("point", { "CENTER", "BOTTOMLEFT", cx * s, cy * s })
     end)
 
     -- the frame hides while the arrow has nothing to show; this one keeps
@@ -70,7 +78,10 @@ local function Build()
     local wait = 0
     driver:SetScript("OnUpdate", function(_, elapsed)
         wait = wait + elapsed
-        if wait < ns.Navigator.TICK then return end
+        if wait < ns.Navigator.TICK then
+            Arrow:Turn()
+            return
+        end
         wait = 0
         Arrow:Refresh(GetTime())
     end)
@@ -78,10 +89,30 @@ local function Build()
     Arrow.driver = driver
 end
 
+-- with /gn debug, one line each time the arrow changes what it does
+local lastSaid
+local function Tell(view)
+    local said
+    if view.state == "guide" then
+        said = ("ARROW guide %s %s %d yd"):format(view.category, tostring(view.node.n), math.floor(view.yards + 0.5))
+    elseif view.state == "empty" then
+        local mapID = ns.Gather.PlayerPosition()
+        said = ("ARROW empty: %d spots on map %s"):format(mapID and #ns.Navigator.Candidates(mapID) or 0, tostring(mapID))
+    else
+        said = "ARROW " .. view.state .. (view.reason and (" " .. view.reason) or "")
+    end
+    local key = said:gsub(" %d+ yd$", "")
+    if key ~= lastSaid then
+        lastSaid = key
+        ns.Debug(said)
+    end
+end
+
 -- shows what the Navigator says now
 function Arrow:Refresh(now)
     if not self.frame then return end
     local view = ns.Navigator.Update(now)
+    Tell(view)
     local f = self.frame
     if view.state == "off" or view.state == "hidden" then
         f:Hide()
@@ -100,16 +131,33 @@ function Arrow:Refresh(now)
         return
     end
     f:SetAlpha(1)
-    self.body:SetRotation(view.angle)
-    self.gem:SetRotation(view.angle)
     local c = ns.db[view.category] and ns.db[view.category].color
     if c then self.gem:SetVertexColor(c.r, c.g, c.b) end
     local node = view.node
     self.icon:SetTexture(ns.NodeData.IconFor(view.category, node.r, node.n))
     self.icon:Show()
-    self.yards:SetText(L.ARROW_YARDS:format(math.floor(view.yards + 0.5)))
+    self.shownYards = nil
+    self:Point(view)
     self.yards:SetShown(set.showDistance)
     f:Show()
+end
+
+-- which way and how far: the parts that change every frame
+function Arrow:Point(view)
+    self.body:SetRotation(view.angle)
+    self.gem:SetRotation(view.angle)
+    local yards = math.floor(view.yards + 0.5)
+    if yards ~= self.shownYards then
+        self.shownYards = yards
+        self.yards:SetText(L.ARROW_YARDS:format(yards))
+    end
+end
+
+-- every frame between two Refreshes, while it guides
+function Arrow:Turn()
+    if not (self.frame and self.frame:IsShown()) then return end
+    local view = ns.Navigator.Track()
+    if view.state == "guide" then self:Point(view) end
 end
 
 -- the settings again: size, place, locked, on or off

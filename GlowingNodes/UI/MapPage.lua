@@ -244,7 +244,7 @@ function ns.BuildMapPage(page)
                     end
                     local x, y = G.Decode(key)
                     p.node, p.key, p.mapID = node, key, mapID
-                    p.tex:SetVertexColor(Pins.Color(node.k))
+                    if isArea then p.tex:SetVertexColor(Pins.Color(node.k)) else Pins.Paint(p.tex, node) end
                     p:SetAlpha((query == "" or hit) and 1 or 0.22)
                     p:ClearAllPoints()
                     p:SetPoint("CENTER", content, "TOPLEFT", x * cw, -y * ch)
@@ -265,7 +265,7 @@ function ns.BuildMapPage(page)
                     p:SetSize(s, s)
                     local x, y = G.Decode(key)
                     p.node, p.key, p.mapID = node, key, mapID
-                    p.tex:SetVertexColor(Pins.Color(node.k))
+                    Pins.Paint(p.tex, node)
                     p:SetAlpha((query == "" or hit) and Pins.DB_ALPHA or 0.12)
                     p:ClearAllPoints()
                     p:SetPoint("CENTER", content, "TOPLEFT", x * cw, -y * ch)

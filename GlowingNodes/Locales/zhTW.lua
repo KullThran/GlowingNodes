@@ -116,7 +116,7 @@ ns.RegisterLocale("zhTW", {
     ARROW_ORE = "指向礦石",
     ARROW_HERB = "指向草藥",
     ARROW_DATABASE = "同時使用資料庫",
-    ARROW_DATABASE_TIP = "除了你採集過的位置，也包括可能重生的位置。在你更改之前，跟隨地圖的設定。",
+    ARROW_DATABASE_TIP = "除了你採集過的位置，也包括可能重生的位置。",
     ARROW_SCALE = "箭頭大小",
     ARROW_LOCKED = "鎖定位置",
     ARROW_LOCKED_TIP = "解鎖後可用滑鼠拖曳箭頭。",
@@ -184,9 +184,9 @@ ns.RegisterLocale("zhTW", {
     ABOUT_4 = "顯示一張卡片，包含所發現採集點的圖示、名稱與等級。",
     ABOUT_5 = "在遊戲中學習Forever的新採集點，並把找到的每個採集點標在地圖上，無論是否採集。",
     ABOUT_COMMANDS = "指令",
-    ABOUT_CMDS = [[/gn  開啟這本筆記
-/gn map  你的採集地圖
+    ABOUT_CMDS = [[/gn map  你的採集地圖
 /gn on  ·  /gn off  開啟或關閉發光
+/gn arrow  顯示或隱藏箭頭
 /gn info  顯示目前偵測到的內容
 /gn range  遊戲選中採集點的距離
 /gn debug  在聊天框記錄它偵測到的內容

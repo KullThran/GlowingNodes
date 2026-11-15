@@ -116,7 +116,7 @@ ns.RegisterLocale("ptBR", {
     ARROW_ORE = "Guiar até minérios",
     ARROW_HERB = "Guiar até ervas",
     ARROW_DATABASE = "Usar também o banco de dados",
-    ARROW_DATABASE_TIP = "Também os locais onde nós podem surgir, não só os que você coletou. Até você mudar, segue os mapas.",
+    ARROW_DATABASE_TIP = "Também os locais onde nós podem surgir, não só os que você coletou.",
     ARROW_SCALE = "Tamanho da seta",
     ARROW_LOCKED = "Travar posição",
     ARROW_LOCKED_TIP = "Destrave para arrastar a seta com o mouse.",
@@ -184,9 +184,9 @@ ns.RegisterLocale("ptBR", {
     ABOUT_4 = "Mostra um cartão com o ícone, o nome e o nível do nó encontrado.",
     ABOUT_5 = "Aprende os nós novos de Forever enquanto você joga e marca no mapa cada nó encontrado, coletado ou não.",
     ABOUT_COMMANDS = "Comandos",
-    ABOUT_CMDS = [[/gn  abre este caderno
-/gn map  o mapa do que você coletou
+    ABOUT_CMDS = [[/gn map  o mapa do que você coletou
 /gn on  ·  /gn off  liga ou desliga o brilho
+/gn arrow  mostra ou oculta a seta
 /gn info  o que ele vê agora
 /gn range  até onde o jogo escolhe nós
 /gn debug  anotações no chat sobre o que ele detecta

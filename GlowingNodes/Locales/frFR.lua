@@ -116,7 +116,7 @@ ns.RegisterLocale("frFR", {
     ARROW_ORE = "Guider vers le minerai",
     ARROW_HERB = "Guider vers les herbes",
     ARROW_DATABASE = "Utiliser aussi la base de données",
-    ARROW_DATABASE_TIP = "Aussi les endroits où des gisements peuvent apparaître, pas seulement ceux que vous avez récoltés. Tant que vous n'y touchez pas, suit les cartes.",
+    ARROW_DATABASE_TIP = "Aussi les endroits où des gisements peuvent apparaître, pas seulement ceux que vous avez récoltés.",
     ARROW_SCALE = "Taille de la flèche",
     ARROW_LOCKED = "Verrouiller la position",
     ARROW_LOCKED_TIP = "Déverrouillez-la pour déplacer la flèche à la souris.",
@@ -184,9 +184,9 @@ ns.RegisterLocale("frFR", {
     ABOUT_4 = "Affiche une carte avec l'icône, le nom et le niveau du nœud trouvé.",
     ABOUT_5 = "Apprend les nouveaux nœuds de Forever en jouant et marque sur la carte chaque nœud trouvé, récolté ou non.",
     ABOUT_COMMANDS = "Commandes",
-    ABOUT_CMDS = [[/gn  ouvre ce carnet
-/gn map  la carte de vos récoltes
+    ABOUT_CMDS = [[/gn map  la carte de vos récoltes
 /gn on  ·  /gn off  active ou désactive la lueur
+/gn arrow  affiche ou masque la flèche
 /gn info  ce qu'il voit en ce moment
 /gn range  jusqu'où le jeu choisit les nœuds
 /gn debug  des notes dans le chat sur ce qu'il voit

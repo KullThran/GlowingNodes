@@ -116,7 +116,7 @@ ns.RegisterLocale("deDE", {
     ARROW_ORE = "Zu Erz führen",
     ARROW_HERB = "Zu Kräutern führen",
     ARROW_DATABASE = "Auch die Fundort-Datenbank nutzen",
-    ARROW_DATABASE_TIP = "Auch Orte, an denen Vorkommen erscheinen können, nicht nur die, die du gesammelt hast. Bis du es änderst, folgt es der Karte.",
+    ARROW_DATABASE_TIP = "Auch Orte, an denen Vorkommen erscheinen können, nicht nur die, die du gesammelt hast.",
     ARROW_SCALE = "Pfeilgröße",
     ARROW_LOCKED = "Position sperren",
     ARROW_LOCKED_TIP = "Entsperren, um den Pfeil mit der Maus zu ziehen.",
@@ -184,9 +184,9 @@ ns.RegisterLocale("deDE", {
     ABOUT_4 = "Zeigt eine Karte mit Symbol, Name und Stufe des gefundenen Vorkommens.",
     ABOUT_5 = "Lernt Forevers neue Vorkommen beim Spielen und markiert jedes gefundene Vorkommen auf der Karte, ob gesammelt oder nicht.",
     ABOUT_COMMANDS = "Befehle",
-    ABOUT_CMDS = [[/gn  öffnet dieses Notizbuch
-/gn map  die Karte deiner Funde
+    ABOUT_CMDS = [[/gn map  die Karte deiner Funde
 /gn on  ·  /gn off  schaltet das Leuchten an oder aus
+/gn arrow  zeigt oder verbirgt den Pfeil
 /gn info  was es gerade sieht
 /gn range  wie weit das Spiel Vorkommen wählt
 /gn debug  Notizen im Chat zu dem, was es sieht

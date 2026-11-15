@@ -116,7 +116,7 @@ ns.RegisterLocale("zhCN", {
     ARROW_ORE = "指向矿石",
     ARROW_HERB = "指向草药",
     ARROW_DATABASE = "同时使用数据库",
-    ARROW_DATABASE_TIP = "除了你采集过的位置，也包括可能刷新的位置。在你更改之前，跟随地图的设置。",
+    ARROW_DATABASE_TIP = "除了你采集过的位置，也包括可能刷新的位置。",
     ARROW_SCALE = "箭头大小",
     ARROW_LOCKED = "锁定位置",
     ARROW_LOCKED_TIP = "解锁后可用鼠标拖动箭头。",
@@ -184,9 +184,9 @@ ns.RegisterLocale("zhCN", {
     ABOUT_4 = "显示一张卡片，包含所发现采集点的图标、名称和等级。",
     ABOUT_5 = "在游戏中学习Forever的新采集点，并把找到的每个采集点标在地图上，无论是否采集。",
     ABOUT_COMMANDS = "命令",
-    ABOUT_CMDS = [[/gn  打开本笔记
-/gn map  你的采集地图
+    ABOUT_CMDS = [[/gn map  你的采集地图
 /gn on  ·  /gn off  开启或关闭发光
+/gn arrow  显示或隐藏箭头
 /gn info  显示当前检测到的内容
 /gn range  游戏选中采集点的距离
 /gn debug  在聊天框记录它检测到的内容

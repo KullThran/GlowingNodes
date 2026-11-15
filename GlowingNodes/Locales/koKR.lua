@@ -116,7 +116,7 @@ ns.RegisterLocale("koKR", {
     ARROW_ORE = "광석으로 안내",
     ARROW_HERB = "약초로 안내",
     ARROW_DATABASE = "데이터베이스도 사용",
-    ARROW_DATABASE_TIP = "직접 채집한 곳뿐 아니라 채집물이 생성될 수 있는 위치도 포함합니다. 변경하기 전까지는 지도 설정을 따릅니다.",
+    ARROW_DATABASE_TIP = "직접 채집한 곳뿐 아니라 채집물이 생성될 수 있는 위치도 포함합니다.",
     ARROW_SCALE = "화살표 크기",
     ARROW_LOCKED = "위치 잠금",
     ARROW_LOCKED_TIP = "잠금을 해제하면 마우스로 화살표를 끌 수 있습니다.",
@@ -184,9 +184,9 @@ ns.RegisterLocale("koKR", {
     ABOUT_4 = "발견한 채집물의 아이콘, 이름, 레벨이 담긴 카드를 보여줘요.",
     ABOUT_5 = "플레이하며 Forever의 새 채집물을 배우고, 찾은 채집물을 채집 여부와 상관없이 모두 지도에 표시해요.",
     ABOUT_COMMANDS = "명령어",
-    ABOUT_CMDS = [[/gn  이 수첩 열기
-/gn map  채집한 곳의 지도
+    ABOUT_CMDS = [[/gn map  채집한 곳의 지도
 /gn on  ·  /gn off  빛 효과 켜기/끄기
+/gn arrow  화살표 표시/숨기기
 /gn info  지금 보고 있는 정보
 /gn range  게임이 채집물을 고르는 거리
 /gn debug  감지한 내용을 채팅에 기록

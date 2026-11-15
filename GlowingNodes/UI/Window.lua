@@ -513,13 +513,18 @@ local function BuildAboutPage(page)
         y = y - math.max(type(h) == "number" and h or 13, 13) - 8
     end
 
+    -- the commands sit on the page's bottom, clear of the frame, as tall as
+    -- their lines (the bullets above end some way over them)
     local commands = W.Section(page, L.ABOUT_COMMANDS, 250, 100)
-    commands:SetPoint("TOPLEFT", 6, -290)
+    commands:SetPoint("BOTTOMLEFT", page, "BOTTOMLEFT", 6, 12)
     local cmds = W.Text(commands, 11)
-    cmds:SetPoint("TOPLEFT", 2, -30)
+    cmds:SetPoint("TOPLEFT", 2, -28)
     cmds:SetWidth(248)
-    cmds:SetSpacing(4)
+    cmds:SetSpacing(2)
     cmds:SetText(L.ABOUT_CMDS)
+    local ch = cmds:GetStringHeight()
+    commands:SetHeight(28 + math.max(type(ch) == "number" and ch or 0, 7 * 13))
+    page.commands = commands
 
     -- right: KullThranUI, by the same author
     local kui = W.Section(page, L.ABOUT_RECOMMENDED, 262, 270)

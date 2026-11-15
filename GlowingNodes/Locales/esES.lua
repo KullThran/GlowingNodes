@@ -120,7 +120,7 @@ ns.RegisterLocale("esES", {
     ARROW_ORE = "Guiar a menas",
     ARROW_HERB = "Guiar a hierbas",
     ARROW_DATABASE = "Usar también la base de datos",
-    ARROW_DATABASE_TIP = "También los sitios donde pueden aparecer nodos, no solo los que has recogido. Hasta que lo cambies, sigue lo que tengas en el mapa.",
+    ARROW_DATABASE_TIP = "También los sitios donde pueden aparecer nodos, no solo los que has recogido.",
     ARROW_SCALE = "Tamaño de la flecha",
     ARROW_LOCKED = "Bloquear posición",
     ARROW_LOCKED_TIP = "Desbloquéala para arrastrar la flecha con el ratón.",
@@ -184,9 +184,9 @@ ns.RegisterLocale("esES", {
     ABOUT_4 = "Muestra una tarjeta con el icono, el nombre y el nivel del nodo encontrado.",
     ABOUT_5 = "Aprende los nodos nuevos de Forever mientras juegas y marca en el mapa cada nodo que encuentra, lo recojas o no.",
     ABOUT_COMMANDS = "Comandos",
-    ABOUT_CMDS = [[/gn  abre este cuaderno
-/gn mapa  el mapa de lo que has recogido
+    ABOUT_CMDS = [[/gn mapa  el mapa de lo que has recogido
 /gn on  ·  /gn off  enciende o apaga el brillo
+/gn flecha  muestra u oculta la flecha
 /gn info  qué detecta ahora mismo
 /gn rango  hasta dónde elige nodos el juego
 /gn debug  apuntes en el chat de lo que detecta

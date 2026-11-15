@@ -80,7 +80,7 @@ ns.DEFAULTS = {
         arrow = {
             enabled = false,
             ore = true, herb = true, -- what it leads to
-            database = nil, -- the database's spots too; nil: as the maps (map.database)
+            database = false, -- the database's spots too (its own switch, off like the maps')
             scale = 1,
             locked = true,
             showDistance = true,
@@ -227,11 +227,9 @@ function ns.SetArrow(key, value)
     ns.Fire("Changed", "arrow." .. key)
 end
 
--- the arrow uses the database's spots: its own choice, else as the maps
+-- the arrow uses the database's spots (its own switch, off by default)
 function ns.ArrowUsesDatabase()
-    local own = ns.db.arrow.database
-    if own ~= nil then return own == true end
-    return ns.db.map.database == true
+    return ns.db.arrow.database == true
 end
 
 function ns.ToggleArrow()

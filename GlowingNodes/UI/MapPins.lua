@@ -1,6 +1,6 @@
 -- MapPins.lua
--- The gathering log drawn on the game's maps: a bead in the node kind's
--- colour on the world map (the map being looked at) and on the minimap (the
+-- The gathering log drawn on the game's maps: the icon of what the node
+-- gives on the world map (the map being looked at) and on the minimap (the
 -- player's zone), placed by HereBeDragons-Pins as for GatherMate2. Hides are
 -- areas, not beads: a wash the size of the area in yards on the world map
 -- (its own map layer, so it zooms with the map); none on the minimap.
@@ -18,6 +18,33 @@ function Pins.Color(kind)
     local c = ns.db and ns.db[kind] and ns.db[kind].color
     if c then return c.r, c.g, c.b end
     return 1, 1, 1
+end
+
+-- A pin wears the icon of what its node gives (Tin Ore, Silver Ore,
+-- Peacebloom...), cut round, in its own colours: no two kinds of ore or herb
+-- look alike. Database spots carry only their English name (en).
+local ROUND = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
+
+function Pins.Icon(node)
+    return ns.NodeData.IconFor(node.k, node.r, node.n or node.en)
+end
+
+function Pins.Paint(tex, node)
+    tex:SetTexture(Pins.Icon(node))
+    tex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    tex:SetVertexColor(1, 1, 1)
+    if not tex.gnRound then
+        local parent = tex.GetParent and tex:GetParent()
+        if parent and parent.CreateMaskTexture and tex.AddMaskTexture then
+            local mask = parent:CreateMaskTexture()
+            if mask then
+                mask:SetTexture(ROUND, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+                mask:SetAllPoints(tex)
+                tex:AddMaskTexture(mask)
+                tex.gnRound = mask
+            end
+        end
+    end
 end
 
 local function When(t)
@@ -100,7 +127,6 @@ local function NewPin()
     f:SetSize(12, 12)
     f.tex = f:CreateTexture(nil, "OVERLAY")
     f.tex:SetAllPoints()
-    f.tex:SetTexture(ns.ART .. "pin")
     f:SetScript("OnEnter", function(self) if self.node then Pins.Tooltip(self, self.node) end end)
     f:SetScript("OnLeave", function() GameTooltip:Hide() end)
     return f
@@ -116,7 +142,7 @@ local function Pool()
         local pin = table.remove(self.free) or NewPin()
         pin.node = node
         pin:SetSize(size, size)
-        pin.tex:SetVertexColor(Pins.Color(node.k))
+        Pins.Paint(pin.tex, node)
         pin:SetAlpha(node.db and DB_ALPHA or 1)
         self.used[#self.used + 1] = pin
         return pin

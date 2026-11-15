@@ -227,6 +227,20 @@ function Nav.Update(now)
     return view
 end
 
+-- Between two picks, every frame: the same target, from where you stand and
+-- the way you face now, so the arrow turns smoothly. One vector, no search.
+function Nav.Track()
+    if view.state ~= "guide" or not target then return view end
+    local hbd = HBD()
+    local px, py, instance = Ask(hbd and hbd.GetPlayerWorldPosition, hbd)
+    local facing = Ask(GetPlayerFacing)
+    if not (px and py and type(facing) == "number") then return view end
+    if target.instance ~= nil and instance ~= nil and target.instance ~= instance then return view end
+    local angle, yards = Ask(hbd.GetWorldVector, hbd, instance, px, py, target.wx, target.wy)
+    if angle and yards then view.angle, view.yards = angle - facing, yards end
+    return view
+end
+
 -- A gather just now: every spot within reach of where you stand is empty.
 local function Gathered()
     local last = ns.Gather.lastGather

@@ -116,7 +116,7 @@ ns.RegisterLocale("itIT", {
     ARROW_ORE = "Guida ai minerali",
     ARROW_HERB = "Guida alle erbe",
     ARROW_DATABASE = "Usa anche il database",
-    ARROW_DATABASE_TIP = "Anche i punti dove possono comparire nodi, non solo quelli che hai raccolto. Finché non lo cambi, segue le mappe.",
+    ARROW_DATABASE_TIP = "Anche i punti dove possono comparire nodi, non solo quelli che hai raccolto.",
     ARROW_SCALE = "Dimensione della freccia",
     ARROW_LOCKED = "Blocca posizione",
     ARROW_LOCKED_TIP = "Sbloccala per trascinare la freccia con il mouse.",
@@ -184,9 +184,9 @@ ns.RegisterLocale("itIT", {
     ABOUT_4 = "Mostra una scheda con icona, nome e livello del nodo trovato.",
     ABOUT_5 = "Impara i nuovi nodi di Forever mentre giochi e segna sulla mappa ogni nodo trovato, raccolto o no.",
     ABOUT_COMMANDS = "Comandi",
-    ABOUT_CMDS = [[/gn  apre questo taccuino
-/gn map  la mappa delle tue raccolte
+    ABOUT_CMDS = [[/gn map  la mappa delle tue raccolte
 /gn on  ·  /gn off  accende o spegne il bagliore
+/gn arrow  mostra o nasconde la freccia
 /gn info  cosa vede in questo momento
 /gn range  fin dove il gioco sceglie i nodi
 /gn debug  note in chat su ciò che rileva

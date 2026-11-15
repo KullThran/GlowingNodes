@@ -120,7 +120,7 @@ ns.RegisterLocale("enUS", {
     ARROW_ORE = "Lead to ore",
     ARROW_HERB = "Lead to herbs",
     ARROW_DATABASE = "Use the spawn database too",
-    ARROW_DATABASE_TIP = "Also the spots where nodes can spawn, not only the ones you have gathered. Until you change it, it follows the maps.",
+    ARROW_DATABASE_TIP = "Also the spots where nodes can spawn, not only the ones you have gathered.",
     ARROW_SCALE = "Arrow size",
     ARROW_LOCKED = "Lock position",
     ARROW_LOCKED_TIP = "Unlock it to drag the arrow with the mouse.",
@@ -184,9 +184,9 @@ ns.RegisterLocale("enUS", {
     ABOUT_4 = "Shows a card with the icon, name and level of the node found.",
     ABOUT_5 = "Learns Forever's new nodes as you play, and marks every node it finds on the map, gathered or not.",
     ABOUT_COMMANDS = "Commands",
-    ABOUT_CMDS = [[/gn  opens this notebook
-/gn map  the map of what you gathered
+    ABOUT_CMDS = [[/gn map  the map of what you gathered
 /gn on  ·  /gn off  switches the glow on or off
+/gn arrow  shows or hides the arrow
 /gn info  what it sees right now
 /gn range  how far the game picks nodes
 /gn debug  notes on what it sees, in the chat
