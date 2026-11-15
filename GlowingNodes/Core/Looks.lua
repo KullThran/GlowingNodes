@@ -183,3 +183,47 @@ Add({
         end
     end,
 })
+
+---------------------------------------------------------------------------
+-- Rune circle: flat on the ground, a ring of runes turning slowly, a fainter
+-- inner one turning the other way
+---------------------------------------------------------------------------
+
+Add({
+    id = "runes",
+    Build = function(glow)
+        glow:Part("runes", "fx_runes", "ARTWORK", 0)
+        glow:Part("runes2", "fx_runes", "ARTWORK", 1)
+        Phase(glow, "runesAngle")
+        Phase(glow, "runes2Angle")
+    end,
+    Paint = function(glow, f)
+        local scale, r, g, b = f.scale, f.r, f.g, f.b
+        Halo(glow, f, true)
+        glow.runesAngle = (glow.runesAngle + f.elapsed * 0.35 * f.speed) % TAU
+        glow.runes2Angle = (glow.runes2Angle - f.elapsed * 0.5 * f.speed) % TAU
+        local alpha = (f.a1 * 0.9 + f.a2 * 0.5) * (0.85 + 0.15 * f.beat)
+        Turn(glow.runes, glow.runesAngle)
+        Tint(glow.runes, 180 * scale, 68 * scale, r, g, b, alpha)
+        Turn(glow.runes2, glow.runes2Angle)
+        Tint(glow.runes2, 120 * scale, 45 * scale, r, g, b, alpha * 0.5)
+    end,
+})
+
+---------------------------------------------------------------------------
+-- Aura: the quietest, a soft halo and a wide hazy ring breathing with the
+-- pulse; nothing turns
+---------------------------------------------------------------------------
+
+Add({
+    id = "aura",
+    shock = false,
+    Build = function(glow)
+        glow:Part("aura", "fx_aura", "ARTWORK", 0)
+    end,
+    Paint = function(glow, f)
+        Halo(glow, f)
+        local s = 200 * (0.92 + 0.08 * f.beat) * f.scale
+        Tint(glow.aura, s, s, f.r, f.g, f.b, f.a1 * 0.8 + f.a2 * 0.4)
+    end,
+})
