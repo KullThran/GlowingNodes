@@ -122,6 +122,8 @@ ns.RegisterLocale("ptBR", {
     ARROW_LOCKED_TIP = "Destrave para arrastar a seta com o mouse.",
     ARROW_DISTANCE = "Mostrar a distância",
     ARROW_KEY_NOTE = "Defina uma tecla em Menu > Teclas de Atalho > AddOns > Glowing Nodes, ou digite /gn arrow.",
+    MAP_MINE = "Meus pontos coletados",
+    MAP_MINE_TIP = "Os pontos dos nós que você coletou ou viu, e suas áreas de esfolamento. Desligado, os mapas mostram só os pontos do banco de dados (se estiverem ligados); o que você coleta continua sendo registrado.",
     TAB_fish = "Pesca",
     CAT_fish = "Boia de pesca",
     FISH_HEIGHT = "Altura sobre a água",

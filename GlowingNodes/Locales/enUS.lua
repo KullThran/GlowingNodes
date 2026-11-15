@@ -126,6 +126,8 @@ ns.RegisterLocale("enUS", {
     ARROW_LOCKED_TIP = "Unlock it to drag the arrow with the mouse.",
     ARROW_DISTANCE = "Show the yards",
     ARROW_KEY_NOTE = "Bind a key in Menu > Key Bindings > AddOns > Glowing Nodes, or type /gn arrow.",
+    MAP_MINE = "My gathered spots",
+    MAP_MINE_TIP = "The points of the nodes you gathered or saw, and your hide areas. Switched off, the maps show only the database's spots (if they are on); what you gather is still logged.",
     TAB_fish = "Fishing",
     CAT_fish = "Fishing bobber",
     FISH_HEIGHT = "Height on the water",

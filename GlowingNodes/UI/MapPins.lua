@@ -172,7 +172,14 @@ local worldPool, miniPool = Pool(), Pool()
 local SHOW_PARENT = 1 -- HBD_PINS_WORLDMAP_SHOW_PARENT
 
 -- beads: ore and herbs (hides are drawn as areas), unless switched off in the Catalog tab
+-- your own points show unless "My gathered spots" is off; the database's
+-- have their own switch (Core/NodeDB.lua)
+function Pins.Mine()
+    return ns.db.map.mine ~= false
+end
+
 local function Visible(node)
+    if not node.db and not Pins.Mine() then return false end
     return node.k ~= "skin" and ns.db.map.show[node.k] and ns.Catalog.ShownNode(node) or false
 end
 Pins.Visible = Visible
@@ -278,7 +285,7 @@ local function SetupAreaLayer()
     function areaProvider:RefreshAllData()
         self:RemoveAllData()
         local map = ns.db and ns.db.map
-        if not (map and map.worldMap and map.show.skin) then return end
+        if not (map and map.worldMap and map.show.skin and Pins.Mine()) then return end
         local canvasMap = self:GetMap()
         local mapID = canvasMap:GetMapID()
         if not mapID then return end

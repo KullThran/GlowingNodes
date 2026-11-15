@@ -122,6 +122,8 @@ ns.RegisterLocale("zhCN", {
     ARROW_LOCKED_TIP = "解锁后可用鼠标拖动箭头。",
     ARROW_DISTANCE = "显示距离",
     ARROW_KEY_NOTE = "在 菜单 > 按键设置 > 插件 > Glowing Nodes 中绑定按键，或输入 /gn arrow。",
+    MAP_MINE = "我采集过的点",
+    MAP_MINE_TIP = "你采集过或见过的节点，以及你的剥皮区域。关闭后，地图只显示数据库中的点（若已开启）；你采集的内容仍会被记录。",
     TAB_fish = "钓鱼",
     CAT_fish = "鱼漂",
     FISH_HEIGHT = "水面高度",

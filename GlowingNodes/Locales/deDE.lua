@@ -122,6 +122,8 @@ ns.RegisterLocale("deDE", {
     ARROW_LOCKED_TIP = "Entsperren, um den Pfeil mit der Maus zu ziehen.",
     ARROW_DISTANCE = "Entfernung anzeigen",
     ARROW_KEY_NOTE = "Lege eine Taste fest unter Menü > Tastaturbelegung > AddOns > Glowing Nodes, oder tippe /gn arrow.",
+    MAP_MINE = "Meine gesammelten Punkte",
+    MAP_MINE_TIP = "Die Punkte der Vorkommen, die du gesammelt oder gesehen hast, und deine Kürschnergebiete. Ausgeschaltet zeigen die Karten nur die Punkte der Datenbank (falls an); was du sammelst, wird weiter verzeichnet.",
     TAB_fish = "Angeln",
     CAT_fish = "Angelschwimmer",
     FISH_HEIGHT = "Höhe auf dem Wasser",

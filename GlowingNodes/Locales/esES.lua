@@ -126,6 +126,8 @@ ns.RegisterLocale("esES", {
     ARROW_LOCKED_TIP = "Desbloquéala para arrastrar la flecha con el ratón.",
     ARROW_DISTANCE = "Mostrar las yardas",
     ARROW_KEY_NOTE = "Asigna una tecla en Menú > Atajos > Accesorios > Glowing Nodes, o usa /gn flecha.",
+    MAP_MINE = "Mis puntos recogidos",
+    MAP_MINE_TIP = "Los puntos de los nodos que has recogido o visto, y tus zonas de pieles. Apagado, los mapas solo muestran los de la base de datos (si están encendidos); lo que recoges se sigue registrando.",
     TAB_fish = "Pesca",
     CAT_fish = "Corcho de pesca",
     FISH_HEIGHT = "Altura sobre el agua",

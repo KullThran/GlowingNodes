@@ -6,6 +6,7 @@
 - "Also above my skill" on the Arrow tab (off by default): the arrow also leads to veins and herbs you can't gather yet, so you know where they are. Off, it leads only to what you can gather now.
 - The points on the minimap, the world map and the Map page show the icon of what the node gives, cut round: Tin Ore, Silver Ore, Peacebloom, Silverleaf... no longer one bead per kind.
 - A Catalog tab lists every ore and herb with its icon and level: switch one off and it no longer glows, shows on the maps or draws the arrow.
+- "My gathered spots", on by default: switch off your own points (and hide areas) on the world map, the minimap and the Map page, to see only the database's spots, or both off for a clean map. It sits next to "Database spots" in the Map page's Options (now in two columns), in the map filters and in Open Map's menu. With your points off, a database spot you have gathered shows as the database's again. What you gather is still logged.
 - Fishing: a new Fishing tab (off by default) puts a pale blue swirl on your bobber, turning on the water with sparkles, so it's easy to spot. Its colour, size, brightness, height and sound are yours to pick.
 
 ## 1.3.0 (2026-11-13)

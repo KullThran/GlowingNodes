@@ -122,6 +122,8 @@ ns.RegisterLocale("itIT", {
     ARROW_LOCKED_TIP = "Sbloccala per trascinare la freccia con il mouse.",
     ARROW_DISTANCE = "Mostra la distanza",
     ARROW_KEY_NOTE = "Assegna un tasto in Menu > Tasti > AddOn > Glowing Nodes, oppure scrivi /gn arrow.",
+    MAP_MINE = "I miei punti raccolti",
+    MAP_MINE_TIP = "I punti dei nodi che hai raccolto o visto, e le tue zone di scuoiatura. Spento, le mappe mostrano solo i punti del database (se attivi); ciò che raccogli viene comunque registrato.",
     TAB_fish = "Pesca",
     CAT_fish = "Galleggiante da pesca",
     FISH_HEIGHT = "Altezza sull'acqua",

@@ -122,6 +122,8 @@ ns.RegisterLocale("zhTW", {
     ARROW_LOCKED_TIP = "解鎖後可用滑鼠拖曳箭頭。",
     ARROW_DISTANCE = "顯示距離",
     ARROW_KEY_NOTE = "在 選單 > 按鍵設定 > 插件 > Glowing Nodes 中設定按鍵，或輸入 /gn arrow。",
+    MAP_MINE = "我採集過的點",
+    MAP_MINE_TIP = "你採集過或見過的節點，以及你的剝皮區域。關閉後，地圖只顯示資料庫中的點（若已開啟）；你採集的內容仍會被記錄。",
     TAB_fish = "釣魚",
     CAT_fish = "魚漂",
     FISH_HEIGHT = "水面高度",

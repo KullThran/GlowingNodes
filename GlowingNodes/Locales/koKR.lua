@@ -122,6 +122,8 @@ ns.RegisterLocale("koKR", {
     ARROW_LOCKED_TIP = "잠금을 해제하면 마우스로 화살표를 끌 수 있습니다.",
     ARROW_DISTANCE = "거리 표시",
     ARROW_KEY_NOTE = "메뉴 > 단축키 > 애드온 > Glowing Nodes에서 키를 지정하거나 /gn arrow를 입력하세요.",
+    MAP_MINE = "내가 채집한 지점",
+    MAP_MINE_TIP = "채집했거나 본 노드의 지점과 무두질 구역입니다. 끄면 지도에는 데이터베이스 지점만 표시됩니다(켜져 있는 경우). 채집한 것은 계속 기록됩니다.",
     TAB_fish = "낚시",
     CAT_fish = "낚시찌",
     FISH_HEIGHT = "수면 높이",

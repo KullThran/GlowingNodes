@@ -122,6 +122,8 @@ ns.RegisterLocale("frFR", {
     ARROW_LOCKED_TIP = "Déverrouillez-la pour déplacer la flèche à la souris.",
     ARROW_DISTANCE = "Afficher la distance",
     ARROW_KEY_NOTE = "Attribuez une touche dans Menu > Raccourcis > Addons > Glowing Nodes, ou tapez /gn arrow.",
+    MAP_MINE = "Mes points récoltés",
+    MAP_MINE_TIP = "Les points des nœuds que vous avez récoltés ou vus, et vos zones de dépeçage. Désactivé, les cartes ne montrent que les points de la base de données (s'ils sont activés) ; ce que vous récoltez est toujours enregistré.",
     TAB_fish = "Pêche",
     CAT_fish = "Flotteur de pêche",
     FISH_HEIGHT = "Hauteur sur l'eau",

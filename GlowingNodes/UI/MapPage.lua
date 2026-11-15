@@ -111,6 +111,7 @@ function ns.BuildMapPage(page)
     empty:SetPoint("RIGHT", -10, 0)
     empty:SetJustifyH("CENTER")
     empty:SetSpacing(2)
+    page.notice = empty
 
     local tiles = {}
     -- the zone's art, tile by tile, cut where the map ends
@@ -228,7 +229,7 @@ function ns.BuildMapPage(page)
             local rw, rh = G.AreaRadius(mapID)
             local cw, ch = CW(), CH()
             for key, node in pairs(zoneNodes) do
-                if ns.db.map.show[node.k] and ns.Catalog.ShownNode(node) then
+                if Pins.Mine() and ns.db.map.show[node.k] and ns.Catalog.ShownNode(node) then
                     local isArea = node.k == "skin"
                     local hit = query ~= "" and MatchName(node, query) ~= nil
                     local p
@@ -846,10 +847,10 @@ function ns.BuildMapPage(page)
     -----------------------------------------------------------------------
 
     local panels = {}
-    local function Panel()
+    local function Panel(w)
         local f = CreateFrame("Frame", nil, plate)
         f:SetFrameLevel(canvas:GetFrameLevel() + 12)
-        f:SetSize(PANEL_W, MAP_H - 12)
+        f:SetSize(w or PANEL_W, MAP_H - 12)
         f:SetPoint("TOPRIGHT", canvas, "TOPRIGHT", -6, -6)
         f:EnableMouse(true)
         W.NineSlice(f, "f_plate", 128, 24, 10, "BACKGROUND", 0)
@@ -884,8 +885,9 @@ function ns.BuildMapPage(page)
     total:SetWidth(PANEL_W - 28)
     total:SetSpacing(2)
 
-    -- the options: what to log, where to show it, clearing
-    local optPanel = Panel()
+    -- the options, in two columns: what to log and clearing it on the left,
+    -- which points show and where on the right
+    local optPanel = Panel(2 * PANEL_W - 12)
     local record = W.Section(optPanel, L.MAP_RECORD, PANEL_W - 24, 96)
     record:SetPoint("TOPLEFT", 12, -10)
     for _, kind in ipairs(KINDS) do
@@ -893,8 +895,12 @@ function ns.BuildMapPage(page)
             function() return ns.db.map.record[kind] end,
             function(v) ns.SetMap("record", v, kind) end), 22)
     end
-    local show = W.Section(optPanel, L.MAP_SHOW, PANEL_W - 24, 118)
-    show:SetPoint("TOPLEFT", 12, -110)
+    local show = W.Section(optPanel, L.MAP_SHOW, PANEL_W - 24, 162)
+    show:SetPoint("TOPLEFT", PANEL_W - 12, -10)
+    page.mine = show:Add(W.Check(show, L.MAP_MINE, L.MAP_MINE_TIP,
+        function() return ns.db.map.mine ~= false end, function(v) ns.SetMap("mine", v) end), 22)
+    page.database = show:Add(W.Check(show, L.MAP_DATABASE, L.MAP_DATABASE_TIP,
+        function() return ns.db.map.database end, function(v) ns.SetMap("database", v) end), 22)
     show:Add(W.Check(show, L.MAP_WORLD, L.MAP_WORLD_TIP,
         function() return ns.db.map.worldMap end, function(v) ns.SetMap("worldMap", v) end), 22)
     show:Add(W.Check(show, L.MAP_MINIMAP, L.MAP_MINIMAP_TIP,

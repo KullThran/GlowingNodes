@@ -82,6 +82,7 @@ ns.DEFAULTS = {
             -- the spots of Data/NodeSpawns.lua (where ore and herbs can
             -- spawn, from the 1.12 world database), fainter than your own
             database = false,
+            mine = true, -- the points you gathered (and your hide areas); off, only the database's
             worldMap = true,
             minimap = true,
             pinSize = 12,

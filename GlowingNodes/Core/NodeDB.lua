@@ -77,10 +77,12 @@ local function OwnerTest(mapID)
 end
 
 local cache, order = {}, {}
+local gathered = {} -- mapID -> { [key] = node }: the spots you logged, left out of cache
 local KEEP = 6
 
 function DB.Reset()
     wipe(cache)
+    wipe(gathered)
     wipe(order)
     types = nil
 end
@@ -102,6 +104,7 @@ function DB.Zone(mapID, force)
         local logged = G.Zone(mapID)
         local owner = OwnerTest(mapID)
         local all = Types()
+        gathered[mapID] = {}
         for i, s in pairs(lists) do
             local node = all[i]
             node.n = node.n or LocalName(node.k, node.r, node.en)
@@ -125,7 +128,11 @@ function DB.Zone(mapID, force)
                                 end
                             end
                         end
-                        if not mine then zone[G.Key(x, y)] = node end
+                        if mine then
+                            gathered[mapID][G.Key(x, y)] = node
+                        else
+                            zone[G.Key(x, y)] = node
+                        end
                     end
                 end
             end
@@ -133,15 +140,23 @@ function DB.Zone(mapID, force)
     end
     cache[mapID] = zone
     order[#order + 1] = mapID
-    if #order > KEEP then cache[table.remove(order, 1)] = nil end
+    if #order > KEEP then
+        local old = table.remove(order, 1)
+        cache[old], gathered[old] = nil, nil
+    end
     return zone or nil
 end
 
--- the database's spots on a map: fn(key, node)
+-- the database's spots on a map: fn(key, node). With your own points
+-- hidden on the maps (map.mine off), the spots you gathered are the
+-- database's again; the arrow (force) never takes them, it has yours.
 function DB.Each(mapID, fn, force)
     local zone = DB.Zone(mapID, force)
     if not zone then return end
     for key, node in pairs(zone) do fn(key, node) end
+    if not force and ns.db.map.mine == false then
+        for key, node in pairs(gathered[mapID] or {}) do fn(key, node) end
+    end
 end
 
 ns.On("NodesChanged", function() DB.Reset() end)
