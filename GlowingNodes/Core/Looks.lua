@@ -167,11 +167,11 @@ Add({
     Paint = function(glow, f)
         local scale, r, g, b = f.scale, f.r, f.g, f.b
         Halo(glow, f, true)
-        glow.swirlAngle = (glow.swirlAngle + f.elapsed * SWIRL_SPEED) % TAU
+        glow.swirlAngle = (glow.swirlAngle + f.elapsed * SWIRL_SPEED * f.speed) % TAU
         Turn(glow.swirl, glow.swirlAngle)
         Tint(glow.swirl, 170 * scale, 64 * scale, r, g, b, (f.a1 * 0.9 + f.a2 * 0.5) * (0.85 + 0.15 * f.beat))
         for _, s in ipairs(glow.sparkles) do
-            s.age = s.age + f.elapsed
+            s.age = s.age + f.elapsed * f.speed
             if s.age >= s.life then RespawnSparkle(s, true) end
             local shine = s.age > 0 and sin(pi * s.age / s.life) or 0
             local size = s.size * (0.5 + 0.5 * shine) * scale
@@ -221,19 +221,32 @@ local function Foot(glow, tex)
     tex:SetPoint("BOTTOM", glow.frame, "CENTER", 0, -12)
 end
 
+local STREAKS, STREAK_LIFE, STREAK_RISE = 3, 1.4, 440 -- seconds to climb; how high
+
 Add({
     id = "pillar",
     beam = false,
     Build = function(glow)
         Foot(glow, glow:Part("pillar", "fx_pillar", "BACKGROUND", 0))
         Foot(glow, glow:Part("pillarGlow", "fx_pillar", "BACKGROUND", 2))
+        -- streaks of light climbing the column, one after another
+        for i, s in ipairs(glow:Parts("pillarStreaks", STREAKS, "fx_pillar", "BACKGROUND", 3)) do
+            s.age = (i - 1) * STREAK_LIFE / STREAKS
+        end
     end,
     Paint = function(glow, f)
         local scale, r, g, b = f.scale, f.r, f.g, f.b
         Halo(glow, f, true)
         Tint(glow.pillar, 70 * scale, 520 * scale, r, g, b, f.a1 * 0.9 + f.a2 * 0.5)
-        local streak = 0.6 + 0.4 * sin(glow.t * 2)
-        Tint(glow.pillarGlow, 40 * scale, 520 * scale, r, g, b, (f.a1 * 0.5 + f.a2 * 0.3) * streak, 0.5)
+        Tint(glow.pillarGlow, 40 * scale, 520 * scale, r, g, b, (f.a1 * 0.4 + f.a2 * 0.25) * (0.85 + 0.15 * f.beat), 0.5)
+        for _, s in ipairs(glow.pillarStreaks) do
+            s.age = (s.age + f.elapsed * f.speed) % STREAK_LIFE
+            local up = s.age / STREAK_LIFE
+            local tex = s.tex
+            tex:ClearAllPoints()
+            tex:SetPoint("BOTTOM", glow.frame, "CENTER", 0, (-12 + up * STREAK_RISE) * scale)
+            Tint(tex, 18 * scale, 90 * scale, r, g, b, (f.a1 * 0.7 + f.a2 * 0.4) * sin(pi * up), 0.6)
+        end
     end,
 })
 

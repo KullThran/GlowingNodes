@@ -138,9 +138,13 @@ local function BuildPlate(page, cat)
     nameBox:SetPoint("TOPLEFT", prev, "TOPRIGHT", 4, 0)
     nameBox:SetPoint("BOTTOMRIGHT", nxt, "BOTTOMLEFT", -4, 0)
     nameBox:EnableMouse(true)
+    -- held between the arrows: a long name (in some languages) is cut short,
+    -- the whole of it on the tooltip
     local name = W.Text(nameBox, 13, W.INK_SOFT, W.TITLE_FONT)
-    name:SetPoint("CENTER")
+    name:SetPoint("LEFT", nameBox, "LEFT", 0, 0)
+    name:SetPoint("RIGHT", nameBox, "RIGHT", 0, 0)
     name:SetJustifyH("CENTER")
+    name:SetWordWrap(false)
     -- what the look is, on the name
     nameBox:SetScript("OnEnter", function(self)
         local id = Looks.Get(ns.db[cat].look).id
