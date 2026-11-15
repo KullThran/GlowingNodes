@@ -111,9 +111,46 @@ local function BuildPlate(page, cat)
     local glow = Glow.New(anchor)
     local state = "ready"
 
-    local caption = W.Text(page, 13, W.INK_SOFT, W.TITLE_FONT)
-    caption:SetPoint("TOP", plate, "BOTTOM", 0, -8)
-    caption:SetJustifyH("CENTER")
+    -- the look picker under the plate:  <  Rune circle  >  (round the list)
+    local Looks = ns.Looks
+    local function Step(by)
+        local list, at = Looks.LIST, 1
+        local id = Looks.Get(ns.db[cat].look).id
+        for i, v in ipairs(list) do if v == id then at = i end end
+        ns.SetCat(cat, "look", list[(at - 1 + by) % #list + 1])
+        page.preview.apply()
+        glow:Flare()
+    end
+    local function Arrow(by)
+        local b = W.Button(page, "", 26, function() Step(by) end)
+        b:SetHeight(22)
+        local t = W.Tex(b, "f_arrow", "OVERLAY")
+        t:SetSize(14, 14)
+        t:SetPoint("CENTER")
+        if by < 0 then t:SetTexCoord(1, 0, 0, 1) end
+        W.Tooltip(b, by < 0 and L.LOOK_PREV or L.LOOK_NEXT)
+        return b
+    end
+    local prev, nxt = Arrow(-1), Arrow(1)
+    prev:SetPoint("TOPLEFT", plate, "BOTTOMLEFT", 0, -6)
+    nxt:SetPoint("TOPRIGHT", plate, "BOTTOMRIGHT", 0, -6)
+    local nameBox = CreateFrame("Frame", nil, page)
+    nameBox:SetPoint("TOPLEFT", prev, "TOPRIGHT", 4, 0)
+    nameBox:SetPoint("BOTTOMRIGHT", nxt, "BOTTOMLEFT", -4, 0)
+    nameBox:EnableMouse(true)
+    local name = W.Text(nameBox, 13, W.INK_SOFT, W.TITLE_FONT)
+    name:SetPoint("CENTER")
+    name:SetJustifyH("CENTER")
+    -- what the look is, on the name
+    nameBox:SetScript("OnEnter", function(self)
+        local id = Looks.Get(ns.db[cat].look).id
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:AddLine(L["LOOK_" .. id], 1, 0.86, 0.6)
+        GameTooltip:AddLine(L["LOOK_" .. id .. "_TIP"], 0.9, 0.9, 0.9, true)
+        GameTooltip:Show()
+    end)
+    nameBox:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    page.look = { prev = prev, next = nxt, name = name }
 
     local function apply()
         local db = ns.db
@@ -133,7 +170,7 @@ local function BuildPlate(page, cat)
         else
             glow:SetNumber("")
         end
-        caption:SetText(L.PLATE_CAPTION:format(L["CAT_" .. cat]))
+        name:SetText(L["LOOK_" .. Looks.Get(db[cat].look).id])
         if not db[cat].enabled then glow:Hide() return end
         if not glow:IsShown() then
             glow:Attach(anchor, 0, 0)
