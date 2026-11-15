@@ -129,6 +129,45 @@ function Arrow:Apply()
     end
 end
 
+---------------------------------------------------------------------------
+-- The Arrow tab of the options window
+---------------------------------------------------------------------------
+
+function ns.BuildArrowPage(page)
+    local function get(key) return function() return Settings()[key] end end
+    local function set(key) return function(v) ns.SetArrow(key, v) end end
+    local main = W.Section(page, L.CARD_ARROW, 300, 330)
+    main:SetPoint("TOPLEFT", 2, -2)
+    page.enable = main:Add(W.Check(main, L.ARROW_ON, L.ARROW_ON_TIP, get("enabled"), set("enabled")), 30)
+    main:Add(W.Check(main, L.ARROW_ORE, nil, get("ore"), set("ore")), 24)
+    main:Add(W.Check(main, L.ARROW_HERB, nil, get("herb"), set("herb")), 24)
+    main:Add(W.Check(main, L.ARROW_DATABASE, L.ARROW_DATABASE_TIP, ns.ArrowUsesDatabase, set("database")), 30)
+    main:Add(W.Slider(main, L.ARROW_SCALE, 0.5, 2, 0.05, get("scale"), set("scale"),
+        function(v) return ("%d%%"):format(v * 100 + 0.5) end), 48)
+    main:Add(W.Check(main, L.ARROW_LOCKED, L.ARROW_LOCKED_TIP, get("locked"), set("locked")), 24)
+    main:Add(W.Check(main, L.ARROW_DISTANCE, nil, get("showDistance"), set("showDistance")), 34)
+    local note = W.Text(main, 12, W.INK_SOFT)
+    note:SetWidth(290)
+    note:SetText(L.ARROW_KEY_NOTE)
+    main:Add(note, 40)
+    -- the arrow itself, still, as it looks
+    local art = CreateFrame("Frame", nil, page)
+    art:SetSize(SIZE, SIZE)
+    art:SetPoint("TOPLEFT", 360, -40)
+    local body = W.Tex(art, "f_navarrow", "ARTWORK", 0)
+    body:SetAllPoints()
+    body:SetRotation(-0.6)
+    local gem = W.Tex(art, "f_navgem", "ARTWORK", 1)
+    gem:SetAllPoints()
+    gem:SetRotation(-0.6)
+    local c = ns.db.ore.color
+    gem:SetVertexColor(c.r, c.g, c.b)
+    function page:UpdateStatus()
+        local cc = ns.db.ore.color
+        gem:SetVertexColor(cc.r, cc.g, cc.b)
+    end
+end
+
 ns.On("Enable", function() Arrow:Apply() end)
 ns.On("Changed", function(key)
     if not ns.db then return end

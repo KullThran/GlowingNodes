@@ -1,5 +1,9 @@
 # Glowing Nodes Changelog
 
+## 1.4.0 (2026-11-15)
+- The arrow: a leather and bronze arrowhead on screen that points to the nearest ore vein or herb you can gather, with the item's icon and the yards under it. Once you are there and the node glows, the arrow steps aside for the glow. A spot you reach and find empty is skipped for 10 minutes, and the arrow fades while nothing is left to lead to. It hides in combat, in instances, on flight paths and while dead. It is our own frame, not a map waypoint.
+- Turn it on and off with a key (Key Bindings > AddOns > Glowing Nodes), with /gn arrow (or /gn flecha), or on the new Arrow tab, where you also pick ore, herbs or both, whether it uses the spawn database spots too, its size, and whether it can be dragged.
+
 ## 1.3.0 (2026-11-13)
 - Profiles: a new Profiles tab. Each character can keep its own settings ("Own settings for this character") or use the shared ones, as before; you can also make named profiles, use another character's, copy settings from one profile to another, delete one, or reset the one in use. A new profile starts as a copy of the settings in use. What you have gathered, the levels learned and the language stay account-wide.
 - "Glow lasts" on the Ore, Herbs, Skinning and Chests pages: how many seconds a node glows once it lights up (up to 60), after which the glow goes out softly. Back at the same node after half a minute, it glows again. "Always" (the default) keeps it as before: as long as the node is your interact target.
