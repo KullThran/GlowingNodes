@@ -296,6 +296,7 @@ function G.Seen(target)
     local kind = target and target.category
     if not kind or target.gnPrecise or not (ns.db and ns.db.map.record[kind]) then return end
     if kind == "skin" and not target.corpse then return end
+    if kind == "fish" then return end -- the bobber: pools go in from their loot
     -- in reach: as the client said it (inReach), else from the glow's state
     local inReach
     if target.inReach ~= nil then

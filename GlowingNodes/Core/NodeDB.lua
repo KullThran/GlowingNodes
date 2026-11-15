@@ -22,6 +22,7 @@ end
 -- gives; a vein keeps its English name where the client speaks English, else
 -- takes the ore's
 local function LocalName(kind, level, name)
+    if kind == "fish" then return name end -- a pool keeps its English name
     local loc = GetLocale and GetLocale() or "enUS"
     if loc == "enUS" or loc == "enGB" then return name end
     local item = ns.NodeData.ItemFor(kind, level, name)
@@ -37,9 +38,17 @@ local function Types()
     if types then return types end
     types = {}
     for i, t in ipairs(ns.NodeSpawns.nodes) do
-        types[i] = { k = t[1], r = t[2], en = t[3], o = t[4], c = 0, db = true }
+        types[i] = { k = t[1], r = t[2], en = t[3], o = t[4], i = t[5], c = 0, db = true }
     end
     return types
+end
+
+-- what a fishing pool mainly gives (an item ID), by its template's ID
+function DB.PoolItem(objectID)
+    local S = ns.NodeSpawns
+    local index = S and S.pools and S.pools[objectID]
+    local t = index and S.nodes[index]
+    return t and t[5] or nil
 end
 
 local CONTINENT = Enum and Enum.UIMapType and Enum.UIMapType.Continent or 2

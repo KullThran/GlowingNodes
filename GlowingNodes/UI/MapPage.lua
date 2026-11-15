@@ -15,7 +15,8 @@ local W = ns.W
 
 local MAP_W, MAP_H = 497, 331 -- the game's zone maps are 3:2
 local PLATE_X, PLATE_Y = 15, 30
-local KINDS = { "ore", "herb", "skin" }
+local KINDS = { "ore", "herb", "skin", "fish" } -- the filters under the map
+local RECORD_KINDS = { "ore", "herb", "skin" } -- what goes in the log (pools always do)
 local RECENT = 12
 local PANEL_W = 214
 local SEARCH_W = 190
@@ -170,7 +171,7 @@ function ns.BuildMapPage(page)
                 if item and Has(item.n, q) then return item.n end
             end
         end
-        if Has(L["CAT_" .. node.k], q) then return L["CAT_" .. node.k] end
+        if Has(ns.KindLabel(node.k), q) then return ns.KindLabel(node.k) end
         return nil
     end
 
@@ -327,7 +328,7 @@ function ns.BuildMapPage(page)
             local c = G.Counts(self.mapID)
             for _, kind in ipairs(KINDS) do
                 if (c[kind] or 0) > 0 then
-                    GameTooltip:AddLine(L["CAT_" .. kind] .. ": " .. c[kind], Pins.Color(kind))
+                    GameTooltip:AddLine(ns.KindLabel(kind) .. ": " .. c[kind], Pins.Color(kind))
                 end
             end
             GameTooltip:AddLine(L.MAP_OPEN_ZONE, 0.6, 0.6, 0.6)
@@ -890,7 +891,7 @@ function ns.BuildMapPage(page)
     local optPanel = Panel(2 * PANEL_W - 12)
     local record = W.Section(optPanel, L.MAP_RECORD, PANEL_W - 24, 96)
     record:SetPoint("TOPLEFT", 12, -10)
-    for _, kind in ipairs(KINDS) do
+    for _, kind in ipairs(RECORD_KINDS) do
         record:Add(W.Check(record, L["CAT_" .. kind], kind == "skin" and L.MAP_RECORD_SKIN_TIP or L.MAP_RECORD_TIP,
             function() return ns.db.map.record[kind] end,
             function(v) ns.SetMap("record", v, kind) end), 22)
@@ -943,10 +944,11 @@ function ns.BuildMapPage(page)
             ns.SetMap("show", not ns.db.map.show[kind], kind)
             W.Click()
         end)
-        W.Tooltip(b, L["CAT_" .. kind], L.MAP_FILTER_TIP)
+        W.Tooltip(b, ns.KindLabel(kind), L.MAP_FILTER_TIP)
         b.kind = kind
         filters[i] = b
     end
+    page.filters = filters
     local optBtn = W.Button(page, L.MAP_OPTIONS_BTN, 90, function() Toggle(optPanel) end)
     optBtn:SetPoint("TOPRIGHT", plate, "BOTTOMRIGHT", 0, -6)
     local logBtn = W.Button(page, L.MAP_LOG_BTN, 90, function() Toggle(logPanel) end)
@@ -1009,7 +1011,7 @@ function ns.BuildMapPage(page)
             local on = ns.db.map.show[b.kind]
             b.dot:SetVertexColor(Pins.Color(b.kind))
             b.dot:SetAlpha(on and 1 or 0.3)
-            b.text:SetText(L["CAT_" .. b.kind] .. "  " .. (counts[b.kind] or 0))
+            b.text:SetText(ns.KindLabel(b.kind) .. "  " .. (counts[b.kind] or 0))
             b.text:SetTextColor(unpack(on and W.INK or W.INK_SOFT))
             b:SetAlpha(on and 1 or 0.7)
         end

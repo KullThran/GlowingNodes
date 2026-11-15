@@ -79,6 +79,22 @@ local function DropLines(node)
 end
 Pins.DropLines = DropLines
 
+-- a fishing pool's catch: "Gives: Oily Blackmouth", in its quality's colour
+local function GivesLine(node)
+    local id = node.i or (node.o and ns.NodeDB.PoolItem(node.o))
+    if not id then return end
+    local get = C_Item and C_Item.GetItemNameByID or GetItemInfo
+    local ok, name = pcall(get, id)
+    if not (ok and type(name) == "string" and name ~= "") then return end
+    local quality = C_Item and C_Item.GetItemQualityByID and select(2, pcall(C_Item.GetItemQualityByID, id))
+    if type(quality) ~= "number" and GetItemInfo then
+        local ok2, _, _, q = pcall(GetItemInfo, id)
+        quality = ok2 and q or nil
+    end
+    local c = type(quality) == "number" and ITEM_QUALITY_COLORS and ITEM_QUALITY_COLORS[quality]
+    GameTooltip:AddLine(L.FISH_GIVES:format(name), c and c.r or 1, c and c.g or 1, c and c.b or 1)
+end
+
 -- the tooltip of a hide area: the creatures skinned there
 local function AreaTooltip(node)
     local r, g, b = Pins.Color("skin")
@@ -105,11 +121,13 @@ function Pins.Tooltip(owner, node)
     GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
     if node.k == "skin" then return AreaTooltip(node) end
     local r, g, b = Pins.Color(node.k)
-    GameTooltip:AddLine(node.n or L["CAT_" .. node.k], r, g, b)
+    local fish = node.k == "fish"
+    GameTooltip:AddLine(node.n or ns.KindLabel(node.k), r, g, b)
     GameTooltip:AddLine(L["PROF_" .. node.k], 0.8, 0.8, 0.8)
+    if fish then GivesLine(node) end
     if node.db then
         -- a spot of the 1.12 database: maybe there, never gathered by you
-        if node.r then GameTooltip:AddLine(L.PIN_LEVEL:format(node.r), 0.8, 0.8, 0.8) end
+        if node.r and not fish then GameTooltip:AddLine(L.PIN_LEVEL:format(node.r), 0.8, 0.8, 0.8) end
         GameTooltip:AddLine(L.PIN_DATABASE, 0.7, 0.7, 0.7, true)
         GameTooltip:Show()
         return
@@ -119,7 +137,7 @@ function Pins.Tooltip(owner, node)
     else
         GameTooltip:AddLine(L.PIN_SEEN, 1, 1, 1)
     end
-    if node.r then GameTooltip:AddLine(L.PIN_LEVEL:format(node.r), 0.8, 0.8, 0.8) end
+    if node.r and not fish then GameTooltip:AddLine(L.PIN_LEVEL:format(node.r), 0.8, 0.8, 0.8) end
     if node.p == false then GameTooltip:AddLine(L.PIN_ROUGH, 0.7, 0.7, 0.7) end
     DropLines(node)
     local last = node.t or node.v

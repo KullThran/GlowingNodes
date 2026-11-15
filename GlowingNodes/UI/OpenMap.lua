@@ -115,6 +115,7 @@ end
 local ICONS = {
     ore = "Interface\\Icons\\INV_Ore_Copper_01",
     herb = "Interface\\Icons\\INV_Misc_Flower_02",
+    fish = "Interface\\Icons\\Trade_Fishing",
 }
 
 -- the switches go in its menu (true: our own button isn't wanted)
@@ -132,8 +133,8 @@ function O.RegisterMenu()
     end
     local ok = Add("worldMap", L.MAP_WORLD, ns.ART .. "emblem",
         function() return ns.db.map.worldMap end, function(v) ns.SetMap("worldMap", v and true or false) end)
-    for _, kind in ipairs({ "ore", "herb", "skin" }) do
-        ok = Add(kind, L["CAT_" .. kind], ICONS[kind] or ns.SkinZones.ICON,
+    for _, kind in ipairs({ "ore", "herb", "skin", "fish" }) do
+        ok = Add(kind, ns.KindLabel(kind), ICONS[kind] or ns.SkinZones.ICON,
             function() return ns.db.map.show[kind] end, function(v) ns.SetMap("show", v and true or false, kind) end) and ok
     end
     ok = Add("mine", L.MAP_MINE, "Interface\\Icons\\INV_Misc_Bag_10",

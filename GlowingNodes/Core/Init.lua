@@ -77,10 +77,10 @@ ns.DEFAULTS = {
             point = nil, -- { point, relPoint, x, y } once dragged
         },
         map = {
-            record = { ore = true, herb = true, skin = true }, -- what goes in the log
+            record = { ore = true, herb = true, skin = true, fish = true }, -- what goes in the log
             -- what the maps draw; skinning (your hide areas and the purple
             -- skinning zones of Data/SkinAreas.lua) starts off
-            show = { ore = true, herb = true, skin = false },
+            show = { ore = true, herb = true, skin = false, fish = true }, -- fish: fishing pools
             -- the spots of Data/NodeSpawns.lua (where ore and herbs can
             -- spawn, from the 1.12 world database), fainter than your own
             database = false,
@@ -227,6 +227,13 @@ end
 function ns.SetCat(category, key, value)
     ns.db[category][key] = value
     ns.Fire("Changed", category .. "." .. key)
+end
+
+-- a kind of point on the maps' filters: fishing pools are "fish", whose
+-- CAT_ text is the bobber's
+function ns.KindLabel(kind)
+    if kind == "fish" then return ns.L.MAP_FISH end
+    return ns.L["CAT_" .. kind]
 end
 
 -- ns.SetMap("worldMap", true) / ns.SetMap("show", false, "herb")
