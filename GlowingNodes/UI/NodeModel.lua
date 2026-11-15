@@ -18,6 +18,7 @@ NodeModel.MODELS = {
     herb = { file = 219440 },
     skin = { display = 604, anim = 6, yaw = 0.6 },
     chest = { file = 219372, yaw = 0.5 }, -- world/skillactivated/containers/treasurechest01.m2
+    fish = { file = 201000 }, -- world/goober/g_fishingbobber.m2
 }
 
 local FOV = 0.6       -- radians

@@ -16,12 +16,13 @@ ns.Window = Window
 
 local WIDTH, HEIGHT = 768, 512
 local HEADER_H = 64
-local TAB_STEP = 31 -- eleven tabs down the side, clear of the size ruler
-local TAB_H = 28
+local TAB_STEP = 29 -- twelve tabs down the side, clear of the size ruler
+local TAB_H = 26
 local TAB_TOP = HEADER_H + 12 -- the first tab's top
 local RAIL_X = 188               -- margin rule after the tabs
 local CONTENT_X, CONTENT_Y = 204, 78
-local TABS = { "general", "ore", "herb", "skin", "chest", "catalog", "map", "arrow", "alert", "profiles", "about" }
+local TABS = { "general", "ore", "herb", "skin", "chest", "fish", "catalog", "map", "arrow", "alert", "profiles",
+    "about" }
 Window.TABS = TABS
 local SAMPLE = { ore = 65, herb = 100, skin = 35 }
 local SAMPLE_NAME = { ore = "SAMPLE_NODE", herb = "PROF_herb", skin = "PROF_skin" }
@@ -50,6 +51,7 @@ local ICONS = {
     herb = Data.CATEGORY_ICONS.herb,
     skin = Data.CATEGORY_ICONS.skin,
     chest = Data.CATEGORY_ICONS.chest,
+    fish = Data.CATEGORY_ICONS.fish,
     catalog = "Interface\\Icons\\INV_Scroll_03",
     map ="Interface\\Icons\\INV_Misc_Map_01",
     arrow = "Interface\\Icons\\INV_Ammo_Arrow_02",
@@ -100,9 +102,11 @@ local function BuildPlate(page, cat)
     end)
     if model then icon:Hide() end
 
+    -- the bobber's swirl lies on the water, under the bobber
+    local swirl = cat == "fish"
     local anchor = CreateFrame("Frame", nil, plate)
     anchor:SetSize(1, 1)
-    anchor:SetPoint("CENTER", node, "CENTER")
+    anchor:SetPoint("CENTER", node, "CENTER", 0, swirl and -30 or 0)
     anchor:SetFrameLevel(node:GetFrameLevel() + 2)
     local glow = Glow.New(anchor)
     local state = "ready"
@@ -113,7 +117,8 @@ local function BuildPlate(page, cat)
 
     local function apply()
         local db = ns.db
-        glow:Configure(db[cat], { numberSize = db.numberSize, greyLocked = db.greyLocked, dimFar = db.dimFar, scale = 0.78 })
+        glow:Configure(db[cat], { numberSize = db.numberSize, greyLocked = db.greyLocked, dimFar = db.dimFar, scale = 0.78,
+            look = swirl and "swirl" or nil })
         local required = SAMPLE[cat]
         local skill = Skills.Get(cat)
         if not required then
@@ -139,6 +144,8 @@ local function BuildPlate(page, cat)
         glow.textFrame:SetFrameLevel(anchor:GetFrameLevel() + 8)
     end
 
+    page.preview = { apply = apply, glow = glow }
+    if swirl then return end -- a bobber is never far or too low: no stamps
     local states = { { "far", L.STATE_FAR }, { "ready", L.STATE_READY }, { "locked", L.STATE_LOCKED } }
     if not ns.PROFESSIONS[cat] then states[3] = nil end -- a chest is never "too low"
     local stamps = W.Stamps(page, states, function() return state end, function(v)
@@ -148,8 +155,7 @@ local function BuildPlate(page, cat)
     end)
     stamps:SetPoint("TOPLEFT", plate, "BOTTOMLEFT", 0, -32)
     stamps:SetPoint("TOPRIGHT", plate, "BOTTOMRIGHT", 0, -32)
-
-    page.preview = { apply = apply }
+    page.stamps = stamps
 end
 
 local function BuildCategoryPage(page, cat)
@@ -163,12 +169,22 @@ local function BuildCategoryPage(page, cat)
     glow:Add(W.ColorRow(glow, L.COLOR, L.COLOR_TIP, function() return cfg().color end, function(r, g, b)
         ns.SetCat(cat, "color", { r = r, g = g, b = b })
     end), 44)
-    glow:Add(W.Slider(glow, L.INTENSITY, 0.5, 3, 0.1, function() return cfg().intensity end, setter("intensity"), Pct), 42)
-    glow:Add(W.Slider(glow, L.SIZE, 0.5, 2, 0.05, function() return cfg().size end, setter("size"), Pct), 44)
+    -- the bobber's card has one slider more (its height) for the beam's check:
+    -- its sliders sit closer to keep clear of the sound card
+    local fish = cat == "fish"
+    glow:Add(W.Slider(glow, L.INTENSITY, 0.5, 3, 0.1, function() return cfg().intensity end, setter("intensity"), Pct),
+        fish and 40 or 42)
+    glow:Add(W.Slider(glow, L.SIZE, 0.5, 2, 0.05, function() return cfg().size end, setter("size"), Pct), fish and 40 or 44)
     glow:Add(W.Slider(glow, L.GLOW_TIME, 0, 60, 1, function() return cfg().glowTime or 0 end, setter("glowTime"),
-        function(v) return v == 0 and L.GLOW_TIME_ALWAYS or L.SECONDS:format(v) end, L.GLOW_TIME_TIP), 44)
+        function(v) return v == 0 and L.GLOW_TIME_ALWAYS or L.SECONDS:format(v) end, L.GLOW_TIME_TIP), fish and 40 or 44)
     glow:Add(W.Check(glow, L.PULSE, L.PULSE_TIP, function() return cfg().pulse end, setter("pulse")), 26)
-    glow:Add(W.Check(glow, L.BEAM, L.BEAM_TIP, function() return cfg().beam end, setter("beam")), 26)
+    if fish then
+        -- the swirl's height over the water instead of a column of light
+        page.height = glow:Add(W.Slider(glow, L.FISH_HEIGHT, -140, 40, 1, function() return cfg().height or -60 end,
+            setter("height"), nil, L.FISH_HEIGHT_TIP), 44)
+    else
+        page.beam = glow:Add(W.Check(glow, L.BEAM, L.BEAM_TIP, function() return cfg().beam end, setter("beam")), 26)
+    end
 
     local sound = W.Section(page, L.CARD_SOUND, 300, 130)
     sound:SetPoint("TOPLEFT", 236, -296)

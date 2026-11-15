@@ -354,6 +354,7 @@ function W.Slider(parent, label, minV, maxV, step, get, set, fmt, tip)
         show(get())
     end
     f:Refresh()
+    f.slider = s
     return W.Track(f)
 end
 
