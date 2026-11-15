@@ -22,11 +22,20 @@ end
 
 -- A pin wears the icon of what its node gives (Tin Ore, Silver Ore,
 -- Peacebloom...), cut round, in its own colours: no two kinds of ore or herb
--- look alike. Database spots carry only their English name (en).
+-- look alike. Database spots carry only their English name (en). Ores and
+-- herbs go by their catalog type (the object's ID first, so any client
+-- language works); one the catalog doesn't know wears the plain ore or herb
+-- icon rather than another node's.
 local ROUND = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
 
 function Pins.Icon(node)
-    return ns.NodeData.IconFor(node.k, node.r, node.n or node.en)
+    local Data = ns.NodeData
+    if node.k == "ore" or node.k == "herb" then
+        local key = ns.Catalog.TypeOf(node.o, node.n or node.en, node.k)
+        local t = key and ns.Catalog.ByKey[key]
+        return t and Data.ItemIcon(t.item) or Data.CATEGORY_ICONS[node.k]
+    end
+    return Data.IconFor(node.k, node.r, node.n or node.en)
 end
 
 function Pins.Paint(tex, node)

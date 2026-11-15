@@ -42,6 +42,7 @@ local function NewRow(list)
     row.name = W.Text(row, 12)
     row.name:SetPoint("LEFT", row.icon, "RIGHT", 6, 0)
     row.name:SetPoint("RIGHT", row.level, "LEFT", -4, 0)
+    if row.name.SetWordWrap then row.name:SetWordWrap(false) end -- the tooltip has it whole
     row.name:SetShadowColor(0, 0, 0, 0.9)
     row.name:SetShadowOffset(1, -1)
     row:SetScript("OnEnter", function(self)
