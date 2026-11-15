@@ -469,6 +469,8 @@ end
 
 -- opts: leather (gold label on the cover), boxWidth, fontOf(value) for values
 -- written in another alphabet
+local dropdown -- the one list of choices (W.OpenDropdown, below)
+
 function W.Selector(parent, label, values, nameOf, get, set, extraWidth, opts)
     opts = opts or {}
     local f = CreateFrame("Frame", nil, parent)
@@ -481,7 +483,8 @@ function W.Selector(parent, label, values, nameOf, get, set, extraWidth, opts)
     local box = CreateFrame("Frame", nil, f)
     box:SetPoint("RIGHT", -(extraWidth or 0), 0)
     box:SetSize(opts.boxWidth or 140, 24)
-    local well = CreateFrame("Frame", nil, box)
+    -- the value: a click opens the list of choices (W.OpenDropdown)
+    local well = CreateFrame("Button", nil, box)
     well:SetPoint("TOPLEFT", 18, 1)
     well:SetPoint("BOTTOMRIGHT", -18, -1)
     W.NineSlice(well, "f_inset", 128, 24, 9, "BACKGROUND", 0)
@@ -491,7 +494,14 @@ function W.Selector(parent, label, values, nameOf, get, set, extraWidth, opts)
     valueText:SetPoint("RIGHT", -6, 0)
     valueText:SetJustifyH("CENTER")
     if valueText.SetWordWrap then valueText:SetWordWrap(false) end
-    f.box = box
+    f.box, f.well, f.valueText = box, well, valueText
+    well:SetScript("OnClick", function() W.OpenDropdown(f, values, nameOf, get, set, opts.fontOf) end)
+    well:SetScript("OnEnter", function() valueText:SetTextColor(1, 0.86, 0.6) end)
+    well:SetScript("OnLeave", function() valueText:SetTextColor(unpack(W.INK)) end)
+    -- the selector gone (its page closed): its list too
+    f:HookScript("OnHide", function()
+        if dropdown and dropdown.owner == f then dropdown:Hide() end
+    end)
 
     local function index()
         local cur = get()
@@ -528,6 +538,137 @@ function W.Selector(parent, label, values, nameOf, get, set, extraWidth, opts)
     end
     f:Refresh()
     return W.Track(f)
+end
+
+---------------------------------------------------------------------------
+-- Dropdown: a selector's value opens the list of its choices under it, one
+-- list for all selectors. A click picks and closes it; a click outside or
+-- Escape closes it. More than DROPDOWN_ROWS choices scroll.
+---------------------------------------------------------------------------
+
+W.DROPDOWN_ROW = 20
+local DROPDOWN_ROWS = 10
+
+local function DropdownFrame()
+    if dropdown then return dropdown end
+    -- the rest of the screen: a click there closes the list
+    local catcher = CreateFrame("Button", nil, UIParent)
+    catcher:SetAllPoints(UIParent)
+    catcher:SetFrameStrata("FULLSCREEN_DIALOG")
+    catcher:Hide()
+    local d = CreateFrame("Frame", nil, UIParent)
+    d:SetFrameStrata("FULLSCREEN_DIALOG")
+    d:SetFrameLevel((catcher:GetFrameLevel() or 0) + 10)
+    d:EnableMouse(true)
+    d:Hide()
+    W.Backing(d, 0.96)
+    W.NineSlice(d, "f_inset", 128, 24, 9, "BACKGROUND", 0)
+    d.catcher, d.rows, d.lists = catcher, {}, {}
+    catcher:SetScript("OnClick", function() d:Hide() end)
+    d:SetScript("OnHide", function(self)
+        catcher:Hide()
+        self.owner = nil
+    end)
+    -- Escape closes the list, not the window under it; other keys go on
+    d:EnableKeyboard(true)
+    d:SetScript("OnKeyDown", function(self, key)
+        local esc = key == "ESCAPE"
+        if self.SetPropagateKeyboardInput then pcall(self.SetPropagateKeyboardInput, self, not esc) end
+        if esc then self:Hide() end
+    end)
+    dropdown = d
+    return d
+end
+
+-- the open list (or nil before the first)
+function W.Dropdown() return dropdown end
+
+local function Row(d, i)
+    local r = d.rows[i]
+    if r then return r end
+    r = CreateFrame("Button", nil, d)
+    r:SetHeight(W.DROPDOWN_ROW)
+    r.mark = r:CreateTexture(nil, "BACKGROUND")
+    r.mark:SetAllPoints()
+    r.mark:SetColorTexture(0.85, 0.62, 0.25, 0.22)
+    r.lit = r:CreateTexture(nil, "HIGHLIGHT")
+    r.lit:SetAllPoints()
+    r.lit:SetColorTexture(1, 0.86, 0.6, 0.14)
+    r.text = W.Text(r, 12, W.INK)
+    r.text:SetPoint("LEFT", 8, 0)
+    r.text:SetPoint("RIGHT", -6, 0)
+    r.text:SetJustifyH("LEFT")
+    if r.text.SetWordWrap then r.text:SetWordWrap(false) end
+    r:SetScript("OnClick", function(self)
+        local pick = self.pick
+        d:Hide()
+        if pick then pick() end
+    end)
+    d.rows[i] = r
+    return r
+end
+
+-- open owner's list of values under its box (closes it if it is open)
+function W.OpenDropdown(owner, values, nameOf, get, set, fontOf)
+    local d = DropdownFrame()
+    if d:IsShown() and d.owner == owner then d:Hide() return end
+    local n = #values
+    if n == 0 then return end
+    local width = math.max(owner.box:GetWidth() or 140, 140)
+    local shownN = math.min(n, DROPDOWN_ROWS)
+    local h = shownN * W.DROPDOWN_ROW
+    -- a scroll list per size (frames can't be freed)
+    local key = width .. "x" .. h
+    local list = d.lists[key]
+    if not list then
+        list = W.ScrollList(d, width - 8, h)
+        list:SetPoint("TOPLEFT", 4, -4)
+        d.lists[key] = list
+    end
+    for k, other in pairs(d.lists) do other:SetShown(k == key) end
+    d.scroll = list
+    d:SetSize(width, h + 8)
+    d:ClearAllPoints()
+    local below = (owner.box:GetBottom() or 1000) > h + 40
+    if below then
+        d:SetPoint("TOPLEFT", owner.box, "BOTTOMLEFT", 0, -2)
+    else
+        d:SetPoint("BOTTOMLEFT", owner.box, "TOPLEFT", 0, 2)
+    end
+    local cur, curIndex = get(), 1
+    local rowW = (width - 8) - (n > DROPDOWN_ROWS and 14 or 0)
+    for i = 1, math.max(n, #d.rows) do
+        local r = Row(d, i)
+        if i <= n then
+            local v = values[i]
+            r:SetParent(list.content)
+            r:SetWidth(rowW)
+            r:ClearAllPoints()
+            r:SetPoint("TOPLEFT", list.content, "TOPLEFT", 0, -(i - 1) * W.DROPDOWN_ROW)
+            r.text:SetText(nameOf(v))
+            if fontOf then r.text:SetFont(fontOf(v) or W.FONT, 12, "") else r.text:SetFont(W.FONT, 12, "") end
+            r.current = v == cur
+            if r.current then curIndex = i end
+            r.mark:SetShown(r.current)
+            r.text:SetTextColor(unpack(r.current and { 1, 0.86, 0.6 } or W.INK))
+            r.pick = function()
+                set(v)
+                Click()
+                if owner.Refresh then owner:Refresh() end
+            end
+            r:Show()
+        else
+            r.pick, r.current = nil, nil
+            r:Hide()
+        end
+    end
+    list:SetContentHeight(n * W.DROPDOWN_ROW)
+    -- the current choice in sight, a few rows from the top
+    list:SetOffset((curIndex - 4) * W.DROPDOWN_ROW)
+    d.owner = owner
+    d.catcher:Show()
+    d:Show()
+    Click()
 end
 
 ---------------------------------------------------------------------------

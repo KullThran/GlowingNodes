@@ -235,6 +235,7 @@ local function BuildCategoryPage(page, cat)
             ns.SetCat(cat, "sound", v)
             Sounds.Play(v, cfg().volume, ns.db.channel, true)
         end, 72), 30)
+    page.soundSel = sel
     local play = W.Button(sel, L.TEST, 66, function() Sounds.PlayCategory(cat, true) end)
     play:SetPoint("RIGHT", 0, 0)
     play:SetHeight(24)
