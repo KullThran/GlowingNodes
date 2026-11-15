@@ -6,6 +6,9 @@
 -- so a spot is where nodes spawn, not where one is now.
 -- No Blizzard waypoint: nothing here touches C_Map waypoints, the super
 -- track or C_Navigation, so other addons keep their destination.
+-- With a fishing pole equipped (and arrow.fish on) it leads to fishing
+-- pools instead, one after another: a pool can't be picked by the game, so
+-- in reach it waits FISH_WAIT seconds, longer while you fish there.
 -- Logic only; UI/Arrow.lua draws what Update returns.
 local _, ns = ...
 
@@ -21,6 +24,7 @@ Nav.GATHERED_YARDS = 30
 Nav.EMPTY_YARDS = 20      -- a spot this close to one found empty is the same node
 Nav.GATHERED_WITHIN = 2
 Nav.DIM_ALPHA = 0.45
+Nav.FISH_WAIT = 10        -- seconds at a pool without a cast: it isn't there now
 
 local KINDS = { ore = true, herb = true }
 
@@ -37,6 +41,23 @@ local function Ask(fn, ...)
 end
 
 local function HBD() return LibStub and LibStub("HereBeDragons-2.0", true) end
+
+-- a fishing pole in the main hand: weapon (class 2), fishing pole (subclass
+-- 20), as the item's type says it in every language
+local MAIN_HAND, WEAPON, FISHING_POLE = 16, 2, 20
+function Nav.HasPole()
+    local id = Ask(GetInventoryItemID, "player", MAIN_HAND)
+    if not id then return false end
+    local instant = GetItemInfoInstant or (C_Item and C_Item.GetItemInfoInstant)
+    if not instant then return false end
+    local ok, _, _, _, _, _, class, subclass = pcall(instant, id)
+    return ok and class == WEAPON and subclass == FISHING_POLE or false
+end
+
+-- pools, not veins and herbs, now
+function Nav.FishMode()
+    return ns.db ~= nil and ns.db.arrow.fish == true and Nav.HasPole()
+end
 
 ---------------------------------------------------------------------------
 -- Candidates
@@ -70,12 +91,28 @@ local function Add(list, hbd, mapID, key, node, skills)
         category = kind, node = node }
 end
 
+local function AddPool(list, hbd, mapID, key, node)
+    if node.k ~= "fish" then return end
+    local x, y = ns.Gather.Decode(key)
+    local wx, wy, instance = Ask(hbd.GetWorldCoordinatesFromZone, hbd, x, y, mapID)
+    if not (wx and wy) then return end
+    list[#list + 1] = { key = key, mapID = mapID, wx = wx, wy = wy, instance = instance,
+        category = "fish", node = node }
+end
+
 -- this map's spots the arrow may lead to (built once, until something changes)
 function Nav.Candidates(mapID)
-    if cache[mapID] then return cache[mapID] end
-    local list = {}
+    local fish = Nav.FishMode()
+    if cache[mapID] and cache[mapID].fish == fish then return cache[mapID] end
+    local list = { fish = fish }
     local hbd = HBD()
-    if hbd and mapID then
+    if hbd and mapID and fish then
+        -- your pools, and the database's; no skill, no Catalog, no bobber glow
+        for key, node in pairs(ns.Gather.Zone(mapID) or {}) do AddPool(list, hbd, mapID, key, node) end
+        if ns.ArrowUsesDatabase() then
+            ns.NodeDB.Each(mapID, function(key, node) AddPool(list, hbd, mapID, key, node) end, true)
+        end
+    elseif hbd and mapID then
         local skills = { ore = Wanted("ore") or false, herb = Wanted("herb") or false }
         for key, node in pairs(ns.Gather.Zone(mapID) or {}) do
             if skills[node.k] then Add(list, hbd, mapID, key, node, skills) end
@@ -149,6 +186,7 @@ end
 -- the glow has a node the arrow would lead to: it takes over from here
 local function HandsOver(current)
     if not (current and KINDS[current.category] and not current.blocked) then return false end
+    if Nav.FishMode() then return false end -- leading to pools: a vein's glow isn't where it goes
     local skill = Wanted(current.category)
     if not skill then return false end
     return Reachable(current.required, current.skill or skill)
@@ -214,14 +252,23 @@ function Nav.Update(now)
         view.state = "empty"
         return view
     end
-    -- in reach and no node picked for a while: nothing there now
+    -- in reach and no node picked for a while: nothing there now. A pool is
+    -- never picked: it waits longer, and while you fish there it stays
     if bestYards <= Nav.ARRIVE_YARDS then
+        local pool = best.category == "fish"
         arrivedAt = arrivedAt or now
-        if now - arrivedAt >= Nav.WAIT then
+        if pool and ns.SoftTarget and ns.SoftTarget.Fishing and ns.SoftTarget.Fishing() then arrivedAt = now end
+        local wait = pool and Nav.FISH_WAIT or Nav.WAIT
+        if now - arrivedAt >= wait then
             local picked = ns.SoftTarget and ns.SoftTarget.current
-            ns.Debug(("ARROW marked empty: %s, %d yd off, no node of yours picked in %d s (the game picks: %s)"):format(
-                tostring(best.node and (best.node.n or best.node.en)), bestYards + 0.5, Nav.WAIT,
-                picked and tostring(picked.name) .. " (" .. tostring(picked.category) .. ")" or "nothing"))
+            if pool then
+                ns.Debug(("ARROW marked empty: pool %s, %d yd off, no cast in %d s"):format(
+                    tostring(best.node and (best.node.n or best.node.en)), bestYards + 0.5, wait))
+            else
+                ns.Debug(("ARROW marked empty: %s, %d yd off, no node of yours picked in %d s (the game picks: %s)"):format(
+                    tostring(best.node and (best.node.n or best.node.en)), bestYards + 0.5, wait,
+                    picked and tostring(picked.name) .. " (" .. tostring(picked.category) .. ")" or "nothing"))
+            end
             Nav.MarkEmpty(best, now)
             arrivedAt = nil
             return Nav.Update(now)
@@ -252,12 +299,21 @@ function Nav.Track()
 end
 
 -- A gather just now: every spot within reach of where you stand is empty.
+-- A catch from a pool is the other way round: the pool is there, so the
+-- arrow's pool in reach waits again.
 local function Gathered()
     local last = ns.Gather.lastGather
     local now = GetTime()
     if not (last and last.mapID and last.at and now - last.at <= Nav.GATHERED_WITHIN) then return end
     local hbd = HBD()
     local px, py = Ask(hbd and hbd.GetPlayerWorldPosition, hbd)
+    if last.kind == "fish" then
+        if target and target.category == "fish" and arrivedAt and px and py then
+            local dx, dy = target.wx - px, target.wy - py
+            if dx * dx + dy * dy <= Nav.ARRIVE_YARDS * Nav.ARRIVE_YARDS then arrivedAt = now end
+        end
+        return
+    end
     if px and py then MarkAt(last.mapID, px, py, Nav.GATHERED_YARDS, now) end
 end
 
@@ -266,6 +322,10 @@ ns.On("NodesChanged", function()
     Nav.Refresh()
 end)
 ns.On("Learned", function() Nav.Refresh() end)
+-- a pole put on or taken off: pools or veins and herbs
+local gear = CreateFrame("Frame")
+gear:SetScript("OnEvent", function() Nav.Reset() end)
+pcall(gear.RegisterEvent, gear, "PLAYER_EQUIPMENT_CHANGED")
 ns.On("SkillsChanged", function() Nav.Refresh() end)
 ns.On("Changed", function(key)
     if key == "*" or key == "profiles" or key == "catalog" or key == "map.database" or key == "ore.enabled" or key == "herb.enabled"

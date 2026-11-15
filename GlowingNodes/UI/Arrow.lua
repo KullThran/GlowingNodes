@@ -184,11 +184,12 @@ end
 function ns.BuildArrowPage(page)
     local function get(key) return function() return Settings()[key] end end
     local function set(key) return function(v) ns.SetArrow(key, v) end end
-    local main = W.Section(page, L.CARD_ARROW, 300, 330)
+    local main = W.Section(page, L.CARD_ARROW, 300, 354)
     main:SetPoint("TOPLEFT", 2, -2)
     page.enable = main:Add(W.Check(main, L.ARROW_ON, L.ARROW_ON_TIP, get("enabled"), set("enabled")), 30)
     main:Add(W.Check(main, L.ARROW_ORE, nil, get("ore"), set("ore")), 24)
     main:Add(W.Check(main, L.ARROW_HERB, nil, get("herb"), set("herb")), 24)
+    page.fish = main:Add(W.Check(main, L.ARROW_FISH, L.ARROW_FISH_TIP, get("fish"), set("fish")), 24)
     page.unskilled = main:Add(W.Check(main, L.ARROW_UNSKILLED, L.ARROW_UNSKILLED_TIP, get("unskilled"), set("unskilled")), 24)
     -- the maps' database switch: one for both
     page.database = main:Add(W.Check(main, L.ARROW_DATABASE, L.ARROW_DATABASE_TIP, ns.ArrowUsesDatabase,

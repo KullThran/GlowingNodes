@@ -93,6 +93,7 @@ ns.DEFAULTS = {
         arrow = {
             enabled = false,
             ore = true, herb = true, -- what it leads to
+            fish = true, -- with a fishing pole equipped: fishing pools only
             unskilled = false, -- veins and herbs above your skill too (the profession is still needed)
             scale = 1,
             locked = true,

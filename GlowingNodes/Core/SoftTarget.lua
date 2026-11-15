@@ -73,6 +73,7 @@ local function Fishing()
     local ok, _, _, icon = pcall(UnitChannelInfo, "player")
     return ok and not IsSecret(icon) and icon == FISHING_ICON
 end
+ST.Fishing = Fishing -- casting Fishing now (the arrow's pools)
 
 ---------------------------------------------------------------------------
 -- CVars
