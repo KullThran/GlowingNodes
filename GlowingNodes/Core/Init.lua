@@ -86,6 +86,8 @@ ns.DEFAULTS = {
             showDistance = true,
             point = nil, -- { point, relPoint, x, y } once dragged
         },
+        -- node types switched off in the Catalog tab (Core/Catalog.lua): key -> true
+        catalog = { hidden = {} },
     },
     global = {
         learned = {}, -- "o<objectID>" / "n<lower name>" -> required skill seen in game
@@ -225,6 +227,12 @@ end
 function ns.SetArrow(key, value)
     ns.db.arrow[key] = value
     ns.Fire("Changed", "arrow." .. key)
+end
+
+-- shows or hides a node type everywhere (glow, maps, arrow); nothing is kept for a shown one
+function ns.SetHidden(key, hidden)
+    ns.db.catalog.hidden[key] = hidden and true or nil
+    ns.Fire("Changed", "catalog")
 end
 
 -- the arrow uses the database's spots (its own switch, off by default)

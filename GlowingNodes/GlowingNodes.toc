@@ -37,6 +37,7 @@ Locales\zhTW.lua
 Core\Init.lua
 Core\Profiles.lua
 Core\NodeData.lua
+Core\Catalog.lua
 Core\Skills.lua
 Core\Glow.lua
 Core\Sounds.lua
