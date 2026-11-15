@@ -81,6 +81,7 @@ ns.DEFAULTS = {
             enabled = false,
             ore = true, herb = true, -- what it leads to
             database = false, -- the database's spots too (its own switch, off like the maps')
+            unskilled = false, -- veins and herbs above your skill too (the profession is still needed)
             scale = 1,
             locked = true,
             showDistance = true,

@@ -122,6 +122,8 @@ ns.RegisterLocale("koKR", {
     ARROW_LOCKED_TIP = "잠금을 해제하면 마우스로 화살표를 끌 수 있습니다.",
     ARROW_DISTANCE = "거리 표시",
     ARROW_KEY_NOTE = "메뉴 > 단축키 > 애드온 > Glowing Nodes에서 키를 지정하거나 /gn arrow를 입력하세요.",
+    ARROW_UNSKILLED = "내 숙련도보다 높은 것도",
+    ARROW_UNSKILLED_TIP = "아직 채집할 수 없는 광맥과 약초로도 안내해 위치를 알 수 있습니다. 전문 기술은 여전히 필요합니다.",
     TAB_catalog = "목록",
     CARD_CATALOG_ORE = "광석",
     CARD_CATALOG_HERB = "약초",

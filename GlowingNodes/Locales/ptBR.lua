@@ -122,6 +122,8 @@ ns.RegisterLocale("ptBR", {
     ARROW_LOCKED_TIP = "Destrave para arrastar a seta com o mouse.",
     ARROW_DISTANCE = "Mostrar a distância",
     ARROW_KEY_NOTE = "Defina uma tecla em Menu > Teclas de Atalho > AddOns > Glowing Nodes, ou digite /gn arrow.",
+    ARROW_UNSKILLED = "Também acima da minha perícia",
+    ARROW_UNSKILLED_TIP = "Leva também a veios e ervas que você ainda não pode coletar, para saber onde estão. A profissão continua sendo necessária.",
     TAB_catalog = "Catálogo",
     CARD_CATALOG_ORE = "Minérios",
     CARD_CATALOG_HERB = "Ervas",

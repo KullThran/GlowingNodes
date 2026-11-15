@@ -53,10 +53,15 @@ local function Wanted(kind)
     return ns.Skills.Get(kind)
 end
 
+-- a node above your skill counts only when the arrow is told to lead there too
+local function Reachable(required, skill)
+    return ns.db.arrow.unskilled == true or (required or 1) <= skill
+end
+
 local function Add(list, hbd, mapID, key, node, skills)
     local kind = node.k
     local skill = skills[kind]
-    if not skill or (node.r or 1) > skill then return end
+    if not skill or not Reachable(node.r, skill) then return end
     if not ns.Catalog.ShownNode(node) then return end -- switched off in the Catalog tab
     local x, y = ns.Gather.Decode(key)
     local wx, wy, instance = Ask(hbd.GetWorldCoordinatesFromZone, hbd, x, y, mapID)
@@ -146,7 +151,7 @@ local function HandsOver(current)
     if not (current and KINDS[current.category] and not current.blocked) then return false end
     local skill = Wanted(current.category)
     if not skill then return false end
-    return not (current.required and current.required > (current.skill or skill))
+    return Reachable(current.required, current.skill or skill)
 end
 
 local function Reason()
@@ -213,6 +218,10 @@ function Nav.Update(now)
     if bestYards <= Nav.ARRIVE_YARDS then
         arrivedAt = arrivedAt or now
         if now - arrivedAt >= Nav.WAIT then
+            local picked = ns.SoftTarget and ns.SoftTarget.current
+            ns.Debug(("ARROW marked empty: %s, %d yd off, no node of yours picked in %d s (the game picks: %s)"):format(
+                tostring(best.node and (best.node.n or best.node.en)), bestYards + 0.5, Nav.WAIT,
+                picked and tostring(picked.name) .. " (" .. tostring(picked.category) .. ")" or "nothing"))
             Nav.MarkEmpty(best, now)
             arrivedAt = nil
             return Nav.Update(now)

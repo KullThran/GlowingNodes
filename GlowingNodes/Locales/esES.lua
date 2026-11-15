@@ -126,6 +126,8 @@ ns.RegisterLocale("esES", {
     ARROW_LOCKED_TIP = "Desbloquéala para arrastrar la flecha con el ratón.",
     ARROW_DISTANCE = "Mostrar las yardas",
     ARROW_KEY_NOTE = "Asigna una tecla en Menú > Atajos > Accesorios > Glowing Nodes, o usa /gn flecha.",
+    ARROW_UNSKILLED = "También las de más nivel que mi habilidad",
+    ARROW_UNSKILLED_TIP = "Te lleva también a menas y hierbas que aún no puedes recoger, para saber dónde están. Sigue haciendo falta la profesión.",
     TAB_catalog = "Catálogo",
     CARD_CATALOG_ORE = "Menas",
     CARD_CATALOG_HERB = "Hierbas",

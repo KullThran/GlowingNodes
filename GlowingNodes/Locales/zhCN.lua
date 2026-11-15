@@ -122,6 +122,8 @@ ns.RegisterLocale("zhCN", {
     ARROW_LOCKED_TIP = "解锁后可用鼠标拖动箭头。",
     ARROW_DISTANCE = "显示距离",
     ARROW_KEY_NOTE = "在 菜单 > 按键设置 > 插件 > Glowing Nodes 中绑定按键，或输入 /gn arrow。",
+    ARROW_UNSKILLED = "也包括高于我技能的",
+    ARROW_UNSKILLED_TIP = "也会指向你还无法采集的矿脉和草药，让你知道它们在哪里。仍需要该专业。",
     TAB_catalog = "目录",
     CARD_CATALOG_ORE = "矿石",
     CARD_CATALOG_HERB = "草药",

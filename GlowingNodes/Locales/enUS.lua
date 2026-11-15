@@ -126,6 +126,8 @@ ns.RegisterLocale("enUS", {
     ARROW_LOCKED_TIP = "Unlock it to drag the arrow with the mouse.",
     ARROW_DISTANCE = "Show the yards",
     ARROW_KEY_NOTE = "Bind a key in Menu > Key Bindings > AddOns > Glowing Nodes, or type /gn arrow.",
+    ARROW_UNSKILLED = "Also above my skill",
+    ARROW_UNSKILLED_TIP = "Leads to veins and herbs you can't gather yet too, so you know where they are. You still need the profession.",
     TAB_catalog = "Catalog",
     CARD_CATALOG_ORE = "Ores",
     CARD_CATALOG_HERB = "Herbs",

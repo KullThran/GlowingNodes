@@ -3,6 +3,7 @@
 ## 1.4.0 (2026-11-15)
 - The arrow: a leather and bronze arrowhead on screen that points to the nearest ore vein or herb you can gather, with the item's icon and the yards under it. Once you are there and the node glows, the arrow steps aside for the glow. A spot you reach and find empty is skipped for 10 minutes, and the arrow fades while nothing is left to lead to. It hides in combat, in instances, on flight paths and while dead. It is our own frame, not a map waypoint.
 - Turn it on and off with a key (Key Bindings > AddOns > Glowing Nodes), with /gn arrow (or /gn flecha), or on the new Arrow tab, where you also pick ore, herbs or both, whether it uses the spawn database spots too (off by default, like on the maps), its size, and whether it can be dragged.
+- "Also above my skill" on the Arrow tab (off by default): the arrow also leads to veins and herbs you can't gather yet, so you know where they are. Off, it leads only to what you can gather now.
 - The points on the minimap, the world map and the Map page show the icon of what the node gives, cut round: Tin Ore, Silver Ore, Peacebloom, Silverleaf... no longer one bead per kind.
 - A Catalog tab lists every ore and herb with its icon and level: switch one off and it no longer glows, shows on the maps or draws the arrow.
 

@@ -122,6 +122,8 @@ ns.RegisterLocale("itIT", {
     ARROW_LOCKED_TIP = "Sbloccala per trascinare la freccia con il mouse.",
     ARROW_DISTANCE = "Mostra la distanza",
     ARROW_KEY_NOTE = "Assegna un tasto in Menu > Tasti > AddOn > Glowing Nodes, oppure scrivi /gn arrow.",
+    ARROW_UNSKILLED = "Anche sopra la mia abilità",
+    ARROW_UNSKILLED_TIP = "Porta anche a vene ed erbe che non puoi ancora raccogliere, per sapere dove sono. Serve comunque la professione.",
     TAB_catalog = "Catalogo",
     CARD_CATALOG_ORE = "Minerali",
     CARD_CATALOG_HERB = "Erbe",

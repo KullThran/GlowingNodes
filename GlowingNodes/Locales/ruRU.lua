@@ -122,6 +122,8 @@ ns.RegisterLocale("ruRU", {
     ARROW_LOCKED_TIP = "Открепите, чтобы перетащить стрелку мышью.",
     ARROW_DISTANCE = "Показывать расстояние",
     ARROW_KEY_NOTE = "Назначьте клавишу в Меню > Назначение клавиш > Модификации > Glowing Nodes или введите /gn arrow.",
+    ARROW_UNSKILLED = "И выше моего навыка",
+    ARROW_UNSKILLED_TIP = "Ведёт и к залежам и травам, которые вы пока не можете собрать, чтобы знать, где они. Профессия всё равно нужна.",
     TAB_catalog = "Каталог",
     CARD_CATALOG_ORE = "Руда",
     CARD_CATALOG_HERB = "Травы",

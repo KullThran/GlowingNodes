@@ -122,6 +122,8 @@ ns.RegisterLocale("deDE", {
     ARROW_LOCKED_TIP = "Entsperren, um den Pfeil mit der Maus zu ziehen.",
     ARROW_DISTANCE = "Entfernung anzeigen",
     ARROW_KEY_NOTE = "Lege eine Taste fest unter Menü > Tastaturbelegung > AddOns > Glowing Nodes, oder tippe /gn arrow.",
+    ARROW_UNSKILLED = "Auch über meiner Fertigkeit",
+    ARROW_UNSKILLED_TIP = "Führt auch zu Vorkommen und Kräutern, die du noch nicht sammeln kannst, damit du weißt, wo sie sind. Den Beruf brauchst du trotzdem.",
     TAB_catalog = "Katalog",
     CARD_CATALOG_ORE = "Erze",
     CARD_CATALOG_HERB = "Kräuter",

@@ -189,6 +189,7 @@ function ns.BuildArrowPage(page)
     page.enable = main:Add(W.Check(main, L.ARROW_ON, L.ARROW_ON_TIP, get("enabled"), set("enabled")), 30)
     main:Add(W.Check(main, L.ARROW_ORE, nil, get("ore"), set("ore")), 24)
     main:Add(W.Check(main, L.ARROW_HERB, nil, get("herb"), set("herb")), 24)
+    page.unskilled = main:Add(W.Check(main, L.ARROW_UNSKILLED, L.ARROW_UNSKILLED_TIP, get("unskilled"), set("unskilled")), 24)
     main:Add(W.Check(main, L.ARROW_DATABASE, L.ARROW_DATABASE_TIP, ns.ArrowUsesDatabase, set("database")), 30)
     main:Add(W.Slider(main, L.ARROW_SCALE, 0.5, 2, 0.05, get("scale"), set("scale"),
         function(v) return ("%d%%"):format(v * 100 + 0.5) end), 48)

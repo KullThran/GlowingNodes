@@ -122,6 +122,8 @@ ns.RegisterLocale("frFR", {
     ARROW_LOCKED_TIP = "Déverrouillez-la pour déplacer la flèche à la souris.",
     ARROW_DISTANCE = "Afficher la distance",
     ARROW_KEY_NOTE = "Attribuez une touche dans Menu > Raccourcis > Addons > Glowing Nodes, ou tapez /gn arrow.",
+    ARROW_UNSKILLED = "Aussi au-dessus de ma compétence",
+    ARROW_UNSKILLED_TIP = "Mène aussi aux filons et herbes que vous ne pouvez pas encore récolter, pour savoir où ils sont. Il faut toujours le métier.",
     TAB_catalog = "Catalogue",
     CARD_CATALOG_ORE = "Minerais",
     CARD_CATALOG_HERB = "Herbes",
