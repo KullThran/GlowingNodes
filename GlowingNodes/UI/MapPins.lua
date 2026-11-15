@@ -162,10 +162,11 @@ end
 local worldPool, miniPool = Pool(), Pool()
 local SHOW_PARENT = 1 -- HBD_PINS_WORLDMAP_SHOW_PARENT
 
--- beads: ore and herbs (hides are drawn as areas)
+-- beads: ore and herbs (hides are drawn as areas), unless switched off in the Catalog tab
 local function Visible(node)
-    return node.k ~= "skin" and ns.db.map.show[node.k]
+    return node.k ~= "skin" and ns.db.map.show[node.k] and ns.Catalog.ShownNode(node) or false
 end
+Pins.Visible = Visible
 
 ---------------------------------------------------------------------------
 -- World map: the points of the map on show
@@ -359,7 +360,7 @@ end)
 ns.On("NodesChanged", function() Pins:Refresh() end)
 
 ns.On("Changed", function(key)
-    if key == "*" or (type(key) == "string" and (key:find("^map%.") or key:find("%.color$"))) then
+    if key == "*" or key == "catalog" or (type(key) == "string" and (key:find("^map%.") or key:find("%.color$"))) then
         Pins:Refresh()
     end
 end)

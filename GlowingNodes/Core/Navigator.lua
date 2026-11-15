@@ -57,6 +57,7 @@ local function Add(list, hbd, mapID, key, node, skills)
     local kind = node.k
     local skill = skills[kind]
     if not skill or (node.r or 1) > skill then return end
+    if not ns.Catalog.ShownNode(node) then return end -- switched off in the Catalog tab
     local x, y = ns.Gather.Decode(key)
     local wx, wy, instance = Ask(hbd.GetWorldCoordinatesFromZone, hbd, x, y, mapID)
     if not (wx and wy) then return end
@@ -258,7 +259,7 @@ end)
 ns.On("Learned", function() Nav.Refresh() end)
 ns.On("SkillsChanged", function() Nav.Refresh() end)
 ns.On("Changed", function(key)
-    if key == "*" or key == "profiles" or key == "map.database" or key == "ore.enabled" or key == "herb.enabled"
+    if key == "*" or key == "profiles" or key == "catalog" or key == "map.database" or key == "ore.enabled" or key == "herb.enabled"
         or (type(key) == "string" and key:find("^arrow%.")) then
         Nav.Reset()
     end

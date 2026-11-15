@@ -228,7 +228,7 @@ function ns.BuildMapPage(page)
             local rw, rh = G.AreaRadius(mapID)
             local cw, ch = CW(), CH()
             for key, node in pairs(zoneNodes) do
-                if ns.db.map.show[node.k] then
+                if ns.db.map.show[node.k] and ns.Catalog.ShownNode(node) then
                     local isArea = node.k == "skin"
                     local hit = query ~= "" and MatchName(node, query) ~= nil
                     local p
@@ -257,7 +257,7 @@ function ns.BuildMapPage(page)
             local size = math.max(ns.db.map.pinSize - Pins.DB_SMALLER, 6)
             local cw, ch = CW(), CH()
             ns.NodeDB.Each(mapID, function(key, node)
-                if ns.db.map.show[node.k] then
+                if ns.db.map.show[node.k] and ns.Catalog.ShownNode(node) then
                     local hit = query ~= "" and MatchName(node, query) ~= nil
                     n = n + 1
                     local p = Pin(n)

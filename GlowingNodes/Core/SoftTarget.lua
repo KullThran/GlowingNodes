@@ -550,7 +550,9 @@ function ST:Evaluate()
     local skill = profession and Skills.Get(target.category) or nil
     local hasProf = skill ~= nil
     -- "only professions I have" is about professions: chests always count
+    -- a type switched off in the Catalog tab is treated as a category switched off
     local wanted = cfg ~= nil and cfg.enabled and not (profession and db.onlyKnown and not hasProf)
+        and ns.Catalog.Shown(target.objectID, target.name, target.category)
     SetGate(wanted)
     ST.current = target
     if not wanted or not plate then

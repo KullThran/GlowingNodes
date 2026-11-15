@@ -204,6 +204,7 @@ function Catalog.NameOf(t)
 end
 
 function Catalog.Shown(objectID, name, kind)
+    if kind ~= "ore" and kind ~= "herb" then return true end -- only they have types
     local hidden = ns.db and ns.db.catalog and ns.db.catalog.hidden
     if not hidden or next(hidden) == nil then return true end
     local key = Catalog.TypeOf(objectID, name, kind)
