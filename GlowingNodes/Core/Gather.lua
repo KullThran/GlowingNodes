@@ -21,7 +21,9 @@ local KIND_SPELLS = {
 -- nodes: mobs wander, so skinning marks an area (AREA_YARDS round) where
 -- skinnable creatures roam, and skinning inside it adds to it.
 local AREA_YARDS = 60
-local MERGE_YARDS = { ore = 15, herb = 15, skin = AREA_YARDS }
+-- A fishing pool is logged where you stand, some 20 yards off (the cast's
+-- reach): a catch of that pool from closer than 35 yards is that pool.
+local MERGE_YARDS = { ore = 15, herb = 15, skin = AREA_YARDS, fish = 35 }
 G.AREA_YARDS = AREA_YARDS
 local MAX_MOBS = 6
 local LOG_SIZE = 100
@@ -138,13 +140,14 @@ local LOOSE_YARDS = 45
 G.LOOSE_YARDS = LOOSE_YARDS
 
 -- the point of this kind at that spot, if there is one (rough: the spot is
--- only where the player stood when the glow found it)
-function G.Near(mapID, kind, x, y, rough)
+-- only where the player stood when the glow found it). name: only a point
+-- of that name (pools of two kinds share spots)
+function G.Near(mapID, kind, x, y, rough, name)
     local zone = ns.global.nodes[mapID]
     if not zone then return nil end
     local best, bestKey, bestD
     for key, node in pairs(zone) do
-        if node.k == kind then
+        if node.k == kind and (not name or node.n == name) then
             local nx, ny = G.Decode(key)
             local d = G.Distance(mapID, x, y, nx, ny)
             local reach = MERGE_YARDS[kind]
@@ -193,7 +196,7 @@ local function Put(kind, name, objectID, mapID, x, y, how)
     local zone = nodes[mapID]
     local now = time()
     local precise = how.gathered or how.precise
-    local key, node = G.Near(mapID, kind, x, y, not precise and kind ~= "skin")
+    local key, node = G.Near(mapID, kind, x, y, not precise and kind ~= "skin", kind == "fish" and name or nil)
     local isNew = node == nil
     local startKey, wasRough = key, node and node.p == false
     local changed = isNew
@@ -447,7 +450,7 @@ local MAX_DROPS = 8
 
 -- the loot's source fits the gather: an object for veins and herbs, a
 -- creature for hides. A client that won't say is believed.
-local SOURCE_TYPE = { ore = "GameObject", herb = "GameObject", chest = "GameObject", skin = "Creature" }
+local SOURCE_TYPE = { ore = "GameObject", herb = "GameObject", chest = "GameObject", skin = "Creature", fish = "GameObject" }
 local function SourceFits(slot, kind)
     if not GetLootSourceInfo then return true end
     local ok, guid = pcall(GetLootSourceInfo, slot)
@@ -502,6 +505,39 @@ function G.Loot()
     if got then ns.Debug(("LOOT %s: %d slots on the node"):format(last.kind, n)) end
 end
 
+-- A fishing loot from a pool: the game says where the catch came from (the
+-- pool's GUID, its template ID sixth); a pool of Data/NodeSpawns.lua goes on
+-- your map where you stand, and its catch on it (G.Loot, right after). Open
+-- water (the bobber's loot), a creature or a source the game keeps secret
+-- log nothing. Returns the pool's point.
+function G.FishLoot()
+    if not (IsFishingLoot and IsFishingLoot()) then return nil end
+    local S = ns.NodeSpawns
+    local pools = S and S.pools
+    local n = tonumber(GetNumLootItems and GetNumLootItems()) or 0
+    local said, entry
+    for slot = 1, n do
+        local ok, guid = pcall(GetLootSourceInfo or function() end, slot)
+        if ok and type(guid) == "string" then
+            if IsSecret(guid) then
+                said = said or "secret"
+            else
+                said = said or guid
+                local kind, id = guid:match("^(%a+)%-%d+%-%d+%-%d+%-%d+%-(%d+)")
+                if kind == "GameObject" and pools and pools[tonumber(id)] then
+                    entry = tonumber(id)
+                    said = guid
+                    break
+                end
+            end
+        end
+    end
+    ns.Debug("FISH loot source: " .. (said or "none"))
+    if not entry then return nil end
+    local t = S.nodes[pools[entry]]
+    return (G.Record("fish", t and t[3], entry))
+end
+
 -- the items a node dropped, most first: { id, name, quality, times }
 function G.Drops(node)
     local list = {}
@@ -520,6 +556,7 @@ loot:SetScript("OnEvent", function(_, event)
     if event == "LOOT_CLOSED" then looted = false return end
     if looted or not ns.global then return end
     looted = true
+    G.FishLoot()
     G.Loot()
 end)
 for _, event in ipairs({ "LOOT_READY", "LOOT_OPENED", "LOOT_CLOSED" }) do
