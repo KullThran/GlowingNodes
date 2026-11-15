@@ -211,6 +211,69 @@ Add({
 })
 
 ---------------------------------------------------------------------------
+-- Pillar of light: a tall column rising from the node, lighter streaks
+-- running up it, a flat glow at its foot. It is a pillar itself: the kind's
+-- own pillar of light isn't drawn with it.
+---------------------------------------------------------------------------
+
+local function Foot(glow, tex)
+    tex:ClearAllPoints()
+    tex:SetPoint("BOTTOM", glow.frame, "CENTER", 0, -12)
+end
+
+Add({
+    id = "pillar",
+    beam = false,
+    Build = function(glow)
+        Foot(glow, glow:Part("pillar", "fx_pillar", "BACKGROUND", 0))
+        Foot(glow, glow:Part("pillarGlow", "fx_pillar", "BACKGROUND", 2))
+    end,
+    Paint = function(glow, f)
+        local scale, r, g, b = f.scale, f.r, f.g, f.b
+        Halo(glow, f, true)
+        Tint(glow.pillar, 70 * scale, 520 * scale, r, g, b, f.a1 * 0.9 + f.a2 * 0.5)
+        local streak = 0.6 + 0.4 * sin(glow.t * 2)
+        Tint(glow.pillarGlow, 40 * scale, 520 * scale, r, g, b, (f.a1 * 0.5 + f.a2 * 0.3) * streak, 0.5)
+    end,
+})
+
+---------------------------------------------------------------------------
+-- Flames: a ring of six tongues of magic fire round the node, each growing
+-- and shrinking at its own pace; a warm core
+---------------------------------------------------------------------------
+
+local FLAMES = 6
+
+Add({
+    id = "flames",
+    Build = function(glow)
+        glow:Part("core", "fx_core", "ARTWORK", 1)
+        for _, p in ipairs(glow:Parts("flames", FLAMES, "fx_flame", "ARTWORK", 2)) do
+            p.phase = random() * TAU
+        end
+        Phase(glow, "flamesAngle")
+    end,
+    Paint = function(glow, f)
+        local scale, r, g, b, t = f.scale, f.r, f.g, f.b, glow.t
+        Halo(glow, f)
+        local cs = 60 * (0.9 + 0.1 * f.beat) * scale
+        Tint(glow.core, cs, cs, r, g, b, (f.a1 + f.a2) * 0.7, 0.35)
+        glow.flamesAngle = (glow.flamesAngle + f.elapsed * 0.3 * f.speed) % TAU
+        local alpha = f.a1 * 0.85 + f.a2 * 0.5
+        for i, p in ipairs(glow.flames) do
+            local a = glow.flamesAngle + (i - 1) * TAU / FLAMES
+            local back = sin(a) > 0 -- the far half of the ring, behind the node
+            local tex = p.tex
+            tex:SetDrawLayer("ARTWORK", back and 0 or 2)
+            tex:ClearAllPoints()
+            tex:SetPoint("BOTTOM", glow.frame, "CENTER", cos(a) * 60 * scale, (sin(a) * 22 - 10) * scale)
+            local height = 56 * (0.8 + 0.25 * sin(t * 7 + p.phase)) * scale
+            Tint(tex, 28 * scale, height, r, g, b, alpha * (back and 0.6 or 1))
+        end
+    end,
+})
+
+---------------------------------------------------------------------------
 -- Aura: the quietest, a soft halo and a wide hazy ring breathing with the
 -- pulse; nothing turns
 ---------------------------------------------------------------------------
