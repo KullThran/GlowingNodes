@@ -386,11 +386,12 @@ local function Settle(target, state)
     return target.shownState
 end
 
--- the bobber's swirl lies on the water; everything else wears the ring
+-- each kind wears its own look (the bobber's swirl, by default)
 local function GlowOptions(category)
     local db = ns.db
+    local cfg = db[category]
     return { numberSize = db.numberSize, greyLocked = db.greyLocked, dimFar = db.dimFar, scale = 1,
-        look = category == "fish" and "swirl" or nil }
+        look = cfg and cfg.look }
 end
 
 -- a category may keep its own height over the nameplate (the bobber's swirl

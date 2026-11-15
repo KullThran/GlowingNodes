@@ -118,7 +118,7 @@ local function BuildPlate(page, cat)
     local function apply()
         local db = ns.db
         glow:Configure(db[cat], { numberSize = db.numberSize, greyLocked = db.greyLocked, dimFar = db.dimFar, scale = 0.78,
-            look = swirl and "swirl" or nil })
+            look = db[cat].look })
         local required = SAMPLE[cat]
         local skill = Skills.Get(cat)
         if not required then

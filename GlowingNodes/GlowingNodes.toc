@@ -39,6 +39,7 @@ Core\Profiles.lua
 Core\NodeData.lua
 Core\Catalog.lua
 Core\Skills.lua
+Core\Looks.lua
 Core\Glow.lua
 Core\Sounds.lua
 Core\SoftTarget.lua

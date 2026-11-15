@@ -28,6 +28,7 @@ local function Category(r, g, b, sound)
         soundOn = true,
         sound = sound,
         volume = 2,
+        look = "ring", -- how its glow looks (Looks.LIST)
     }
 end
 
@@ -37,6 +38,7 @@ local function Bobber(cfg)
     cfg.enabled = false
     cfg.beam = false
     cfg.height = -60
+    cfg.look = "swirl"
     return cfg
 end
 

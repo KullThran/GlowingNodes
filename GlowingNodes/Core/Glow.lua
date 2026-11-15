@@ -1,15 +1,13 @@
 -- Glow.lua
--- The glow drawn over a node: a wide halo, a bright core, a turning ring of
--- arcs, slow rays, an optional pillar of light, rising glints and a shock ring
--- when the node comes into reach, all additive and tinted with the colour the
--- player picked. The level number sits above it.
--- A second look, "swirl" (the fishing bobber's), lies flat on the water
--- instead: a flattened halo, a wave ring turning round the bobber and sparks
--- leaping off its edge.
+-- The glow drawn over a node, additive and tinted with the colour the player
+-- picked: a halo, an optional pillar of light, a shock ring when the node
+-- comes into reach and the level number above it, plus the parts of its look
+-- (Looks.lua: the ring, the swirl...), made the first time that look shows.
 -- The same object draws the in-world glow (hung on the soft-target nameplate)
 -- and the live preview in the options window.
 local _, ns = ...
 local Data = ns.NodeData
+local Looks = ns.Looks
 
 local Glow = {}
 Glow.__index = Glow
@@ -17,15 +15,12 @@ ns.Glow = Glow
 
 local ART = ns.ART
 local FONT = STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF" -- has the client's glyphs
-local GLINTS = 6
-local SPARKLES = 8
-local SWIRL_SPEED = 0.6 -- radians a second
 local BURST_TIME = 0.55
 local FADE_IN = 0.25
 local FADE_OUT = 0.8 -- the glow going out when its time is up
 local BLEND = 0.3
 
-local sin, cos, pi, random, min, max, sqrt = math.sin, math.cos, math.pi, math.random, math.min, math.max, math.sqrt
+local sin, pi, random, min, max = math.sin, math.pi, math.random, math.min, math.max
 local TAU = 2 * pi
 
 local function Approach(value, target, step)
@@ -52,27 +47,15 @@ function Glow.New(parent)
     f:Hide()
     self.frame = f
 
+    -- what every look shares; a look's own parts come with it (Glow:Part)
     self.beam = Tex(f, "fx_beam", "BACKGROUND", 0)
     self.halo = Tex(f, "fx_halo", "BACKGROUND", 1)
-    self.halo2 = Tex(f, "fx_halo", "BACKGROUND", 2)
-    self.burst = Tex(f, "fx_burst", "BORDER", 0)
-    self.ring = Tex(f, "fx_ring", "ARTWORK", 0)
-    self.core = Tex(f, "fx_core", "ARTWORK", 1)
     self.shock = Tex(f, "fx_shock", "OVERLAY", 0)
-    self.glints = {}
-    for i = 1, GLINTS do
-        self.glints[i] = { tex = Tex(f, "fx_glint", "OVERLAY", 1) }
-    end
-    self.swirl = Tex(f, "fx_swirl", "ARTWORK", 0)
-    self.sparkles = {}
-    for i = 1, SPARKLES do
-        self.sparkles[i] = { tex = Tex(f, "fx_sparkle", "OVERLAY", 2), white = i % 2 == 0 }
-    end
-    for _, t in ipairs({ self.beam, self.halo, self.halo2, self.burst, self.ring, self.core, self.shock, self.swirl }) do
-        t:SetPoint("CENTER")
-    end
-    self.beam:ClearAllPoints()
+    self.halo:SetPoint("CENTER")
+    self.shock:SetPoint("CENTER")
     self.beam:SetPoint("BOTTOM", f, "CENTER", 0, -12)
+    self.partsOf = {}
+    self.f = {}
 
     -- level number: its own frame so it stays over the glow and the nameplate
     local tf = CreateFrame("Frame", nil, f)
@@ -100,40 +83,59 @@ function Glow.New(parent)
     -- the pulse and the turning parts move by phases of their own, stepped on
     -- each frame: worked out as time × speed, a change of speed (the blend
     -- into "ready" or "locked") made them leap, more the longer you played
-    self.beatPhase, self.ringAngle, self.burstAngle = random() * TAU, random() * TAU, random() * TAU
-    self.swirlAngle = random() * TAU
-    self.shownLook = false -- neither look yet: the first Update sets one up
+    self.beatPhase = random() * TAU
+    self.shownLook = false -- no look yet: Configure sets one up
     self.appear, self.ready, self.locked, self.burstAge = 0, 0, 0, BURST_TIME
     self.state = "ready"
-    for _, g in ipairs(self.glints) do self:Respawn(g) end
-    for _, s in ipairs(self.sparkles) do self:RespawnSparkle(s) end
 
     f:SetScript("OnUpdate", function(_, elapsed) self:Update(elapsed) end)
     return self
 end
 
-function Glow:Respawn(g, now)
-    local a, r = random() * TAU, sqrt(random())
-    g.x, g.y = cos(a) * r * 40, sin(a) * r * 26 - 6
-    g.life = 0.7 + 0.9 * random()
-    g.age = now and 0 or -0.8 * random()
-    g.scale = 0.5 + 0.8 * random()
-    g.spin = (random() - 0.5) * 2
+-- One part of a look: made once (centred, additive), kept as self[name] and
+-- counted among the parts of the look being built, so it shows and hides
+-- with that look. A part two looks share is made once and counted in both.
+function Glow:Part(name, file, layer, sub)
+    local t = self[name]
+    if not t then
+        t = Tex(self.frame, file, layer, sub)
+        t:SetPoint("CENTER")
+        self[name] = t
+    end
+    self:Count(t)
+    return t
 end
 
--- a spark leaps off the swirl's edge, rises a little and goes out
-function Glow:RespawnSparkle(s, now)
-    s.angle = random() * TAU
-    s.life = 0.6 + 0.6 * random()
-    s.age = now and 0 or -0.5 * random()
-    s.size = 10 + 8 * random()
+-- several parts of a kind, as a list of { tex = Texture } in self[name]
+function Glow:Parts(name, n, file, layer, sub)
+    local list = self[name]
+    if not list then
+        list = {}
+        for i = 1, n do
+            local t = Tex(self.frame, file, layer, sub)
+            t:SetPoint("CENTER")
+            list[i] = { tex = t }
+        end
+        self[name] = list
+    end
+    for _, p in ipairs(list) do self:Count(p.tex) end
+    return list
+end
+
+function Glow:Count(t)
+    local parts = self.partsOf[self.building]
+    if parts and not parts[t] then
+        parts[t] = true
+        parts[#parts + 1] = t
+    end
 end
 
 -- cfg: the category settings (colour, intensity, size, pulse, beam)
 -- opts: { scale = number, numberSize = n, greyLocked = bool, dimFar = bool,
---         look = "swirl" or nil (the ring) }
+--         look = a look's id (Looks.LIST); the ring for nil or unknown }
 function Glow:Configure(cfg, opts)
     self.cfg, self.opts = cfg, opts or {}
+    self:ShowLook(self.opts.look)
     local fontSize = (self.opts.numberSize or 26) * (self.opts.textScale or 1)
     self.text:SetFont(FONT, max(fontSize, 8), "THICKOUTLINE")
     self.label:SetFont(FONT, max(fontSize * 0.48, 8), "OUTLINE")
@@ -157,10 +159,10 @@ function Glow:SetState(state)
     end
 end
 
--- the "in reach" flash: shock ring and a burst of glints
+-- the "in reach" flash: the shock ring, and the look's own (the ring's glints)
 function Glow:Flare()
     self.burstAge = 0
-    for _, g in ipairs(self.glints) do self:Respawn(g, true) end
+    if self.look and self.look.Flare then self.look.Flare(self) end
 end
 
 -- world: hung on a nameplate in the world. The game shrinks nameplates with
@@ -226,58 +228,23 @@ local function PlateRel(anchor)
 end
 Glow.PlateRel = PlateRel
 
--- the swirl turns inside its flattened rectangle: turning the texture would
--- turn the whole ellipse, so its texture coordinates turn instead, the four
--- corners of the image round (0.5, 0.5); the art leaves its corners empty
-local CORNER_BASE = { 3 * pi / 4, 5 * pi / 4, pi / 4, 7 * pi / 4 } -- UL, LL, UR, LR
-local function Corner(a, k)
-    local base = CORNER_BASE[k + 1] + a
-    return 0.5 + cos(base) * 0.7071, 0.5 - sin(base) * 0.7071
-end
-
--- what one look shows and the other hides, switched once on a change
-function Glow:ShowLook(look)
-    if self.shownLook == look then return end
-    self.shownLook = look
-    local swirl = look == "swirl"
-    for _, t in ipairs({ self.ring, self.core, self.burst }) do t:SetShown(not swirl) end
-    for _, gl in ipairs(self.glints) do gl.tex:SetShown(not swirl) end
-    if swirl then
-        self.beam:Hide()
-        self.shock:Hide()
-        self.halo2:Hide()
+-- a change of look: the old one's parts hide, the new one's are made the
+-- first time and show
+function Glow:ShowLook(id)
+    local look = Looks.Get(id)
+    if self.shownLook == look.id then return end
+    local old = self.shownLook and self.partsOf[self.shownLook]
+    if old then
+        for _, t in ipairs(old) do t:Hide() end
     end
-    self.swirl:SetShown(swirl)
-    for _, s in ipairs(self.sparkles) do s.tex:SetShown(swirl) end
-end
-
--- the bobber's look: halo and swirl flat on the water, sparks off its edge
-function Glow:UpdateSwirl(elapsed, scale, r, g, b, strength, beat, a1, a2, power)
-    local hs = 230 * (0.94 + 0.06 * beat) * scale
-    self.halo:SetSize(hs, hs * 0.42)
-    self.halo:SetVertexColor(r, g, b, min(a1 * 0.95, 1))
-    self.swirlAngle = (self.swirlAngle + elapsed * SWIRL_SPEED) % TAU
-    local a = self.swirlAngle
-    local ulx, uly = Corner(a, 0)
-    local llx, lly = Corner(a, 1)
-    local urx, ury = Corner(a, 2)
-    local lrx, lry = Corner(a, 3)
-    self.swirl:SetTexCoord(ulx, uly, llx, lly, urx, ury, lrx, lry)
-    self.swirl:SetSize(170 * scale, 64 * scale)
-    self.swirl:SetVertexColor(r, g, b, min((a1 * 0.9 + a2 * 0.5) * (0.85 + 0.15 * beat), 1))
-    for _, s in ipairs(self.sparkles) do
-        s.age = s.age + elapsed
-        if s.age >= s.life then self:RespawnSparkle(s, true) end
-        local shine = s.age > 0 and sin(pi * s.age / s.life) or 0
-        local size = max(s.size * (0.5 + 0.5 * shine) * scale, 0.01)
-        local rise = 18 * max(s.age, 0) / s.life
-        local tex = s.tex
-        tex:ClearAllPoints()
-        tex:SetPoint("CENTER", self.frame, "CENTER", cos(s.angle) * 80 * scale, (sin(s.angle) * 30 + rise) * scale)
-        tex:SetSize(size, size)
-        local w = s.white and 0.85 or 0
-        tex:SetVertexColor(r + (1 - r) * w, g + (1 - g) * w, b + (1 - b) * w, min(strength * shine * min(power, 1.6), 1))
+    if not self.partsOf[look.id] then
+        self.partsOf[look.id] = {}
+        self.building = look.id
+        look.Build(self)
+        self.building = nil
     end
+    for _, t in ipairs(self.partsOf[look.id]) do t:Show() end
+    self.shownLook, self.look = look.id, look
 end
 
 function Glow:Update(elapsed)
@@ -308,12 +275,11 @@ function Glow:Update(elapsed)
     self.ready = Approach(self.ready, self.state == "ready" and 1 or 0, elapsed / BLEND)
     self.locked = Approach(self.locked, self.state == "locked" and 1 or 0, elapsed / BLEND)
 
+    local look = self.look or Looks.Get(opts.look)
     local scale = (cfg.size or 1) * (opts.scale or 1)
     local power = cfg.intensity or 1.5
     local speed = 1 - 0.5 * self.locked
     self.beatPhase = (self.beatPhase + elapsed * TAU * (0.75 + 0.35 * self.ready)) % TAU
-    self.ringAngle = (self.ringAngle + elapsed * 0.55 * speed) % TAU
-    self.burstAngle = (self.burstAngle - elapsed * 0.18 * speed) % TAU
 
     -- colour: the player's, or grey on a node they can't gather yet
     local c = cfg.color
@@ -332,32 +298,8 @@ function Glow:Update(elapsed)
     local a1 = min(power, 1) * strength * beat
     local a2 = max(power - 1, 0) * 0.6 * strength * beat
 
-    self:ShowLook(opts.look)
-    if opts.look == "swirl" then
-        self:UpdateSwirl(elapsed, scale, r, g, b, strength, beat, a1, a2, power)
-        self.textFrame:SetAlpha(self.appear)
-        return
-    end
-
-    local function paint(tex, size, alpha, white)
-        tex:SetSize(size * scale, size * scale)
-        if white then
-            tex:SetVertexColor(r + (1 - r) * white, g + (1 - g) * white, b + (1 - b) * white, min(alpha, 1))
-        else
-            tex:SetVertexColor(r, g, b, min(alpha, 1))
-        end
-    end
-
-    paint(self.halo, 230 * (0.94 + 0.06 * beat), a1 * 0.95)
-    paint(self.halo2, 300, a2)
-    self.halo2:SetShown(a2 > 0.01)
-    paint(self.core, 70 * (0.9 + 0.1 * beat), (a1 + a2) * 0.9, 0.55)
-    paint(self.ring, 150, (a1 * 0.85 + a2 * 0.5))
-    self.ring:SetRotation(self.ringAngle)
-    paint(self.burst, 250, (a1 * 0.45 + a2 * 0.35))
-    self.burst:SetRotation(self.burstAngle)
-
-    if cfg.beam then
+    -- the pillar of light, with every look that isn't one itself
+    if cfg.beam and look.beam ~= false then
         self.beam:SetSize(84 * scale, 620 * scale) -- tall, to show over trees and rocks
         self.beam:SetVertexColor(r, g, b, min((a1 * 0.85 + a2 * 0.45), 1))
         self.beam:Show()
@@ -368,6 +310,8 @@ function Glow:Update(elapsed)
     -- shock ring on "in reach"
     if self.burstAge < BURST_TIME then
         self.burstAge = self.burstAge + elapsed
+    end
+    if self.burstAge < BURST_TIME and look.shock ~= false then
         local p = self.burstAge / BURST_TIME
         local size = (90 + 220 * p) * scale
         self.shock:SetSize(size, size)
@@ -377,19 +321,11 @@ function Glow:Update(elapsed)
         self.shock:Hide()
     end
 
-    -- glints rising out of the node
-    for _, gl in ipairs(self.glints) do
-        gl.age = gl.age + elapsed * speed * (0.8 + 0.4 * self.ready)
-        if gl.age >= gl.life then self:Respawn(gl) end
-        local tex = gl.tex
-        local shine = gl.age > 0 and sin(pi * gl.age / gl.life) or 0
-        local s = max(30 * gl.scale * (0.35 + 0.65 * shine) * scale, 0.01)
-        tex:ClearAllPoints()
-        tex:SetPoint("CENTER", self.frame, "CENTER", gl.x * scale, (gl.y + 26 * max(gl.age, 0)) * scale)
-        tex:SetSize(s, s)
-        tex:SetRotation(gl.spin * max(gl.age, 0))
-        tex:SetVertexColor(r + (1 - r) * 0.5, g + (1 - g) * 0.5, b + (1 - b) * 0.5, min(strength * shine * min(power, 1.6), 1))
-    end
+    local f = self.f
+    f.elapsed, f.scale, f.r, f.g, f.b = elapsed, scale, r, g, b
+    f.strength, f.beat, f.a1, f.a2, f.power = strength, beat, a1, a2, power
+    f.speed, f.ready, f.locked = speed, self.ready, self.locked
+    look.Paint(self, f)
 
     self.textFrame:SetAlpha(self.appear)
 end
