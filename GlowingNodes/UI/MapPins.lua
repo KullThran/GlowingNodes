@@ -172,6 +172,36 @@ end
 local DB_ALPHA, DB_SMALLER = 0.55, 3
 Pins.DB_ALPHA, Pins.DB_SMALLER = DB_ALPHA, DB_SMALLER
 
+-- a vein or herb gathered a moment ago: fainter for 5 minutes, the node not
+-- back yet (a pool you fished is still there: it stays bright)
+local RECENT_FOR, RECENT_ALPHA = 300, 0.4
+Pins.RECENT_FOR, Pins.RECENT_ALPHA = RECENT_FOR, RECENT_ALPHA
+local liftAt -- when the next faint point brightens: the maps are redrawn then
+
+local function LiftAt(at)
+    if liftAt and liftAt <= at then return end
+    liftAt = at
+    C_Timer.After(math.max(at - time(), 0) + 1, function()
+        if liftAt ~= at then return end
+        liftAt = nil
+        ns.Fire("NodesChanged")
+    end)
+end
+
+-- how see-through a point is drawn, on any map
+function Pins.Alpha(node, now)
+    if node.db then return DB_ALPHA end
+    local t = node.t
+    if t and node.k ~= "fish" and (node.c or 1) > 0 then
+        now = now or time()
+        if now - t < RECENT_FOR then
+            LiftAt(t + RECENT_FOR)
+            return RECENT_ALPHA
+        end
+    end
+    return 1
+end
+
 local function Pool()
     local pool = { free = {}, used = {} }
     function pool:Acquire(node, size)
@@ -179,7 +209,7 @@ local function Pool()
         pin.node = node
         pin:SetSize(size, size)
         Pins.Paint(pin.tex, node)
-        pin:SetAlpha(node.db and DB_ALPHA or 1)
+        pin:SetAlpha(Pins.Alpha(node))
         self.used[#self.used + 1] = pin
         return pin
     end

@@ -247,7 +247,7 @@ function ns.BuildMapPage(page)
                     local x, y = G.Decode(key)
                     p.node, p.key, p.mapID = node, key, mapID
                     if isArea then p.tex:SetVertexColor(Pins.Color(node.k)) else Pins.Paint(p.tex, node) end
-                    p:SetAlpha((query == "" or hit) and 1 or 0.22)
+                    p:SetAlpha((query == "" or hit) and (isArea and 1 or Pins.Alpha(node)) or 0.22)
                     p:ClearAllPoints()
                     p:SetPoint("CENTER", content, "TOPLEFT", x * cw, -y * ch)
                     p:Show()

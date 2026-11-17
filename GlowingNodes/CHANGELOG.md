@@ -1,6 +1,7 @@
 # Glowing Nodes Changelog
 
 ## Unreleased
+- The maps' points: a vein or herb you gathered in the last 5 minutes is fainter on the world map, the minimap and the Map page, as it isn't back yet; then it is bright again.
 - The maps' points: the level a node needs is now in the game's difficulty colour against your skill, as on the glow (red, orange, yellow, green, grey).
 - Intensity now goes down to 0%: no glow at all, on any tab.
 - Fishing: a new look for the bobber, Outline, now its default: a thin, faint, still ring on the water round it, its middle empty, so nothing covers the bobber and you see it move when a fish bites (no halo, no sparkles, no pulse). Every bobber is moved to Outline once, even if you had picked another look for it; you can pick that one again with the arrows under the preview, and it stays.
