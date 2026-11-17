@@ -227,6 +227,14 @@ local function BuildCategoryPage(page, cat)
         page.beam = glow:Add(W.Check(glow, L.BEAM, L.BEAM_TIP, function() return cfg().beam end, setter("beam")), 26)
     end
 
+    if fish then
+        -- under the look stamps: hear the splash (Core/FishSound.lua)
+        local splash = W.Section(page, L.CARD_SPLASH, 206, 70)
+        splash:SetPoint("TOPLEFT", 6, -356)
+        page.splash = splash:Add(W.Check(splash, L.SPLASH, L.SPLASH_TIP, function() return cfg().splash end,
+            setter("splash")), 26)
+    end
+
     local sound = W.Section(page, L.CARD_SOUND, 300, 130)
     sound:SetPoint("TOPLEFT", 236, -296)
     sound:Add(W.Check(sound, L.SOUND_ON, L.SOUND_ON_TIP, function() return cfg().soundOn end, setter("soundOn")), 28)

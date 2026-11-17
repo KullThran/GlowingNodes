@@ -1,5 +1,8 @@
 # Glowing Nodes Changelog
 
+## Unreleased
+- Hear the splash: a new box on the Fishing tab (off by default). With a fishing pole equipped, sound effects go up to full and music and ambience down to 10 %, so the bobber's splash stands out; take the pole off and your own levels come back, also after a game closed while fishing. A volume you move meanwhile stays as you leave it, and your master volume is never touched. It doesn't know when a fish bites: it only makes the game's own splash easier to hear.
+
 ## 1.4.0 (2026-11-15)
 - The arrow: a leather and bronze arrowhead on screen that points to the nearest ore vein or herb you can gather, with the item's icon and the yards under it. Once you are there and the node glows, the arrow steps aside for the glow. A spot you reach and find empty is skipped for 10 minutes, and the arrow fades while nothing is left to lead to. It hides in combat, in instances, on flight paths and while dead. It is our own frame, not a map waypoint.
 - Turn it on and off with a key (Key Bindings > AddOns > Glowing Nodes), with /gn arrow (or /gn flecha), or on the new Arrow tab, where you also pick ore, herbs or both, whether it uses the spawn database spots too, its size, and whether it can be dragged.

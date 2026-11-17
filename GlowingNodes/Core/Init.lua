@@ -39,6 +39,7 @@ local function Bobber(cfg)
     cfg.beam = false
     cfg.height = -60
     cfg.look = "swirl"
+    cfg.splash = false -- hear the splash: with a pole on, effects up, music and ambience down (Core/FishSound.lua)
     return cfg
 end
 
