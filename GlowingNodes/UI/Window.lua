@@ -232,8 +232,19 @@ local function BuildCategoryPage(page, cat)
         -- under the look stamps: hear the splash (Core/FishSound.lua)
         local splash = W.Section(page, L.CARD_SPLASH, 206, 70)
         splash:SetPoint("TOPLEFT", 6, -356)
-        page.splash = splash:Add(W.Check(splash, L.SPLASH, L.SPLASH_TIP, function() return cfg().splash end,
-            setter("splash")), 26)
+        -- Off, Balanced or Fishing only: how far music and ambience go down
+        page.splash = splash:Add(W.Selector(splash, L.SPLASH_MODE, ns.FishSound.MODES,
+            function(v) return L["SPLASH_" .. v] end,
+            function() return cfg().splash and (cfg().splashMode or "focus") or "off" end,
+            function(v)
+                if v == "off" then
+                    ns.SetCat("fish", "splash", false)
+                else
+                    ns.SetCat("fish", "splashMode", v)
+                    if not cfg().splash then ns.SetCat("fish", "splash", true) end
+                end
+            end, 0, { boxWidth = 130 }), 30)
+        W.Tooltip(page.splash.well, L.SPLASH, L.SPLASH_TIP)
     end
 
     local sound = W.Section(page, L.CARD_SOUND, 300, 130)
