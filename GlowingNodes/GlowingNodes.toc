@@ -44,6 +44,7 @@ Core\Glow.lua
 Core\Sounds.lua
 Core\SoftTarget.lua
 Core\Gather.lua
+Core\Share.lua
 Data\SkinAreas.lua
 Core\SkinZones.lua
 Data\NodeSpawns.lua

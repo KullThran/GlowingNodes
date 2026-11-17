@@ -974,6 +974,105 @@ function ns.BuildMapPage(page)
     end)
     clearAll:SetPoint("BOTTOMLEFT", 12, 12)
 
+    -- sharing the log as a text code (Core/Share.lua): its own panel, with a
+    -- box to copy the code from or paste one in
+    local sharePanel = Panel(2 * PANEL_W - 12)
+    page.share = sharePanel
+    local shareHead = W.Section(sharePanel, L.SHARE, 2 * PANEL_W - 48, 30)
+    shareHead:SetPoint("TOPLEFT", 12, -10)
+    local note = W.Text(sharePanel, 11, W.INK_SOFT)
+    note:SetPoint("TOPLEFT", 14, -42)
+    note:SetWidth(2 * PANEL_W - 52)
+    note:SetSpacing(2)
+    page.shareNote = note
+    local well = CreateFrame("Frame", nil, sharePanel)
+    well:SetPoint("TOPLEFT", 12, -80)
+    well:SetPoint("BOTTOMRIGHT", -12, 46)
+    W.NineSlice(well, "f_inset", 128, 24, 9, "BACKGROUND", 0)
+    local scroll = CreateFrame("ScrollFrame", nil, well)
+    scroll:SetPoint("TOPLEFT", 8, -6)
+    scroll:SetPoint("BOTTOMRIGHT", -8, 6)
+    local box = CreateFrame("EditBox", nil, scroll)
+    box:SetMultiLine(true)
+    box:SetAutoFocus(false)
+    box:SetMaxLetters(0)
+    box:SetFont(W.CLIENT_FONT or W.FONT, 10, "")
+    box:SetTextColor(unpack(W.INK))
+    box:SetWidth(2 * PANEL_W - 12 - 40)
+    scroll:SetScrollChild(box)
+    page.shareBox = box
+    scroll:EnableMouseWheel(true)
+    scroll:SetScript("OnMouseWheel", function(self, delta)
+        local range = self:GetVerticalScrollRange() or 0
+        self:SetVerticalScroll(math.max(0, math.min(range, (self:GetVerticalScroll() or 0) - delta * 40)))
+    end)
+    well:EnableMouse(true)
+    well:SetScript("OnMouseDown", function() box:SetFocus() end)
+    local mode, exported -- "export" (the box holds that code) or "import"
+    box:SetScript("OnTextChanged", function(self, user)
+        if user and mode == "export" then
+            self:SetText(exported or "")
+            self:HighlightText()
+        end
+    end)
+    box:SetScript("OnEditFocusGained", function(self)
+        if mode == "export" then self:HighlightText() end
+    end)
+    box:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+    local function Say(text, color)
+        note:SetText(text)
+        local c = color or W.INK_SOFT
+        note:SetTextColor(c[1], c[2], c[3])
+    end
+    local go = W.Button(sharePanel, L.SHARE_IMPORT, 120, function()
+        local res, why = ns.Share.Import(box:GetText() or "")
+        if res then
+            local text = L.SHARE_DONE:format(res.added, res.merged)
+            Say(text, W.INK)
+            ns.Print(text)
+            box:SetText("")
+            box:ClearFocus()
+        else
+            Say(L["SHARE_" .. string.upper(why or "bad")] or L.SHARE_BAD, { 1, 0.5, 0.4 })
+        end
+    end)
+    go:SetPoint("BOTTOMRIGHT", -138, 12)
+    page.shareGo = go
+    local close = W.Button(sharePanel, CLOSE or "Close", 120, function() sharePanel:Hide() end)
+    close:SetPoint("BOTTOMRIGHT", -12, 12)
+    local function OpenShare(what)
+        for _, p in ipairs(panels) do p:Hide() end
+        sharePanel:Show()
+        scroll:SetVerticalScroll(0)
+        if what == "import" then
+            mode, exported = "import", nil
+            box:SetText("")
+            Say(L.SHARE_IMPORT_HINT)
+            go:Show()
+            box:SetFocus()
+            return
+        end
+        mode = "export"
+        go:Hide()
+        local code, points, zones = ns.Share.Export(what == "zone" and (shown or 0) or nil)
+        exported = code or ""
+        box:SetText(exported)
+        if code then
+            Say(L.SHARE_EXPORT_HINT:format(points, zones))
+            box:SetFocus()
+            box:HighlightText()
+        else
+            Say(L.SHARE_EMPTY)
+        end
+    end
+    -- the buttons, on the options under what to log
+    local shareCard = W.Section(optPanel, L.SHARE, PANEL_W - 24, 116)
+    shareCard:SetPoint("TOPLEFT", 12, -112)
+    page.exportZone = shareCard:Add(W.Button(shareCard, L.SHARE_EXPORT_ZONE, PANEL_W - 28, function() OpenShare("zone") end), 28)
+    page.exportAll = shareCard:Add(W.Button(shareCard, L.SHARE_EXPORT_ALL, PANEL_W - 28, function() OpenShare("all") end), 28)
+    page.import = shareCard:Add(W.Button(shareCard, L.SHARE_IMPORT, PANEL_W - 28, function() OpenShare("import") end), 28)
+    for _, b in ipairs({ page.exportZone, page.exportAll, page.import }) do W.Tooltip(b, L.SHARE, L.SHARE_TIP) end
+
     -----------------------------------------------------------------------
     -- Under the map: filters with the zone's counts, the panels' buttons
     -----------------------------------------------------------------------

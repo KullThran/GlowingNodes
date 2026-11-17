@@ -1,6 +1,7 @@
 # Glowing Nodes Changelog
 
 ## Unreleased
+- Share your log: the Map page's options export this zone or everything as a text code, to keep as a backup or pass to another character or a friend, and import one back. An imported code joins what you have (the same spot is joined, never doubled; the same code twice changes nothing), and a code cut short or changed is refused.
 - Fishing lure: with a fishing pole on, the chat (and the bobber's sound) tells you when its lure has 30 seconds left and when it has run out, once each. On by default; a box on the Alert tab.
 - Fixed: the Map page showed only the zone's blank parchment, without the parts you explored; it now draws them as the game's world map does, and a part explored while it is open shows at once.
 - Fishing: double right-click to cast. With a fishing pole equipped and out of combat, a double right-click on the world casts Fishing; a single right-click stays as it was (loot the bobber, talk, turn the camera). You always press: nothing is cast on its own. On by default, in the Fishing tab's "With a pole" card, next to Hear the splash.
