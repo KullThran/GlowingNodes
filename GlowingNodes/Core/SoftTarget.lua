@@ -388,6 +388,15 @@ local function Settle(target, state)
 end
 
 -- each kind wears its own look (the bobber's swirl, by default)
+-- a rare node's glow: bigger, with its pillar of light; the kind's own
+-- settings otherwise (and untouched)
+local RARE_SIZE, RARE_SOUND, RARE_VOLUME = 1.3, "crystal", 3
+ST.RARE_SIZE = RARE_SIZE
+local function Shown(cfg, target)
+    if not (cfg and target and target.rare) then return cfg end
+    return setmetatable({ size = (cfg.size or 1) * RARE_SIZE, beam = true }, { __index = cfg })
+end
+
 local function GlowOptions(category)
     local db = ns.db
     local cfg = db[category]
@@ -447,7 +456,11 @@ local function Announce(target)
     if not (cfg and cfg.soundOn) then return end
     if ns.db.soundOnReady and target.state ~= "ready" then return end
     target.sounded = true
-    Sounds.PlayCategory(target.category)
+    if target.rare then
+        Sounds.Play(RARE_SOUND, RARE_VOLUME, ns.db.channel)
+    else
+        Sounds.PlayCategory(target.category)
+    end
 end
 
 local function Describe(t)
@@ -608,6 +621,7 @@ function ST:Evaluate()
 
     local required, source = Skills.Required(target)
     target.required, target.source, target.skill = required, source, skill
+    target.rare = db.rare ~= false and Data.IsRare(target.category, required) or nil
     -- The game greys the cursor ("Unable…") for a node out of reach too, so
     -- what it showed when the node was picked far off says nothing: it is read
     -- again on every poll, and it only means "level too low" for a node whose
@@ -643,18 +657,25 @@ function ST:Evaluate()
             if glow.anchor == anchor then glow:FadeOut() else Release("its time is up") end
         end
     elseif glow.anchor ~= anchor or target.isNew or not glow:IsShown() then
-        glow:Configure(cfg, GlowOptions(target.category))
+        glow:Configure(Shown(cfg, target), GlowOptions(target.category))
+        glow.rare = target.rare
         glow:Attach(anchor, 0, Height(cfg), true)
         shownAt = GetTime()
         glow:Show(state, target.found)
     else
+        if glow.rare ~= target.rare then
+            -- its level learned just now, or the box ticked: rare or not
+            glow:Configure(Shown(cfg, target), GlowOptions(target.category))
+            glow.rare = target.rare
+        end
         glow:SetState(state)
     end
+    local rareLabel = target.rare and not target.hidden and L.RARE_LABEL or nil
     if db.showNumber and profession and not target.hidden then
         local text, r, g, b = Glow.NumberFor(required, skill, db.showMine, hasProf)
-        glow:SetNumber(text, r, g, b)
+        glow:SetNumber(text, r, g, b, rareLabel)
     else
-        glow:SetNumber("")
+        glow:SetNumber("", nil, nil, nil, rareLabel)
     end
 
     target.isNew = false
@@ -803,7 +824,7 @@ function ST:Refresh(force, hard)
     end
     if glow and glow.anchor and ST.current and ST.current.category then
         local cfg = ns.db[ST.current.category]
-        if cfg then glow:Configure(cfg, GlowOptions(ST.current.category)) end
+        if cfg then glow:Configure(Shown(cfg, ST.current), GlowOptions(ST.current.category)) end
         glow:Attach(glow.anchor, 0, Height(cfg), true)
     end
 end

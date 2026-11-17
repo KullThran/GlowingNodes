@@ -150,6 +150,7 @@ function Glow:SetNumber(text, r, g, b, label)
     self.text:SetText(text or "")
     self.text:SetTextColor(r or 1, g or 1, b or 1)
     self.label:SetText(label or "")
+    self.label:SetTextColor(1, 0.82, 0.2) -- gold, over the number
 end
 
 function Glow:SetState(state)

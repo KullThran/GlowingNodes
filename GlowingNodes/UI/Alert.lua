@@ -79,7 +79,8 @@ function Alert.NewCard(parent)
         local col = ns.db[cat] and ns.db[cat].color or { r = 1, g = 1, b = 1 }
         self.edge:SetVertexColor(col.r, col.g, col.b)
         self.halo:SetVertexColor(col.r, col.g, col.b)
-        self.title:SetText(L["ALERT_TITLE_" .. cat])
+        local rare = info.rare and ns.db.rare ~= false
+        self.title:SetText(rare and L.ALERT_TITLE_RARE or L["ALERT_TITLE_" .. cat])
         self.icon:SetTexture(info.icon or Data.IconFor(cat, info.required, info.name))
         if info.hidden then
             self.name:SetText("|cff9aa4a8" .. L.ALERT_HIDDEN .. "|r")
@@ -209,6 +210,7 @@ local function InfoFor(target)
     return {
         category = target.category, name = target.name, required = target.required,
         skill = target.skill, hasProf = target.skill ~= nil, state = target.state, hidden = target.hidden,
+        rare = target.rare,
     }
 end
 

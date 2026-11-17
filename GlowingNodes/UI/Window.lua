@@ -263,21 +263,22 @@ local function BuildGeneralPage(page)
     local function get(key) return function() return ns.db[key] end end
     local function set(key) return function(v) ns.Set(key, v) end end
 
-    local number = W.Section(page, L.CARD_NUMBER, 256, 160)
+    local number = W.Section(page, L.CARD_NUMBER, 256, 186)
     number:SetPoint("TOPLEFT", 6, -2)
     number:Add(W.Check(number, L.SHOW_NUMBER, L.SHOW_NUMBER_TIP, get("showNumber"), set("showNumber")), 26)
     number:Add(W.Check(number, L.SHOW_MINE, L.SHOW_MINE_TIP, get("showMine"), set("showMine")), 26)
     number:Add(W.Slider(number, L.NUMBER_SIZE, 14, 44, 1, get("numberSize"), set("numberSize")), 48)
     number:Add(W.Check(number, L.ONLY_KNOWN, L.ONLY_KNOWN_TIP, get("onlyKnown"), set("onlyKnown")), 26)
+    page.rare = number:Add(W.Check(number, L.RARE, L.RARE_TIP, get("rare"), set("rare")), 26)
 
     local sounds = W.Section(page, L.CARD_SOUNDS_GENERAL, 256, 90)
-    sounds:SetPoint("TOPLEFT", 6, -170)
+    sounds:SetPoint("TOPLEFT", 6, -196)
     sounds:Add(W.Selector(sounds, L.CHANNEL, Sounds.CHANNELS, function(c) return L["CH_" .. c] end,
         get("channel"), set("channel")), 30)
     sounds:Add(W.Check(sounds, L.SOUND_READY, L.SOUND_READY_TIP, get("soundOnReady"), set("soundOnReady")), 26)
 
     local legend = W.Section(page, L.CARD_LEGEND, 256, 120)
-    legend:SetPoint("TOPLEFT", 6, -270)
+    legend:SetPoint("TOPLEFT", 6, -296)
     local items = {
         { { 1, 0.15, 0.12 }, L.LEG_RED }, { { 1, 0.5, 0.1 }, L.LEG_ORANGE }, { { 1, 1, 0 }, L.LEG_YELLOW },
         { { 0.25, 1, 0.25 }, L.LEG_GREEN }, { { 0.6, 0.6, 0.6 }, L.LEG_GREY },

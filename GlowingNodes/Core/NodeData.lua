@@ -215,6 +215,18 @@ end
 
 -- Gathering difficulty colour, like the game's: red can't, orange always a
 -- skill-up, yellow often, green rarely, grey never.
+-- The rare ones, by the level they need: silver (and lesser bloodstone, as
+-- rare), gold, truesilver and dark iron, rich thorium; black lotus
+Data.RARE = {
+    ore = { [75] = true, [155] = true, [230] = true, [275] = true },
+    herb = { [300] = true },
+}
+
+function Data.IsRare(category, required)
+    local set = Data.RARE[category]
+    return (set and required and set[required]) == true
+end
+
 function Data.DifficultyColor(required, skill)
     if not required then return 1, 0.82, 0 end
     if not skill or skill < required then return 1, 0.15, 0.12 end

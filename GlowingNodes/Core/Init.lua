@@ -58,6 +58,7 @@ ns.DEFAULTS = {
         showMine = false,
         numberSize = 26,
         onlyKnown = false,
+        rare = true, -- rare nodes stand out: a bigger glow, RARE, a sound and an alert of their own
         dimFar = false, -- the game only finds nodes close by: glow at full from the first moment
         greyLocked = false,
         height = -45,
