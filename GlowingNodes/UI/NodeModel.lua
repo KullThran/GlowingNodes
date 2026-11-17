@@ -18,7 +18,10 @@ NodeModel.MODELS = {
     herb = { file = 219440 },
     skin = { display = 604, anim = 6, yaw = 0.6 },
     chest = { file = 219372, yaw = 0.5 }, -- world/skillactivated/containers/treasurechest01.m2
-    fish = { file = 201000 }, -- world/goober/g_fishingbobber.m2
+    -- world/goober/g_fishingbobber.m2: its origin is off to one side of it, so
+    -- it turns round its own middle (center), and it is framed smaller (fill)
+    -- to show whole over its glow
+    fish = { file = 201000, center = true, fill = 0.65 },
 }
 
 local FOV = 0.6       -- radians
@@ -81,6 +84,7 @@ function NodeModel.New(parent, cat, onReady)
             set = actor:SetModelByCreatureDisplayID(spec.display)
         end
         if spec.anim and actor.SetAnimation then actor:SetAnimation(spec.anim) end
+        if spec.center and actor.SetUseCenterForOrigin then actor:SetUseCenterForOrigin(true, true, false) end
         return set ~= false
     end
 
@@ -88,7 +92,7 @@ function NodeModel.New(parent, cat, onReady)
         if not ready then
             tries = tries + elapsed
             local loaded = not actor.IsLoaded or actor:IsLoaded()
-            if loaded and Frame(scene, actor) then
+            if loaded and Frame(scene, actor, spec.fill) then
                 ready = true
                 if onReady then onReady(true) end
             elseif tries > 3 then
