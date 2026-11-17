@@ -29,6 +29,7 @@ local CVARS = {
     "SoftTargetInteractArc", "SoftTargetInteractOnlyInRange", "SoftTargetNameplateInteract",
     "nameplateGameObjectMaxDistance", "SoftTargetMatchLocked",
 }
+ST.CVARS = CVARS -- the console variables the addon sets (/gn diag lists them)
 
 local CURSOR_KEYWORDS = {
     { "gather", "herb" }, { "herb", "herb" },
@@ -470,6 +471,7 @@ local function Describe(t)
         tostring(t.required), tostring(t.source), tostring(t.skill), tostring(t.state),
         t.blocked and " unable" or "")
 end
+ST.Describe = Describe
 
 -- for the debug log: what the game hides about a node it won't name (in
 -- instances it may keep the GUID, name and position secret)

@@ -342,6 +342,9 @@ function Addon:Slash(input)
         ns.ToggleArrow()
     elseif cmd == "info" then
         ns.SoftTarget:PrintInfo()
+    elseif cmd == "diag" or cmd == "diagnostico" or cmd == "diagnóstico" then
+        -- a text to copy when reporting a problem (Core/Diagnose.lua)
+        ns.CopyBox:Show(L.DIAG_TITLE, L.DIAG_HINT, ns.Diagnose.Report())
     else
         ns.Print(L.MSG_HELP)
     end

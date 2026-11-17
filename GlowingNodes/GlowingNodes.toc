@@ -53,11 +53,13 @@ Core\Navigator.lua
 Core\FishSound.lua
 Core\EasyCast.lua
 Core\Lure.lua
+Core\Diagnose.lua
 Core\Tracking.lua
 Core\Unlock.lua
 
 UI\Widgets.lua
 UI\Alert.lua
+UI\CopyBox.lua
 UI\MapPins.lua
 UI\MapFilter.lua
 UI\OpenMap.lua

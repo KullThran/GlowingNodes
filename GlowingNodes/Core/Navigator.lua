@@ -222,6 +222,7 @@ local function Reason()
     if Ask(UnitOnTaxi, "player") then return "taxi" end
     if Ask(UnitIsDeadOrGhost, "player") then return "dead" end
 end
+Nav.Reason = Reason -- why the arrow hides now, or nil (/gn diag says it)
 
 function Nav.Update(now)
     view.reason, view.angle, view.yards, view.category, view.node = nil, nil, nil, nil, nil
