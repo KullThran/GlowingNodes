@@ -115,9 +115,59 @@ function ns.BuildMapPage(page)
     page.notice = empty
 
     local tiles = {}
+    local explored = {}
+    page.explored = explored
+
+    -- the parts of the zone you explored, over its art, as the game's world
+    -- map draws them (pieces of one tile at most, the last cut to size); the
+    -- highlights it shows only under the mouse are left out
+    local function PowerOf2(n)
+        local p = 16
+        while p < n do p = p * 2 end
+        return p
+    end
+    local function DrawExplored(mapID, tw, th, sx, sy)
+        local info = C_MapExplorationInfo and C_MapExplorationInfo.GetExploredMapTextures
+        local ok, list = pcall(info or error, mapID)
+        if not (ok and type(list) == "table") then return end
+        local n = 0
+        for _, e in ipairs(list) do
+            if not e.isShownByMouseOver and e.fileDataIDs and e.textureWidth and e.textureWidth > 0 then
+                local wide, tall = math.ceil(e.textureWidth / tw), math.ceil(e.textureHeight / th)
+                for j = 1, tall do
+                    local ph = j < tall and th or (e.textureHeight - th * (tall - 1))
+                    local fh = j < tall and th or PowerOf2(ph)
+                    for k = 1, wide do
+                        local file = e.fileDataIDs[(j - 1) * wide + k]
+                        local pw = k < wide and tw or (e.textureWidth - tw * (wide - 1))
+                        local fw = k < wide and tw or PowerOf2(pw)
+                        if file then
+                            n = n + 1
+                            local t = explored[n]
+                            if not t then
+                                t = content:CreateTexture(nil, "BACKGROUND", nil, 2)
+                                t:SetVertexColor(0.8, 0.78, 0.74) -- toned down as the art under it
+                                if t.SetDesaturation then t:SetDesaturation(0.35) end
+                                explored[n] = t
+                            end
+                            t:SetTexture(file)
+                            t:SetTexCoord(0, pw / fw, 0, ph / fh)
+                            t:ClearAllPoints()
+                            t:SetPoint("TOPLEFT", content, "TOPLEFT", (e.offsetX + tw * (k - 1)) * sx,
+                                -(e.offsetY + th * (j - 1)) * sy)
+                            t:SetSize(pw * sx, ph * sy)
+                            t:Show()
+                        end
+                    end
+                end
+            end
+        end
+    end
+
     -- the zone's art, tile by tile, cut where the map ends
     local function DrawMap(mapID)
         for _, t in ipairs(tiles) do t:Hide() end
+        for _, t in ipairs(explored) do t:Hide() end
         local layers = mapID and C_Map and C_Map.GetMapArtLayers and C_Map.GetMapArtLayers(mapID)
         local layer = layers and layers[1]
         local files = layer and C_Map.GetMapArtLayerTextures and C_Map.GetMapArtLayerTextures(mapID, 1)
@@ -146,6 +196,7 @@ function ns.BuildMapPage(page)
                 t:Show()
             end
         end
+        DrawExplored(mapID, tw, th, sx, sy)
         return true
     end
 
@@ -1058,6 +1109,12 @@ function ns.BuildMapPage(page)
     end)
 
     ns.On("NodesChanged", function()
+        if page:IsVisible() then page:UpdateStatus() end
+    end)
+    -- a part of the map explored just now: drawn at once
+    local exploring = CreateFrame("Frame")
+    pcall(exploring.RegisterEvent, exploring, "MAP_EXPLORATION_UPDATED")
+    exploring:SetScript("OnEvent", function()
         if page:IsVisible() then page:UpdateStatus() end
     end)
 end
