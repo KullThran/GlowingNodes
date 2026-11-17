@@ -1,6 +1,7 @@
 # Glowing Nodes Changelog
 
 ## Unreleased
+- The bobber glows by default, as the nodes do (it started off); untick Make them glow on the Fishing tab to have it off.
 - The Fishing tab has two views, switched under the preview: Glow and sound, and With a pole, which now has room for hearing the splash, casting and looting, and the lure. The one key for everything (the game's Interact) is set right there: click and press a key, or right-click to take it off. Putting the lure on with the key has its own box.
 - The bobber is seen through its glow: every look (the swirl, the runes, the pillar...) gets a soft see-through hole where the bobber floats, as the glow is drawn over the world. Nodes keep their glow whole.
 - Hear the splash, Fishing only: music, ambience and voices now go silent (they stayed at 10 %), and the sounds of pets, emotes and error voices go off; both modes turn the game's sound and effects on if they were off, and Balanced lowers voices to 30 % too. All come back as you had them.

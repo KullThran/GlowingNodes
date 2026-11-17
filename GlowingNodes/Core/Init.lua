@@ -36,7 +36,7 @@ end
 -- no column of light, lower than a node's glow, on the water, and a faint
 -- still outline round it: nothing covers the bobber, so you see it move
 local function Bobber(cfg)
-    cfg.enabled = false
+    cfg.enabled = true -- the bobber glows from the first cast, as the nodes do
     cfg.beam = false
     cfg.height = -60
     cfg.intensity = 1
