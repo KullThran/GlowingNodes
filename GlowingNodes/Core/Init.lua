@@ -77,6 +77,7 @@ ns.DEFAULTS = {
             enabled = true,
             ore = true, herb = true, skin = true, chest = true,
             unlock = true, -- a profession up: say which nodes seen can now be gathered
+            lure = true, -- with a pole on: say when its lure has 30 s left and when it's gone (Core/Lure.lua)
             duration = 10,
             scale = 1,
             onlyCan = false,

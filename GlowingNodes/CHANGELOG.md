@@ -1,6 +1,7 @@
 # Glowing Nodes Changelog
 
 ## Unreleased
+- Fishing lure: with a fishing pole on, the chat (and the bobber's sound) tells you when its lure has 30 seconds left and when it has run out, once each. On by default; a box on the Alert tab.
 - Fixed: the Map page showed only the zone's blank parchment, without the parts you explored; it now draws them as the game's world map does, and a part explored while it is open shows at once.
 - Fishing: double right-click to cast. With a fishing pole equipped and out of combat, a double right-click on the world casts Fishing; a single right-click stays as it was (loot the bobber, talk, turn the camera). You always press: nothing is cast on its own. On by default, in the Fishing tab's "With a pole" card, next to Hear the splash.
 - Rare nodes stand out: silver, gold, truesilver, dark iron, rich thorium and Black Lotus get a bigger glow with its pillar of light, RARE in gold over the level, a sound of their own and a "Rare node!" alert. On by default; a box on the General tab turns it off.

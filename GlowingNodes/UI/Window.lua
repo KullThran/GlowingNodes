@@ -398,11 +398,13 @@ local function BuildAlertPage(page)
     main:Add(W.Check(main, L.HIDE_COMBAT, nil, get("hideCombat"), set("hideCombat")), 26)
     main:Add(W.Check(main, L.ALERT_UNLOCK, L.ALERT_UNLOCK_TIP, get("unlock"), set("unlock")), 26)
 
-    local kinds = W.Section(page, L.CARD_ALERT_KINDS, 300, 118)
+    local kinds = W.Section(page, L.CARD_ALERT_KINDS, 300, 140)
     kinds:SetPoint("TOPLEFT", 236, -254)
     for _, cat in ipairs(ns.CATEGORIES) do
         kinds:Add(W.Check(kinds, L["CAT_" .. cat], nil, get(cat), set(cat)), 22)
     end
+    -- the lure on your fishing pole: a word in the chat (Core/Lure.lua)
+    page.lure = kinds:Add(W.Check(kinds, L.ALERT_LURE, L.ALERT_LURE_TIP, get("lure"), set("lure")), 22)
 
     local move = W.Button(page, L.MOVE, 130, function(self)
         if ns.Alert:IsSampleShown() then
@@ -413,7 +415,7 @@ local function BuildAlertPage(page)
             self.text:SetText(L.MOVE_DONE)
         end
     end)
-    move:SetPoint("TOPLEFT", 238, -378)
+    move:SetPoint("TOPLEFT", 238, -400) -- under the kinds card
     local resetPos = W.Button(page, L.RESET_POS, 130, function() ns.Alert:ResetPosition() end)
     resetPos:SetPoint("LEFT", move, "RIGHT", 12, 0)
     page:SetScript("OnHide", function()

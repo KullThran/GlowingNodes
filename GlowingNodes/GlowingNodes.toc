@@ -51,6 +51,7 @@ Core\NodeDB.lua
 Core\Navigator.lua
 Core\FishSound.lua
 Core\EasyCast.lua
+Core\Lure.lua
 Core\Tracking.lua
 Core\Unlock.lua
 
