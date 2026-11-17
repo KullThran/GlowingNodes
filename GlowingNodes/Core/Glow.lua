@@ -234,7 +234,10 @@ Glow.PlateRel = PlateRel
 -- world, so on the bobber a soft hole (a mask, see-through in the middle,
 -- whole from its edge on) goes on every part, where the bobber floats. The
 -- size at a glow size of 1, and how far over the glow's middle it sits.
-local HOLE_W, HOLE_H, HOLE_UP = 64, 92, 16
+-- The mask spans the whole glow (the pillar, the shock ring), so nothing lies
+-- past its edge, where a client might hide it; the hole (64 x 92 at size 1)
+-- is drawn in its middle (tools: the art is made to these numbers).
+local MASK_W, MASK_H, HOLE_UP = 700, 1300, 16
 
 function Glow:Mask(t, on)
     if not (t and t.AddMaskTexture and self.hole) then return end
@@ -252,9 +255,9 @@ function Glow:SetHole(on)
         local f = self.frame
         local m = f.CreateMaskTexture and f:CreateMaskTexture()
         if not m then return end
-        m:SetTexture(ART .. "fx_hole", "CLAMP", "CLAMP") -- past its edge, the edge: whole
+        m:SetTexture(ART .. "fx_hole", "CLAMP", "CLAMP")
         m:SetPoint("CENTER", f, "CENTER", 0, HOLE_UP)
-        m:SetSize(HOLE_W, HOLE_H)
+        m:SetSize(MASK_W, MASK_H)
         self.hole, self.masked = m, {}
     end
     if not self.hole then return end
@@ -365,7 +368,7 @@ function Glow:Update(elapsed)
     look.Paint(self, f)
     if self.holeOn then
         local hole = self.hole
-        hole:SetSize(HOLE_W * scale, HOLE_H * scale)
+        hole:SetSize(MASK_W * scale, MASK_H * scale)
         hole:ClearAllPoints()
         hole:SetPoint("CENTER", self.frame, "CENTER", 0, HOLE_UP * scale)
     end
