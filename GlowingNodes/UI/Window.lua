@@ -231,8 +231,8 @@ local function BuildCategoryPage(page, cat)
     if fish then
         -- under the look picker, with a pole on: hear the splash
         -- (Core/FishSound.lua) and double right-click to cast (Core/EasyCast.lua)
-        local splash = W.Section(page, L.CARD_SPLASH, 206, 96)
-        splash:SetPoint("TOPLEFT", 6, -328)
+        local splash = W.Section(page, L.CARD_SPLASH, 206, 102)
+        splash:SetPoint("TOPLEFT", 6, -324)
         -- Off, Balanced or Fishing only: how far music and ambience go down
         page.splash = splash:Add(W.Selector(splash, L.SPLASH_MODE, ns.FishSound.MODES,
             function(v) return L["SPLASH_" .. v] end,
@@ -244,10 +244,13 @@ local function BuildCategoryPage(page, cat)
                     ns.SetCat("fish", "splashMode", v)
                     if not cfg().splash then ns.SetCat("fish", "splash", true) end
                 end
-            end, 0, { boxWidth = 130 }), 30)
+            end, 0, { boxWidth = 130 }), 28)
         W.Tooltip(page.splash.well, L.SPLASH, L.SPLASH_TIP)
         page.easyCast = splash:Add(W.Check(splash, L.EASY_CAST, L.EASY_CAST_TIP, function() return cfg().easyCast end,
-            setter("easyCast")), 26)
+            setter("easyCast")), 22)
+        -- the Interact key casts, loots the bobber and puts a lure on (Core/OneKey.lua)
+        page.oneKey = splash:Add(W.Check(splash, L.ONE_KEY, L.ONE_KEY_TIP, function() return cfg().oneKey end,
+            setter("oneKey")), 22)
     end
 
     local sound = W.Section(page, L.CARD_SOUND, 300, 130)

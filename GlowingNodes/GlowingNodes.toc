@@ -53,6 +53,7 @@ Core\Navigator.lua
 Core\FishSound.lua
 Core\EasyCast.lua
 Core\Lure.lua
+Core\OneKey.lua
 Core\Diagnose.lua
 Core\Tracking.lua
 Core\Unlock.lua

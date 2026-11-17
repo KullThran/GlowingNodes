@@ -27,6 +27,7 @@ local function Left()
     if ok and has and type(ms) == "number" then return ms / 1000 end
 end
 Lure.Left = Left
+Lure.Left = Left
 
 local function Say(text)
     ns.Print(text)

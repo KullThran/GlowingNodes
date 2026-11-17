@@ -45,6 +45,7 @@ local function Bobber(cfg)
     cfg.splash = true -- hear the splash: with a pole on, effects up, music and ambience down (Core/FishSound.lua)
     cfg.splashMode = "focus" -- music and ambience to 10 % ("balanced": 30 %)
     cfg.easyCast = true -- double right-click casts, with a pole on (Core/EasyCast.lua)
+    cfg.oneKey = false -- the Interact key casts, loots and puts a lure on, with a pole on (Core/OneKey.lua)
     return cfg
 end
 

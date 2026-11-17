@@ -1,6 +1,7 @@
 # Glowing Nodes Changelog
 
 ## Unreleased
+- Fish with one key (a box on the Fishing tab, off by default): with a fishing pole on, your Interact key casts when the line is in, loots the bobber when it's out and puts on the best lure from your bags when the pole has none. A node in reach is still gathered, and in combat the key is the game's. You press every time.
 - /gn diag: a window with a text to copy when you report a problem: the client, the console variables the addon sets (and what they were before), the range the game really keeps, what the glow sees, the settings, the log, fishing and the other addons loaded, with warnings for what gets in the way (the Interact Key off, another addon that marks nodes). It never holds your character's or realm's name.
 - Share your log: the Map page's options export this zone or everything as a text code, to keep as a backup or pass to another character or a friend, and import one back. An imported code joins what you have (the same spot is joined, never doubled; the same code twice changes nothing), and a code cut short or changed is refused.
 - Fishing lure: with a fishing pole on, the chat (and the bobber's sound) tells you when its lure has 30 seconds left and when it has run out, once each. On by default; a box on the Alert tab.
