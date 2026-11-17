@@ -235,12 +235,20 @@ local function Watch()
 end
 OK.Watch = Watch
 
+-- a unit event counts only for you; the others' arguments (the soft target's
+-- GUIDs, which the game may keep secret) are never looked at
+local function ForYou(event, unit)
+    if event:sub(1, 5) ~= "UNIT_" then return true end
+    if issecretvalue and issecretvalue(unit) then return false end
+    return unit == "player"
+end
+
 owner:SetScript("OnEvent", function(_, event, unit)
     if event == "PLAYER_REGEN_DISABLED" then
         Release() -- combat about to start: bindings can still change now
     elseif event == "PLAYER_EQUIPMENT_CHANGED" or event == "PLAYER_REGEN_ENABLED" then
         Watch()
-    elseif unit == nil or unit == "player" then
+    elseif ForYou(event, unit) then
         if OK.Wanted() then OK.Update() end
     end
 end)
