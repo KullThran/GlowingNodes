@@ -229,9 +229,10 @@ local function BuildCategoryPage(page, cat)
     end
 
     if fish then
-        -- under the look stamps: hear the splash (Core/FishSound.lua)
-        local splash = W.Section(page, L.CARD_SPLASH, 206, 70)
-        splash:SetPoint("TOPLEFT", 6, -356)
+        -- under the look picker, with a pole on: hear the splash
+        -- (Core/FishSound.lua) and double right-click to cast (Core/EasyCast.lua)
+        local splash = W.Section(page, L.CARD_SPLASH, 206, 96)
+        splash:SetPoint("TOPLEFT", 6, -328)
         -- Off, Balanced or Fishing only: how far music and ambience go down
         page.splash = splash:Add(W.Selector(splash, L.SPLASH_MODE, ns.FishSound.MODES,
             function(v) return L["SPLASH_" .. v] end,
@@ -245,6 +246,8 @@ local function BuildCategoryPage(page, cat)
                 end
             end, 0, { boxWidth = 130 }), 30)
         W.Tooltip(page.splash.well, L.SPLASH, L.SPLASH_TIP)
+        page.easyCast = splash:Add(W.Check(splash, L.EASY_CAST, L.EASY_CAST_TIP, function() return cfg().easyCast end,
+            setter("easyCast")), 26)
     end
 
     local sound = W.Section(page, L.CARD_SOUND, 300, 130)

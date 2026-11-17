@@ -50,6 +50,7 @@ Data\NodeSpawns.lua
 Core\NodeDB.lua
 Core\Navigator.lua
 Core\FishSound.lua
+Core\EasyCast.lua
 Core\Tracking.lua
 Core\Unlock.lua
 

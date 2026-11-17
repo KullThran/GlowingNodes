@@ -1,6 +1,7 @@
 # Glowing Nodes Changelog
 
 ## Unreleased
+- Fishing: double right-click to cast. With a fishing pole equipped and out of combat, a double right-click on the world casts Fishing; a single right-click stays as it was (loot the bobber, talk, turn the camera). You always press: nothing is cast on its own. On by default, in the Fishing tab's "With a pole" card, next to Hear the splash.
 - Rare nodes stand out: silver, gold, truesilver, dark iron, rich thorium and Black Lotus get a bigger glow with its pillar of light, RARE in gold over the level, a sound of their own and a "Rare node!" alert. On by default; a box on the General tab turns it off.
 - The arrow to a point you pick: click a vein, herb or pool on the world map, the minimap or the Map page and the arrow leads there, even with nearer nodes or above your skill, until you reach it (it turns on if it was off). Click the point again to let go. On the Map page a right-click still forgets your point.
 - The maps' points: a vein or herb you gathered in the last 5 minutes is fainter on the world map, the minimap and the Map page, as it isn't back yet; then it is bright again.
