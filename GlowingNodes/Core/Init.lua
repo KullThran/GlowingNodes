@@ -271,14 +271,29 @@ end
 -- A profile from before: the arrow had a database switch of its own. Turned
 -- on, it is carried to the one switch (which also shows the spots on the
 -- maps); either way the old one goes.
-function ns.MigrateProfile(profile)
-    local arrow = profile and profile.arrow
+local function MigrateArrow(profile)
+    local arrow = profile.arrow
     if not (arrow and arrow.database ~= nil) then return end
     if arrow.database == true then
         profile.map = profile.map or {}
         profile.map.database = true
     end
     arrow.database = nil
+end
+
+-- The bobber's Outline covers nothing, so you see it move when a fish bites:
+-- every profile is moved to it once, whatever look it had before; a look
+-- picked afterwards stays (profile.fishOutline marks it done)
+local function MigrateBobber(profile)
+    if profile.fishOutline then return end
+    profile.fishOutline = true
+    if profile.fish then profile.fish.look = "outline" end
+end
+
+function ns.MigrateProfile(profile)
+    if not profile then return end
+    MigrateArrow(profile)
+    MigrateBobber(profile)
 end
 
 function ns.ToggleArrow()
