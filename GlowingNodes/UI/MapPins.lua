@@ -138,6 +138,7 @@ function Pins.Tooltip(owner, node)
         -- a spot of the 1.12 database: maybe there, never gathered by you
         if node.r and not fish then LevelLine(node) end
         GameTooltip:AddLine(L.PIN_DATABASE, 0.7, 0.7, 0.7, true)
+        GameTooltip:AddLine(L.PIN_ARROW_HINT, 0.6, 0.6, 0.6)
         GameTooltip:Show()
         return
     end
@@ -151,7 +152,29 @@ function Pins.Tooltip(owner, node)
     DropLines(node)
     local last = node.t or node.v
     if last then GameTooltip:AddLine(L.PIN_LAST:format(When(last)), 0.7, 0.7, 0.7) end
+    GameTooltip:AddLine(L.PIN_ARROW_HINT, 0.6, 0.6, 0.6)
     GameTooltip:Show()
+end
+
+-- a click on a point: the arrow leads there (turned on if it was off); a
+-- click on the point it leads to lets go, back to the nearest node
+function Pins.Lead(mapID, key, node)
+    local Nav = ns.Navigator
+    if not (Nav and mapID and key and node) or node.k == "skin" then return end
+    if not ns.db.arrow.enabled then ns.SetArrow("enabled", true) end
+    local on = Nav.Choose(mapID, key, node)
+    if on == true then
+        ns.Print(L.MSG_ARROW_TO:format(node.n or ns.KindLabel(node.k)))
+    elseif on == false then
+        ns.Print(L.MSG_ARROW_NEAREST)
+    end
+end
+
+function Pins.OnPinClick(pin, button)
+    if button == "LeftButton" and pin.node then
+        GameTooltip:Hide()
+        Pins.Lead(pin.mapID, pin.key, pin.node)
+    end
 end
 
 ---------------------------------------------------------------------------
@@ -165,6 +188,7 @@ local function NewPin()
     f.tex:SetAllPoints()
     f:SetScript("OnEnter", function(self) if self.node then Pins.Tooltip(self, self.node) end end)
     f:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    f:SetScript("OnClick", Pins.OnPinClick)
     return f
 end
 
@@ -204,9 +228,9 @@ end
 
 local function Pool()
     local pool = { free = {}, used = {} }
-    function pool:Acquire(node, size)
+    function pool:Acquire(node, size, mapID, key)
         local pin = table.remove(self.free) or NewPin()
-        pin.node = node
+        pin.node, pin.mapID, pin.key = node, mapID, key
         pin:SetSize(size, size)
         Pins.Paint(pin.tex, node)
         pin:SetAlpha(Pins.Alpha(node))
@@ -216,7 +240,7 @@ local function Pool()
     function pool:ReleaseAll()
         for i = #self.used, 1, -1 do
             local pin = self.used[i]
-            pin.node = nil
+            pin.node, pin.mapID, pin.key = nil, nil, nil
             pin:Hide()
             self.free[#self.free + 1] = pin
             self.used[i] = nil
@@ -257,14 +281,14 @@ function Pins:RefreshWorld()
     for key, node in pairs(zone or {}) do
         if Visible(node) then
             local x, y = ns.Gather.Decode(key)
-            local pin = worldPool:Acquire(node, size)
+            local pin = worldPool:Acquire(node, size, mapID, key)
             HBDP:AddWorldMapIconMap(REF, pin, mapID, x, y, 0)
         end
     end
     ns.NodeDB.Each(mapID, function(key, node)
         if Visible(node) then
             local x, y = ns.Gather.Decode(key)
-            local pin = worldPool:Acquire(node, math.max(size - DB_SMALLER, 5))
+            local pin = worldPool:Acquire(node, math.max(size - DB_SMALLER, 5), mapID, key)
             HBDP:AddWorldMapIconMap(REF, pin, mapID, x, y, 0)
         end
     end)
@@ -274,7 +298,7 @@ function Pins:RefreshWorld()
         ns.OpenMap.Neighbours(mapID, function(nodeMap, key, node)
             if Visible(node) then
                 local x, y = ns.Gather.Decode(key)
-                local pin = worldPool:Acquire(node, size)
+                local pin = worldPool:Acquire(node, size, nodeMap, key)
                 HBDP:AddWorldMapIconMap(REF, pin, nodeMap, x, y, SHOW_PARENT)
             end
         end)
@@ -388,14 +412,14 @@ function Pins:RefreshMinimap()
     for key, node in pairs(ns.Gather.Zone(mapID) or {}) do
         if Visible(node) then
             local x, y = ns.Gather.Decode(key)
-            local pin = miniPool:Acquire(node, size)
+            local pin = miniPool:Acquire(node, size, mapID, key)
             HBDP:AddMinimapIconMap(REF, pin, mapID, x, y, false, false)
         end
     end
     ns.NodeDB.Each(mapID, function(key, node)
         if Visible(node) then
             local x, y = ns.Gather.Decode(key)
-            local pin = miniPool:Acquire(node, math.max(size - DB_SMALLER, 5))
+            local pin = miniPool:Acquire(node, math.max(size - DB_SMALLER, 5), mapID, key)
             HBDP:AddMinimapIconMap(REF, pin, mapID, x, y, false, false)
         end
     end)

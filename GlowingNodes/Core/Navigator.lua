@@ -173,6 +173,30 @@ end
 
 function Nav.Target() return target end
 
+-- A spot picked on a map (a click on its point): the arrow leads there,
+-- nearer nodes or not, above your skill too, until you reach it or click it
+-- again. Kept when the settings change; one at a time.
+local chosen
+
+-- returns true when the arrow now leads there, false when that click let go
+-- of it, nil when the spot can't be placed in the world
+function Nav.Choose(mapID, key, node)
+    if chosen and chosen.mapID == mapID and chosen.key == key then
+        chosen = nil
+        return false
+    end
+    local hbd = HBD()
+    if not (hbd and mapID and key and node) then return nil end
+    local x, y = ns.Gather.Decode(key)
+    local wx, wy, instance = Ask(hbd.GetWorldCoordinatesFromZone, hbd, x, y, mapID)
+    if not (wx and wy) then return nil end
+    chosen = { key = key, mapID = mapID, wx = wx, wy = wy, instance = instance, category = node.k, node = node }
+    arrivedAt = nil
+    return true
+end
+
+function Nav.Chosen() return chosen end
+
 ---------------------------------------------------------------------------
 -- Update
 ---------------------------------------------------------------------------
@@ -221,6 +245,24 @@ function Nav.Update(now)
     local function Vector(spot)
         if spot.instance ~= nil and instance ~= nil and spot.instance ~= instance then return nil end
         return Ask(hbd.GetWorldVector, hbd, instance, px, py, spot.wx, spot.wy)
+    end
+
+    -- a spot picked on a map comes first; reached, it is let go, and the
+    -- arrow goes on as before (the glow takes over at the node)
+    if chosen then
+        local angle, yards = Vector(chosen)
+        if yards and yards <= Nav.ARRIVE_YARDS then
+            chosen = nil
+        elseif yards then
+            if target ~= chosen then arrivedAt = nil end
+            target = chosen
+            view.state = "guide"
+            view.angle = angle - facing
+            view.yards = yards
+            view.category = chosen.category
+            view.node = chosen.node
+            return view
+        end
     end
 
     -- the nearest spot; the one in use keeps it unless another is clearly nearer

@@ -201,6 +201,7 @@ function ns.BuildMapPage(page)
         p.tex:SetAllPoints()
         p.tex:SetTexture(ns.ART .. (isArea and "area" or "pin"))
         p:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+        p.isArea = isArea
         p:SetScript("OnEnter", function(self)
             Pins.Tooltip(self, self.node)
             if not self.node.db then
@@ -214,6 +215,8 @@ function ns.BuildMapPage(page)
             if button == "RightButton" and not self.node.db then
                 GameTooltip:Hide()
                 G.Remove(self.mapID, self.key)
+            elseif not self.isArea then
+                Pins.OnPinClick(self, button)
             end
         end)
         list[i] = p

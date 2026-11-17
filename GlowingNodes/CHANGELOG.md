@@ -1,6 +1,7 @@
 # Glowing Nodes Changelog
 
 ## Unreleased
+- The arrow to a point you pick: click a vein, herb or pool on the world map, the minimap or the Map page and the arrow leads there, even with nearer nodes or above your skill, until you reach it (it turns on if it was off). Click the point again to let go. On the Map page a right-click still forgets your point.
 - The maps' points: a vein or herb you gathered in the last 5 minutes is fainter on the world map, the minimap and the Map page, as it isn't back yet; then it is bright again.
 - The maps' points: the level a node needs is now in the game's difficulty colour against your skill, as on the glow (red, orange, yellow, green, grey).
 - Intensity now goes down to 0%: no glow at all, on any tab.
