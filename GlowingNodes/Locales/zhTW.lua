@@ -143,6 +143,8 @@ ns.RegisterLocale("zhTW", {
     LOOK_fireflies_TIP = "繞著採集點飛行的小光點，留下淡淡的尾跡。",
     LOOK_aura = "靈光",
     LOOK_aura_TIP = "只有柔和脈動的光芒：最低調的外觀。",
+    LOOK_outline = "輪廓",
+    LOOK_outline_TIP = "浮標周圍水面上一圈細而淡、靜止不動的光環，中間是空的：不會遮住浮標，魚咬鉤時能看到它在動。",
     LOOK_PREV = "上一個外觀",
     LOOK_NEXT = "下一個外觀",
     MAP_MINE = "我採集過的點",

@@ -147,6 +147,8 @@ ns.RegisterLocale("esES", {
     LOOK_fireflies_TIP = "Lucecitas que dan vueltas al nodo dejando una estela tenue.",
     LOOK_aura = "Aura",
     LOOK_aura_TIP = "Solo un resplandor suave que late: el aspecto más discreto.",
+    LOOK_outline = "Contorno",
+    LOOK_outline_TIP = "Un anillo fino, tenue y quieto sobre el agua alrededor del corcho, con el centro vacío: nada lo tapa, así que lo ves moverse cuando pica un pez.",
     LOOK_PREV = "Aspecto anterior",
     LOOK_NEXT = "Aspecto siguiente",
     MAP_MINE = "Mis puntos recogidos",

@@ -143,6 +143,8 @@ ns.RegisterLocale("itIT", {
     LOOK_fireflies_TIP = "Piccole luci che girano intorno al nodo lasciando una scia tenue.",
     LOOK_aura = "Aura",
     LOOK_aura_TIP = "Solo un tenue bagliore che pulsa: l'aspetto più discreto.",
+    LOOK_outline = "Contorno",
+    LOOK_outline_TIP = "Un anello sottile, tenue e fermo sull'acqua attorno al galleggiante, vuoto al centro: niente lo copre, così lo vedi muoversi quando un pesce abbocca.",
     LOOK_PREV = "Aspetto precedente",
     LOOK_NEXT = "Aspetto successivo",
     MAP_MINE = "I miei punti raccolti",

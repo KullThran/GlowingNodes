@@ -143,6 +143,8 @@ ns.RegisterLocale("frFR", {
     LOOK_fireflies_TIP = "De petites lumières qui tournent autour du gisement en laissant une traînée légère.",
     LOOK_aura = "Aura",
     LOOK_aura_TIP = "Juste une douce lueur qui pulse : l'aspect le plus discret.",
+    LOOK_outline = "Contour",
+    LOOK_outline_TIP = "Un anneau fin, discret et immobile sur l'eau autour du bouchon, vide au centre : rien ne le cache, vous le voyez bouger quand un poisson mord.",
     LOOK_PREV = "Aspect précédent",
     LOOK_NEXT = "Aspect suivant",
     MAP_MINE = "Mes points récoltés",

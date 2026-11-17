@@ -143,6 +143,8 @@ ns.RegisterLocale("koKR", {
     LOOK_fireflies_TIP = "희미한 꼬리를 남기며 광맥 주위를 도는 작은 빛들입니다.",
     LOOK_aura = "오라",
     LOOK_aura_TIP = "부드럽게 고동치는 빛뿐인, 가장 차분한 모양입니다.",
+    LOOK_outline = "윤곽선",
+    LOOK_outline_TIP = "찌 주위 물 위에 가늘고 은은하며 움직이지 않는 고리, 가운데는 비어 있습니다. 찌를 가리지 않아 물고기가 물 때 찌가 움직이는 것이 보입니다.",
     LOOK_PREV = "이전 모양",
     LOOK_NEXT = "다음 모양",
     MAP_MINE = "내가 채집한 지점",

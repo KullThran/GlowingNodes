@@ -147,6 +147,8 @@ ns.RegisterLocale("enUS", {
     LOOK_fireflies_TIP = "Small lights circling the node, leaving faint trails.",
     LOOK_aura = "Aura",
     LOOK_aura_TIP = "Just a soft pulsing glow: the quietest look.",
+    LOOK_outline = "Outline",
+    LOOK_outline_TIP = "A thin, faint, still ring on the water round the bobber, its middle empty: nothing covers it, so you see it move when a fish bites.",
     LOOK_PREV = "Previous look",
     LOOK_NEXT = "Next look",
     MAP_MINE = "My gathered spots",

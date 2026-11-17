@@ -33,12 +33,15 @@ local function Category(r, g, b, sound)
 end
 
 -- the fishing bobber: off by default (nothing changes for who doesn't fish),
--- no column of light, and its swirl lower than a node's ring, on the water
+-- no column of light, lower than a node's glow, on the water, and a faint
+-- still outline round it: nothing covers the bobber, so you see it move
 local function Bobber(cfg)
     cfg.enabled = false
     cfg.beam = false
     cfg.height = -60
-    cfg.look = "swirl"
+    cfg.intensity = 1
+    cfg.pulse = false
+    cfg.look = "outline"
     cfg.splash = false -- hear the splash: with a pole on, effects up, music and ambience down (Core/FishSound.lua)
     return cfg
 end

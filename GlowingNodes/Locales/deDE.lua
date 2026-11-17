@@ -143,6 +143,8 @@ ns.RegisterLocale("deDE", {
     LOOK_fireflies_TIP = "Kleine Lichter, die das Vorkommen umkreisen und eine schwache Spur ziehen.",
     LOOK_aura = "Aura",
     LOOK_aura_TIP = "Nur ein sanft pulsierendes Leuchten: das dezenteste Aussehen.",
+    LOOK_outline = "Umriss",
+    LOOK_outline_TIP = "Ein dünner, schwacher, ruhiger Ring auf dem Wasser um den Schwimmer, innen leer: nichts verdeckt ihn, so siehst du ihn zucken, wenn ein Fisch anbeißt.",
     LOOK_PREV = "Vorheriges Aussehen",
     LOOK_NEXT = "Nächstes Aussehen",
     MAP_MINE = "Meine gesammelten Punkte",

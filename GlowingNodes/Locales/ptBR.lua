@@ -143,6 +143,8 @@ ns.RegisterLocale("ptBR", {
     LOOK_fireflies_TIP = "Pequenas luzes que circulam o nodo deixando um rastro suave.",
     LOOK_aura = "Aura",
     LOOK_aura_TIP = "Apenas um brilho suave que pulsa: o visual mais discreto.",
+    LOOK_outline = "Contorno",
+    LOOK_outline_TIP = "Um anel fino, suave e parado na água em volta da boia, vazio no centro: nada a cobre, então você a vê se mexer quando um peixe morde.",
     LOOK_PREV = "Visual anterior",
     LOOK_NEXT = "Próximo visual",
     MAP_MINE = "Meus pontos coletados",

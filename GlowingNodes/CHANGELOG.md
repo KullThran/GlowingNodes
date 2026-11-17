@@ -1,6 +1,7 @@
 # Glowing Nodes Changelog
 
 ## Unreleased
+- Fishing: a new look for the bobber, Outline, now its default: a thin, faint, still ring on the water round it, its middle empty, so nothing covers the bobber and you see it move when a fish bites (no halo, no sparkles, no pulse). If you picked another look for the bobber, it stays: choose Outline with the arrows under the preview.
 - Hear the splash: a new box on the Fishing tab (off by default). With a fishing pole equipped, sound effects go up to full and music and ambience down to 10 %, so the bobber's splash stands out; take the pole off and your own levels come back, also after a game closed while fishing. A volume you move meanwhile stays as you leave it, and your master volume is never touched. It doesn't know when a fish bites: it only makes the game's own splash easier to hear.
 
 ## 1.4.0 (2026-11-15)

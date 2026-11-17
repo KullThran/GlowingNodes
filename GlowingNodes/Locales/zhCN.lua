@@ -143,6 +143,8 @@ ns.RegisterLocale("zhCN", {
     LOOK_fireflies_TIP = "绕着采集点飞行的小光点，留下淡淡的尾迹。",
     LOOK_aura = "灵光",
     LOOK_aura_TIP = "只有柔和脉动的光芒：最低调的外观。",
+    LOOK_outline = "轮廓",
+    LOOK_outline_TIP = "鱼漂周围水面上一圈细而淡、静止不动的光环，中间是空的：不会遮住鱼漂，鱼咬钩时能看到它在动。",
     LOOK_PREV = "上一个外观",
     LOOK_NEXT = "下一个外观",
     MAP_MINE = "我采集过的点",

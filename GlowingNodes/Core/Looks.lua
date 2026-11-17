@@ -387,3 +387,24 @@ Add({
         Tint(glow.aura, s, s, f.r, f.g, f.b, f.a1 * 0.8 + f.a2 * 0.4)
     end,
 })
+
+---------------------------------------------------------------------------
+-- Outline (the fishing bobber's): a thin ring flat on the water round the
+-- node, its middle empty, faint and still: no halo, no sparks, no shock ring,
+-- and the pulse doesn't make it beat. Nothing covers the bobber, so when a
+-- fish bites, the bobber is what moves.
+---------------------------------------------------------------------------
+
+Add({
+    id = "outline",
+    shock = false,
+    Build = function(glow)
+        glow:Part("outline", "fx_shock", "ARTWORK", 0)
+    end,
+    Paint = function(glow, f)
+        Tint(glow.halo, 1, 1, f.r, f.g, f.b, 0) -- the shared halo would fill the middle
+        -- a1 and a2 carry the pulse's beat: taken out, the ring stays still
+        local beat = f.beat > 0 and f.beat or 1
+        Tint(glow.outline, 150 * f.scale, 56 * f.scale, f.r, f.g, f.b, (f.a1 * 0.35 + f.a2 * 0.15) / beat)
+    end,
+})
