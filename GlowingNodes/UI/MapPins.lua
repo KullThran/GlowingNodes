@@ -116,6 +116,15 @@ local function AreaTooltip(node)
     GameTooltip:Show()
 end
 
+-- the level a point needs, in the game's difficulty colour against your skill
+-- (as on the glow); neutral without the profession
+local function LevelLine(node)
+    local skill = ns.Skills.Get(node.k)
+    local r, g, b = 0.8, 0.8, 0.8
+    if skill then r, g, b = ns.NodeData.DifficultyColor(node.r, skill) end
+    GameTooltip:AddLine(L.PIN_LEVEL:format(node.r), r, g, b)
+end
+
 -- the tooltip of a point, on any map
 function Pins.Tooltip(owner, node)
     GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
@@ -127,7 +136,7 @@ function Pins.Tooltip(owner, node)
     if fish then GivesLine(node) end
     if node.db then
         -- a spot of the 1.12 database: maybe there, never gathered by you
-        if node.r and not fish then GameTooltip:AddLine(L.PIN_LEVEL:format(node.r), 0.8, 0.8, 0.8) end
+        if node.r and not fish then LevelLine(node) end
         GameTooltip:AddLine(L.PIN_DATABASE, 0.7, 0.7, 0.7, true)
         GameTooltip:Show()
         return
@@ -137,7 +146,7 @@ function Pins.Tooltip(owner, node)
     else
         GameTooltip:AddLine(L.PIN_SEEN, 1, 1, 1)
     end
-    if node.r and not fish then GameTooltip:AddLine(L.PIN_LEVEL:format(node.r), 0.8, 0.8, 0.8) end
+    if node.r and not fish then LevelLine(node) end
     if node.p == false then GameTooltip:AddLine(L.PIN_ROUGH, 0.7, 0.7, 0.7) end
     DropLines(node)
     local last = node.t or node.v

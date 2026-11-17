@@ -1,6 +1,7 @@
 # Glowing Nodes Changelog
 
 ## Unreleased
+- The maps' points: the level a node needs is now in the game's difficulty colour against your skill, as on the glow (red, orange, yellow, green, grey).
 - Intensity now goes down to 0%: no glow at all, on any tab.
 - Fishing: a new look for the bobber, Outline, now its default: a thin, faint, still ring on the water round it, its middle empty, so nothing covers the bobber and you see it move when a fish bites (no halo, no sparkles, no pulse). Every bobber is moved to Outline once, even if you had picked another look for it; you can pick that one again with the arrows under the preview, and it stays.
 - Hear the splash: a new box on the Fishing tab (on by default). With a fishing pole equipped, sound effects go up to full and music and ambience down to 10 %, so the bobber's splash stands out; take the pole off and your own levels come back, also after a game closed while fishing. A volume you move meanwhile stays as you leave it, and your master volume is never touched. It doesn't know when a fish bites: it only makes the game's own splash easier to hear.
