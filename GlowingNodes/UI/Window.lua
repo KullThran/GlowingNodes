@@ -109,6 +109,7 @@ local function BuildPlate(page, cat)
     anchor:SetPoint("CENTER", node, "CENTER", 0, swirl and -30 or 0)
     anchor:SetFrameLevel(node:GetFrameLevel() + 2)
     local glow = Glow.New(anchor)
+    page.glow = glow
     local state = "ready"
 
     -- the look picker under the plate:  <  Rune circle  >  (round the list)
@@ -159,7 +160,7 @@ local function BuildPlate(page, cat)
     local function apply()
         local db = ns.db
         glow:Configure(db[cat], { numberSize = db.numberSize, greyLocked = db.greyLocked, dimFar = db.dimFar, scale = 0.78,
-            look = db[cat].look })
+            look = db[cat].look, hole = cat == "fish" })
         local required = SAMPLE[cat]
         local skill = Skills.Get(cat)
         if not required then

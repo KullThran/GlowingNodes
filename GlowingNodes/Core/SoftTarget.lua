@@ -402,8 +402,9 @@ local function GlowOptions(category)
     local db = ns.db
     local cfg = db[category]
     return { numberSize = db.numberSize, greyLocked = db.greyLocked, dimFar = db.dimFar, scale = 1,
-        look = cfg and cfg.look }
+        look = cfg and cfg.look, hole = category == "fish" } -- the bobber seen through its glow
 end
+ST.GlowOptions = GlowOptions
 
 -- a category may keep its own height over the nameplate (the bobber's swirl
 -- sits on the water, lower than a node's ring)

@@ -136,6 +136,7 @@ end
 function Glow:Configure(cfg, opts)
     self.cfg, self.opts = cfg, opts or {}
     self:ShowLook(self.opts.look)
+    self:SetHole(self.opts.hole == true)
     local fontSize = (self.opts.numberSize or 26) * (self.opts.textScale or 1)
     self.text:SetFont(FONT, max(fontSize, 8), "THICKOUTLINE")
     self.label:SetFont(FONT, max(fontSize * 0.48, 8), "OUTLINE")
@@ -228,6 +229,41 @@ local function PlateRel(anchor)
     return ps / us
 end
 Glow.PlateRel = PlateRel
+
+-- The bobber seen through its glow (opts.hole): the glow is drawn over the
+-- world, so on the bobber a soft hole (a mask, see-through in the middle,
+-- whole from its edge on) goes on every part, where the bobber floats. The
+-- size at a glow size of 1, and how far over the glow's middle it sits.
+local HOLE_W, HOLE_H, HOLE_UP = 64, 92, 16
+
+function Glow:Mask(t, on)
+    if not (t and t.AddMaskTexture and self.hole) then return end
+    if on and not self.masked[t] then
+        t:AddMaskTexture(self.hole)
+        self.masked[t] = true
+    elseif not on and self.masked[t] then
+        t:RemoveMaskTexture(self.hole)
+        self.masked[t] = nil
+    end
+end
+
+function Glow:SetHole(on)
+    if on and not self.hole then
+        local f = self.frame
+        local m = f.CreateMaskTexture and f:CreateMaskTexture()
+        if not m then return end
+        m:SetTexture(ART .. "fx_hole", "CLAMP", "CLAMP") -- past its edge, the edge: whole
+        m:SetPoint("CENTER", f, "CENTER", 0, HOLE_UP)
+        m:SetSize(HOLE_W, HOLE_H)
+        self.hole, self.masked = m, {}
+    end
+    if not self.hole then return end
+    self.holeOn = on
+    for _, t in ipairs({ self.halo, self.beam, self.shock }) do self:Mask(t, on) end
+    for _, parts in pairs(self.partsOf) do
+        for _, t in ipairs(parts) do self:Mask(t, on) end
+    end
+end
 
 -- a change of look: the old one's parts hide, the new one's are made the
 -- first time and show
@@ -327,6 +363,12 @@ function Glow:Update(elapsed)
     f.strength, f.beat, f.a1, f.a2, f.power = strength, beat, a1, a2, power
     f.speed, f.ready, f.locked = speed, self.ready, self.locked
     look.Paint(self, f)
+    if self.holeOn then
+        local hole = self.hole
+        hole:SetSize(HOLE_W * scale, HOLE_H * scale)
+        hole:ClearAllPoints()
+        hole:SetPoint("CENTER", self.frame, "CENTER", 0, HOLE_UP * scale)
+    end
 
     self.textFrame:SetAlpha(self.appear)
 end
