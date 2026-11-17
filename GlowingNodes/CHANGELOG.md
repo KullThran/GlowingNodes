@@ -2,7 +2,7 @@
 
 ## Unreleased
 - Fishing: a new look for the bobber, Outline, now its default: a thin, faint, still ring on the water round it, its middle empty, so nothing covers the bobber and you see it move when a fish bites (no halo, no sparkles, no pulse). If you picked another look for the bobber, it stays: choose Outline with the arrows under the preview.
-- Hear the splash: a new box on the Fishing tab (off by default). With a fishing pole equipped, sound effects go up to full and music and ambience down to 10 %, so the bobber's splash stands out; take the pole off and your own levels come back, also after a game closed while fishing. A volume you move meanwhile stays as you leave it, and your master volume is never touched. It doesn't know when a fish bites: it only makes the game's own splash easier to hear.
+- Hear the splash: a new box on the Fishing tab (on by default). With a fishing pole equipped, sound effects go up to full and music and ambience down to 10 %, so the bobber's splash stands out; take the pole off and your own levels come back, also after a game closed while fishing. A volume you move meanwhile stays as you leave it, and your master volume is never touched. It doesn't know when a fish bites: it only makes the game's own splash easier to hear.
 
 ## 1.4.0 (2026-11-15)
 - The arrow: a leather and bronze arrowhead on screen that points to the nearest ore vein or herb you can gather, with the item's icon and the yards under it. Once you are there and the node glows, the arrow steps aside for the glow. A spot you reach and find empty is skipped for 10 minutes, and the arrow fades while nothing is left to lead to. It hides in combat, in instances, on flight paths and while dead. It is our own frame, not a map waypoint.

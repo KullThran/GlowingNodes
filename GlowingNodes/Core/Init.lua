@@ -42,7 +42,7 @@ local function Bobber(cfg)
     cfg.intensity = 1
     cfg.pulse = false
     cfg.look = "outline"
-    cfg.splash = false -- hear the splash: with a pole on, effects up, music and ambience down (Core/FishSound.lua)
+    cfg.splash = true -- hear the splash: with a pole on, effects up, music and ambience down (Core/FishSound.lua)
     return cfg
 end
 
