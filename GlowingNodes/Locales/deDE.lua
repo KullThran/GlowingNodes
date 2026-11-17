@@ -161,7 +161,7 @@ ns.RegisterLocale("deDE", {
     FISH_HEIGHT_TIP = "Hebt oder senkt den Strudel, bis er um den Schwimmer auf dem Wasser liegt.",
     CARD_SPLASH = "Mit Angel",
     SPLASH = "Platschen hören (mit Angel)",
-    SPLASH_TIP = "Mit angelegter Angelrute gehen die Effekte auf volle Lautstärke und Musik und Umgebung herunter: auf 30 % bei Ausgewogen, auf 10 % bei Nur Angeln. Legst du die Angel ab, kommen deine Lautstärken nach 10 Sekunden zurück; eine Lautstärke, die du inzwischen änderst, bleibt so. Die Gesamtlautstärke wird nie angefasst. Es weiß nicht, wann ein Fisch anbeißt: Es macht nur das Platschen des Spiels besser hörbar.",
+    SPLASH_TIP = "Mit angelegter Angelrute gehen die Effekte auf volle Lautstärke (und Ton und Effekte des Spiels gehen an, falls du sie aus hattest). Ausgewogen: Musik, Umgebung und Stimmen auf 30 %. Nur Angeln: Musik, Umgebung und Stimmen stumm, und die Geräusche von Haustieren, Emotes und Fehlerstimmen aus. Legst du die Angel ab, kommen deine Einstellungen nach 10 Sekunden zurück; eine, die du inzwischen änderst, bleibt so. Die Gesamtlautstärke wird nie angefasst. Zauber, Kreaturen und Schritte sind Effekte wie das Platschen und lassen sich nicht davon trennen. Es weiß nicht, wann ein Fisch anbeißt: Es macht nur das Platschen des Spiels leichter hörbar.",
     SPLASH_MODE = "Platschen",
     SPLASH_off = "Aus",
     SPLASH_balanced = "Ausgewogen",

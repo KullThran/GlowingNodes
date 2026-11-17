@@ -161,7 +161,7 @@ ns.RegisterLocale("itIT", {
     FISH_HEIGHT_TIP = "Alza o abbassa il vortice finché non poggia sull'acqua attorno al galleggiante.",
     CARD_SPLASH = "Con canna",
     SPLASH = "Sentire lo splash (con canna)",
-    SPLASH_TIP = "Con una canna da pesca equipaggiata, gli effetti salgono al massimo e musica e ambiente scendono: al 30 % in Bilanciato, al 10 % in Solo pesca. Tolta la canna, i tuoi volumi tornano dopo 10 secondi; un volume che cambi nel frattempo resta com'è. Il volume generale non viene mai toccato. Non sa quando un pesce abbocca: rende solo più facile sentire lo splash del gioco.",
+    SPLASH_TIP = "Con una canna da pesca equipaggiata, gli effetti salgono al massimo (e l'audio e gli effetti del gioco si accendono se li avevi spenti). Bilanciato: musica, ambiente e voci al 30 %. Solo pesca: musica, ambiente e voci in silenzio, e spenti i suoni di mascotte, emote e voci di errore. Tolta la canna, le tue impostazioni tornano dopo 10 secondi; una che cambi nel frattempo resta com'è. Il volume generale non viene mai toccato. Incantesimi, creature e passi sono effetti come lo splash e non si possono separare da esso. Non sa quando un pesce abbocca: rende solo più facile sentire lo splash del gioco.",
     SPLASH_MODE = "Splash",
     SPLASH_off = "Spento",
     SPLASH_balanced = "Bilanciato",

@@ -161,7 +161,7 @@ ns.RegisterLocale("ptBR", {
     FISH_HEIGHT_TIP = "Sobe ou desce o redemoinho até que fique na água em volta da boia.",
     CARD_SPLASH = "Com vara",
     SPLASH = "Ouvir o splash (com vara)",
-    SPLASH_TIP = "Com uma vara de pesca equipada, os efeitos vão ao máximo e a música e o ambiente baixam: para 30 % em Equilibrado, para 10 % em Só pesca. Ao tirar a vara, seus volumes voltam 10 segundos depois; um volume que você mudar nesse meio-tempo fica como deixou. O volume geral nunca é tocado. Não sabe quando um peixe morde: só deixa o splash do próprio jogo mais fácil de ouvir.",
+    SPLASH_TIP = "Com uma vara de pesca equipada, os efeitos vão ao máximo (e o som e os efeitos do jogo são ligados se estavam desligados). Equilibrado: música, ambiente e vozes em 30 %. Só pesca: música, ambiente e vozes em silêncio, e desligados os sons de mascotes, emotes e vozes de erro. Ao tirar a vara, seus ajustes voltam 10 segundos depois; um que você mudar nesse meio-tempo fica como deixou. O volume geral nunca é tocado. Feitiços, criaturas e passos são efeitos como o splash e não dá para separá-los dele. Não sabe quando um peixe morde: só deixa o splash do próprio jogo mais fácil de ouvir.",
     SPLASH_MODE = "Splash",
     SPLASH_off = "Desligado",
     SPLASH_balanced = "Equilibrado",

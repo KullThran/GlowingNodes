@@ -167,7 +167,7 @@ ns.RegisterLocale("enUS", {
     FISH_HEIGHT_TIP = "Moves the swirl up or down until it sits on the water around the bobber.",
     CARD_SPLASH = "With a pole",
     SPLASH = "Hear the splash (with a pole)",
-    SPLASH_TIP = "With a fishing pole equipped, sound effects go up to full and music and ambience down: to 30 % on Balanced, to 10 % on Fishing only. Take the pole off and your own levels come back 10 seconds later; a volume you move meanwhile stays as you leave it. Your master volume is never touched. It doesn't know when a fish bites: it only makes the game's own splash easier to hear.",
+    SPLASH_TIP = "With a fishing pole equipped, sound effects go up to full (and the game's sound and effects come on if you had them off). Balanced: music, ambience and voices down to 30 %. Fishing only: music, ambience and voices silent, and the sounds of pets, emotes and error voices off. Take the pole off and your own settings come back 10 seconds later; one you change meanwhile stays as you leave it. Your master volume is never touched. Spells, creatures and steps are effects like the splash and can't be told apart from it. It doesn't know when a fish bites: it only makes the game's own splash easier to hear.",
     SPLASH_MODE = "Splash",
     SPLASH_off = "Off",
     SPLASH_balanced = "Balanced",

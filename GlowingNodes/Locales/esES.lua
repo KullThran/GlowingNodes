@@ -167,7 +167,7 @@ ns.RegisterLocale("esES", {
     FISH_HEIGHT_TIP = "Sube o baja el remolino hasta que quede en el agua alrededor del corcho.",
     CARD_SPLASH = "Con la caña",
     SPLASH = "Oír el chapoteo (con caña)",
-    SPLASH_TIP = "Con una caña de pescar equipada, los efectos suben al máximo y la música y el ambiente bajan: al 30 % en Equilibrado, al 10 % en Solo pesca. Al quitarte la caña, tus volúmenes vuelven a los 10 segundos; un volumen que muevas mientras tanto se queda como lo dejes. El volumen general no se toca. No sabe cuándo pica un pez: solo hace más fácil oír el chapoteo del propio juego.",
+    SPLASH_TIP = "Con una caña de pescar equipada, los efectos suben al máximo (y el sonido y los efectos del juego se encienden si los tenías apagados). Equilibrado: música, ambiente y voces al 30 %. Solo pesca: música, ambiente y voces en silencio, y fuera los sonidos de mascotas, emotes y voces de error. Al quitarte la caña, tus ajustes vuelven a los 10 segundos; uno que cambies mientras tanto se queda como lo dejes. El volumen general no se toca. Hechizos, criaturas y pasos son efectos como el chapoteo y no se pueden separar de él. No sabe cuándo pica un pez: solo hace más fácil oír el chapoteo del propio juego.",
     SPLASH_MODE = "Chapoteo",
     SPLASH_off = "Apagado",
     SPLASH_balanced = "Equilibrado",

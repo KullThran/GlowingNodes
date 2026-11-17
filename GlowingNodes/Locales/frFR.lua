@@ -161,7 +161,7 @@ ns.RegisterLocale("frFR", {
     FISH_HEIGHT_TIP = "Monte ou descend le tourbillon jusqu'à ce qu'il repose sur l'eau autour du flotteur.",
     CARD_SPLASH = "Avec canne",
     SPLASH = "Entendre le plouf (avec canne)",
-    SPLASH_TIP = "Avec une canne à pêche équipée, les effets passent au maximum et la musique et l'ambiance baissent : à 30 % en Équilibré, à 10 % en Pêche seule. Canne retirée, vos volumes reviennent 10 secondes plus tard ; un volume que vous changez entre-temps reste tel quel. Le volume principal n'est jamais touché. Il ne sait pas quand un poisson mord : il rend seulement le plouf du jeu plus facile à entendre.",
+    SPLASH_TIP = "Avec une canne à pêche équipée, les effets passent au maximum (et le son et les effets du jeu s'activent s'ils étaient coupés). Équilibré : musique, ambiance et voix à 30 %. Pêche seule : musique, ambiance et voix muettes, et les sons des familiers, des émotes et des voix d'erreur coupés. Canne retirée, vos réglages reviennent 10 secondes plus tard ; un réglage changé entre-temps reste tel quel. Le volume principal n'est jamais touché. Sorts, créatures et pas sont des effets comme le plouf et ne peuvent pas en être séparés. Il ne sait pas quand un poisson mord : il rend seulement le plouf du jeu plus facile à entendre.",
     SPLASH_MODE = "Plouf",
     SPLASH_off = "Désactivé",
     SPLASH_balanced = "Équilibré",

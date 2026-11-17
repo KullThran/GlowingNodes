@@ -1,7 +1,10 @@
 -- FishSound.lua
 -- Hear the splash: with a fishing pole equipped (and fish.splash on), sound
--- effects go up to full and music and ambience down (to 30 % Balanced, to
--- 10 % Fishing only), so the bobber's splash stands out. The pole taken off,
+-- effects go up to full (the game's sound and effects turned on if they were
+-- off) and the rest down: music, ambience and voices to 30 % on Balanced;
+-- on Fishing only, silent, and pets', emotes' and error voices off. The splash
+-- is an effect like any other (spells, creatures, steps): those can't be told
+-- apart from it, so they stay. The pole taken off,
 -- your own levels come back 10 seconds later (a quick swap to your weapon and
 -- back doesn't flip them); turned off, or the addon off, at once. The master
 -- volume is never touched. Nothing here knows when a fish bites: it only
@@ -15,19 +18,34 @@ local _, ns = ...
 local FS = {}
 ns.FishSound = FS
 
--- the channels: effects up to full; music and ambience down to the mode's
--- level (already quieter, they stay so)
+-- what changes: effects up to full; music, ambience and voices down to the
+-- mode's level (already quieter, they stay so); the game's sound and effects
+-- on; and on Fishing only (off = "focus"), the sounds of pets, emotes, error
+-- voices and others' armour off. A setting this client lacks is left alone.
 local CHANNELS = {
     { cvar = "Sound_SFXVolume", up = true },
     { cvar = "Sound_MusicVolume" },
     { cvar = "Sound_AmbienceVolume" },
+    { cvar = "Sound_DialogVolume" },
+    { cvar = "Sound_EnableAllSound", on = true },
+    { cvar = "Sound_EnableSFX", on = true },
+    { cvar = "Sound_EnablePetSounds", off = "focus" },
+    { cvar = "Sound_EnableEmoteSounds", off = "focus" },
+    { cvar = "Sound_EnableErrorSpeech", off = "focus" },
+    { cvar = "Sound_EnableArmorFoleySoundForOthers", off = "focus" },
 }
+FS.CHANNELS = CHANNELS
 FS.MODES = { "off", "balanced", "focus" } -- the picker's values ("off": fish.splash false)
-FS.QUIET = { balanced = 0.3, focus = 0.1 }
+FS.QUIET = { balanced = 0.3, focus = 0 }
 FS.RESTORE_AFTER = 10 -- seconds without a pole before your levels come back
 
+local function Mode()
+    local mode = ns.db and ns.db.fish and ns.db.fish.splashMode
+    return FS.QUIET[mode] and mode or "focus"
+end
+
 local function Quiet()
-    return FS.QUIET[ns.db and ns.db.fish and ns.db.fish.splashMode] or FS.QUIET.focus
+    return FS.QUIET[Mode()]
 end
 
 local function Get(name)
@@ -51,17 +69,26 @@ end
 
 -- your levels first, then the fishing ones
 local function Lower()
-    local kept = {}
+    local kept, mode = {}, Mode()
     for _, ch in ipairs(CHANNELS) do
         local own = Get(ch.cvar)
         if own then
-            local level = ch.up and math.max(own, 1) or math.min(own, Quiet())
-            kept[ch.cvar] = { own = own, set = level }
+            local level
+            if ch.up then
+                level = math.max(own, 1)
+            elseif ch.on then
+                level = 1
+            elseif ch.off then
+                level = mode == ch.off and 0 or nil
+            else
+                level = math.min(own, Quiet())
+            end
+            if level then kept[ch.cvar] = { own = own, set = level } end
         end
     end
     ns.global.splash = kept
     for name, k in pairs(kept) do Put(name, k.set) end
-    ns.Debug("SPLASH on: effects up, music and ambience down")
+    ns.Debug("SPLASH on (" .. mode .. "): effects up, the rest down")
 end
 
 -- your levels back, but a volume you moved since stays yours
