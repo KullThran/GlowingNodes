@@ -45,11 +45,12 @@ end
 -- the keys bound to Interact
 function OK.Keys()
     if not GetBindingKey then return {} end
-    local ok, a, b = pcall(GetBindingKey, "INTERACTTARGET")
-    if not ok then return {} end
+    local got = { pcall(GetBindingKey, "INTERACTTARGET") }
+    if not got[1] then return {} end
     local keys = {}
-    if a then keys[#keys + 1] = a end
-    if b then keys[#keys + 1] = b end
+    for i = 2, #got do
+        if got[i] then keys[#keys + 1] = got[i] end
+    end
     return keys
 end
 
@@ -113,7 +114,7 @@ end
 
 -- the best lure in the bags to put on, when the pole has none
 local function LureToUse(now)
-    if LureLeft() then return nil end
+    if ns.db.fish.oneKeyLure == false or LureLeft() then return nil end
     local count = GetItemCount or (C_Item and C_Item.GetItemCount)
     for _, id in ipairs(OK.LURES) do
         if (Ask(count, id) or 0) > 0 and not (tried[id] and now - tried[id] < OK.LURE_RETRY) then return id end
@@ -164,6 +165,60 @@ function OK.Update(now)
     mode, boundItem = want, item
 end
 
+---------------------------------------------------------------------------
+-- The one key for everything, set from the Fishing tab: the game's Interact
+-- binding (it gathers, opens and, with the pole, casts and loots)
+---------------------------------------------------------------------------
+
+function OK.KeyName(key)
+    return (GetBindingText and Ask(GetBindingText, key)) or key
+end
+
+-- the Interact keys as the game writes them ("F / Button 4"), or nil
+function OK.KeyText()
+    local keys = OK.Keys()
+    if #keys == 0 then return nil end
+    for i, key in ipairs(keys) do keys[i] = OK.KeyName(key) end
+    return table.concat(keys, " / ")
+end
+
+local function SaveKeys()
+    local set = GetCurrentBindingSet and Ask(GetCurrentBindingSet)
+    if SaveBindings and set then pcall(SaveBindings, set) end
+end
+
+-- key: as the game names it ("F", "SHIFT-G", "BUTTON4"). The Interact keys
+-- you had stay; what the key did before is said.
+function OK.Bind(key)
+    if InCombat() then
+        ns.Print(ns.L.KEY_COMBAT)
+        return false
+    end
+    if not (SetBinding and key) then return false end
+    local before = GetBindingAction and Ask(GetBindingAction, key) or ""
+    if not pcall(SetBinding, key, "INTERACTTARGET") then return false end
+    SaveKeys()
+    local name = OK.KeyName(key)
+    ns.Print(ns.L.KEY_SET:format(name))
+    if before ~= "" and before ~= "INTERACTTARGET" then
+        ns.Print(ns.L.KEY_WAS:format(name, _G["BINDING_NAME_" .. before] or before))
+    end
+    return true
+end
+
+-- Interact on no key at all
+function OK.Unbind()
+    if InCombat() then
+        ns.Print(ns.L.KEY_COMBAT)
+        return false
+    end
+    if not SetBinding then return false end
+    for _, key in ipairs(OK.Keys()) do pcall(SetBinding, key) end
+    SaveKeys()
+    ns.Print(ns.L.KEY_CLEARED)
+    return true
+end
+
 local since = 0
 owner:SetScript("OnUpdate", function(_, elapsed)
     since = since + elapsed
@@ -197,6 +252,7 @@ for _, event in ipairs({ "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED", "PLAYE
 end
 ns.On("Enable", Watch)
 ns.On("Changed", function(key)
+    if key == "fish.oneKeyLure" and OK.Wanted() then OK.Update() end
     if key == "*" or key == "enabled" or key == "fish.oneKey" then
         Watch()
         if key == "fish.oneKey" and ns.db.fish.oneKey and #OK.Keys() == 0 then

@@ -200,12 +200,166 @@ local function BuildPlate(page, cat)
     page.stamps = stamps
 end
 
+---------------------------------------------------------------------------
+-- The Fishing tab's second view: what the pole does, with room. Two buttons
+-- under the preview switch it with the glow's view.
+---------------------------------------------------------------------------
+
+-- a button that takes the next key pressed (or a side mouse button) as the
+-- one key for everything: the game's Interact. Right-click: on no key.
+local MOUSE_KEYS = { MiddleButton = "BUTTON3", Button4 = "BUTTON4", Button5 = "BUTTON5" }
+local MODIFIERS = { LSHIFT = true, RSHIFT = true, LCTRL = true, RCTRL = true, LALT = true, RALT = true,
+    LMETA = true, RMETA = true }
+local function Mods()
+    return (IsAltKeyDown and IsAltKeyDown() and "ALT-" or "") .. (IsControlKeyDown and IsControlKeyDown() and "CTRL-" or "")
+        .. (IsShiftKeyDown and IsShiftKeyDown() and "SHIFT-" or "")
+end
+
+local function KeyButton(parent)
+    local OneKey = ns.OneKey
+    local b = W.Button(parent, "", 150, function() end)
+    b:SetHeight(24)
+    b:RegisterForClicks("AnyUp")
+    local waiting = false
+    local function Paint()
+        b.text:SetText(waiting and L.KEY_PRESS or OneKey.KeyText() or L.KEY_NONE)
+    end
+    b.Paint = Paint
+    local function Stop()
+        waiting = false
+        b:EnableKeyboard(false)
+        b:SetScript("OnKeyDown", nil)
+        Paint()
+    end
+    local function Take(key)
+        Stop()
+        OneKey.Bind(key)
+        Paint()
+    end
+    b:SetScript("OnClick", function(_, mouse)
+        W.Click()
+        if waiting then
+            if MOUSE_KEYS[mouse] then Take(Mods() .. MOUSE_KEYS[mouse]) else Stop() end
+            return
+        end
+        if mouse == "RightButton" then
+            OneKey.Unbind()
+            Paint()
+            return
+        end
+        if mouse ~= "LeftButton" then return end
+        waiting = true
+        b:EnableKeyboard(true)
+        if b.SetPropagateKeyboardInput then b:SetPropagateKeyboardInput(false) end
+        b:SetScript("OnKeyDown", function(_, key)
+            if key == "ESCAPE" then Stop() return end
+            if MODIFIERS[key] then return end
+            Take(Mods() .. key)
+        end)
+        Paint()
+    end)
+    b:SetScript("OnHide", function() if waiting then Stop() end end)
+    W.Tooltip(b, L.ONE_KEY_KEY, L.ONE_KEY_KEY_TIP)
+    -- keys changed elsewhere (the game's Key Bindings) show here too
+    local watch = CreateFrame("Frame", nil, b)
+    pcall(watch.RegisterEvent, watch, "UPDATE_BINDINGS")
+    watch:SetScript("OnEvent", function() if not waiting then Paint() end end)
+    Paint()
+    return b
+end
+
+local function BuildPoleView(page, cfg, setter)
+    local pole = CreateFrame("Frame", nil, page)
+    pole:SetAllPoints(page)
+    pole:Hide()
+    page.poleView = pole
+
+    local buttons = {}
+    local function Show(which)
+        page.glowView:SetShown(which == "glow")
+        pole:SetShown(which == "pole")
+        for _, b in ipairs(buttons) do b.Paint() end
+    end
+    local function ViewButton(label, which, x)
+        local b = W.Button(page, label, 101, function() Show(which) end)
+        b:SetPoint("TOPLEFT", 6 + x, -326)
+        local lit = W.Tex(b, "f_tab_glow", "ARTWORK", 1)
+        lit:SetPoint("TOPLEFT", 2, -2)
+        lit:SetPoint("BOTTOMRIGHT", -2, 2)
+        function b.Paint()
+            local on = (which == "pole") == pole:IsShown()
+            local r, g, bb = unpack(W.accent)
+            lit:SetVertexColor(r, g, bb, on and 0.45 or 0)
+            local c = on and W.GOLD or W.INK_SOFT
+            b.text:SetTextColor(c[1], c[2], c[3])
+        end
+        buttons[#buttons + 1] = b
+        return b
+    end
+    page.viewGlow = ViewButton(L.FISH_VIEW_GLOW, "glow", 0)
+    page.viewPole = ViewButton(L.CARD_SPLASH, "pole", 105)
+    page:HookScript("OnShow", function() for _, b in ipairs(buttons) do b.Paint() end end)
+    W.OnAccent(function() for _, b in ipairs(buttons) do b.Paint() end end)
+
+    -- hear the splash (Core/FishSound.lua): Off, Balanced or Fishing only
+    local hear = W.Section(pole, L.CARD_HEAR, 300, 64)
+    hear:SetPoint("TOPLEFT", 236, -2)
+    page.splash = hear:Add(W.Selector(hear, L.SPLASH_MODE, ns.FishSound.MODES,
+        function(v) return L["SPLASH_" .. v] end,
+        function() return cfg().splash and (cfg().splashMode or "focus") or "off" end,
+        function(v)
+            if v == "off" then
+                ns.SetCat("fish", "splash", false)
+            else
+                ns.SetCat("fish", "splashMode", v)
+                if not cfg().splash then ns.SetCat("fish", "splash", true) end
+            end
+        end, 0, { boxWidth = 150 }), 30)
+    W.Tooltip(page.splash.well, L.SPLASH, L.SPLASH_TIP)
+
+    -- cast and loot: double right-click (Core/EasyCast.lua), the one key
+    -- (Core/OneKey.lua) and which key that is
+    local cast = W.Section(pole, L.CARD_CAST, 300, 122)
+    cast:SetPoint("TOPLEFT", 236, -80)
+    page.easyCast = cast:Add(W.Check(cast, L.EASY_CAST, L.EASY_CAST_TIP, function() return cfg().easyCast end,
+        setter("easyCast")), 26)
+    page.oneKey = cast:Add(W.Check(cast, L.ONE_KEY, L.ONE_KEY_TIP, function() return cfg().oneKey end,
+        setter("oneKey")), 26)
+    local row = CreateFrame("Frame", nil, cast)
+    row:SetHeight(28)
+    cast:Add(row, 34)
+    local label = W.Text(row, 12, W.INK)
+    label:SetPoint("LEFT", 0, 0)
+    label:SetPoint("RIGHT", row, "RIGHT", -156, 0)
+    label:SetText(L.ONE_KEY_KEY)
+    page.keyButton = KeyButton(row)
+    page.keyButton:SetPoint("RIGHT", 0, 0)
+    pole:SetScript("OnShow", function() page.keyButton.Paint() end)
+
+    -- the lure: put on with the key, and the word when it runs out (Core/Lure.lua)
+    local lure = W.Section(pole, L.CARD_LURE, 300, 88)
+    lure:SetPoint("TOPLEFT", 236, -216)
+    page.oneKeyLure = lure:Add(W.Check(lure, L.ONE_KEY_LURE, L.ONE_KEY_LURE_TIP,
+        function() return cfg().oneKeyLure ~= false end, setter("oneKeyLure")), 26)
+    page.lureAlert = lure:Add(W.Check(lure, L.ALERT_LURE, L.ALERT_LURE_TIP,
+        function() return ns.db.alert.lure ~= false end, function(v) ns.SetAlert("lure", v) end), 26)
+    Show("glow")
+end
+
 local function BuildCategoryPage(page, cat)
     BuildPlate(page, cat)
     local cfg = function() return ns.db[cat] end
     local function setter(key) return function(v) ns.SetCat(cat, key, v) end end
+    -- the bobber's tab: the glow and its sound in one view, the pole in another
+    local fish = cat == "fish"
+    local host = page
+    if fish then
+        host = CreateFrame("Frame", nil, page)
+        host:SetAllPoints(page)
+        page.glowView = host
+    end
 
-    local glow = W.Section(page, L.CARD_GLOW, 300, 288)
+    local glow = W.Section(host, L.CARD_GLOW, 300, 288)
     glow:SetPoint("TOPLEFT", 236, -2)
     glow:Add(W.Check(glow, L.GLOW_ON, L.GLOW_ON_TIP, function() return cfg().enabled end, setter("enabled")), 28)
     glow:Add(W.ColorRow(glow, L.COLOR, L.COLOR_TIP, function() return cfg().color end, function(r, g, b)
@@ -213,7 +367,6 @@ local function BuildCategoryPage(page, cat)
     end), 44)
     -- the bobber's card has one slider more (its height) for the beam's check:
     -- its sliders sit closer to keep clear of the sound card
-    local fish = cat == "fish"
     -- down to 0%: no glow at all, the node (or the bobber) as the game shows it
     page.intensity = glow:Add(W.Slider(glow, L.INTENSITY, 0, 3, 0.1, function() return cfg().intensity end,
         setter("intensity"), Pct), fish and 40 or 42)
@@ -229,32 +382,9 @@ local function BuildCategoryPage(page, cat)
         page.beam = glow:Add(W.Check(glow, L.BEAM, L.BEAM_TIP, function() return cfg().beam end, setter("beam")), 26)
     end
 
-    if fish then
-        -- under the look picker, with a pole on: hear the splash
-        -- (Core/FishSound.lua) and double right-click to cast (Core/EasyCast.lua)
-        local splash = W.Section(page, L.CARD_SPLASH, 206, 102)
-        splash:SetPoint("TOPLEFT", 6, -324)
-        -- Off, Balanced or Fishing only: how far music and ambience go down
-        page.splash = splash:Add(W.Selector(splash, L.SPLASH_MODE, ns.FishSound.MODES,
-            function(v) return L["SPLASH_" .. v] end,
-            function() return cfg().splash and (cfg().splashMode or "focus") or "off" end,
-            function(v)
-                if v == "off" then
-                    ns.SetCat("fish", "splash", false)
-                else
-                    ns.SetCat("fish", "splashMode", v)
-                    if not cfg().splash then ns.SetCat("fish", "splash", true) end
-                end
-            end, 0, { boxWidth = 130 }), 28)
-        W.Tooltip(page.splash.well, L.SPLASH, L.SPLASH_TIP)
-        page.easyCast = splash:Add(W.Check(splash, L.EASY_CAST, L.EASY_CAST_TIP, function() return cfg().easyCast end,
-            setter("easyCast")), 22)
-        -- the Interact key casts, loots the bobber and puts a lure on (Core/OneKey.lua)
-        page.oneKey = splash:Add(W.Check(splash, L.ONE_KEY, L.ONE_KEY_TIP, function() return cfg().oneKey end,
-            setter("oneKey")), 22)
-    end
+    if fish then BuildPoleView(page, cfg, setter) end
 
-    local sound = W.Section(page, L.CARD_SOUND, 300, 130)
+    local sound = W.Section(host, L.CARD_SOUND, 300, 130)
     sound:SetPoint("TOPLEFT", 236, -296)
     sound:Add(W.Check(sound, L.SOUND_ON, L.SOUND_ON_TIP, function() return cfg().soundOn end, setter("soundOn")), 28)
     local sel = sound:Add(W.Selector(sound, L.SOUND, Sounds.LIST, function(k) return L["SND_" .. k] end,

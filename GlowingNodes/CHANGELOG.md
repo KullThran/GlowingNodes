@@ -1,6 +1,7 @@
 # Glowing Nodes Changelog
 
 ## Unreleased
+- The Fishing tab has two views, switched under the preview: Glow and sound, and With a pole, which now has room for hearing the splash, casting and looting, and the lure. The one key for everything (the game's Interact) is set right there: click and press a key, or right-click to take it off. Putting the lure on with the key has its own box.
 - The bobber is seen through its glow: every look (the swirl, the runes, the pillar...) gets a soft see-through hole where the bobber floats, as the glow is drawn over the world. Nodes keep their glow whole.
 - Hear the splash, Fishing only: music, ambience and voices now go silent (they stayed at 10 %), and the sounds of pets, emotes and error voices go off; both modes turn the game's sound and effects on if they were off, and Balanced lowers voices to 30 % too. All come back as you had them.
 - Fish with one key (a box on the Fishing tab, off by default): with a fishing pole on, your Interact key casts when the line is in, loots the bobber when it's out and puts on the best lure from your bags when the pole has none. A node in reach is still gathered, and in combat the key is the game's. You press every time.
