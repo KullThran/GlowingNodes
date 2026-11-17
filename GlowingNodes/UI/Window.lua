@@ -213,8 +213,9 @@ local function BuildCategoryPage(page, cat)
     -- the bobber's card has one slider more (its height) for the beam's check:
     -- its sliders sit closer to keep clear of the sound card
     local fish = cat == "fish"
-    glow:Add(W.Slider(glow, L.INTENSITY, 0.5, 3, 0.1, function() return cfg().intensity end, setter("intensity"), Pct),
-        fish and 40 or 42)
+    -- down to 0%: no glow at all, the node (or the bobber) as the game shows it
+    page.intensity = glow:Add(W.Slider(glow, L.INTENSITY, 0, 3, 0.1, function() return cfg().intensity end,
+        setter("intensity"), Pct), fish and 40 or 42)
     glow:Add(W.Slider(glow, L.SIZE, 0.5, 2, 0.05, function() return cfg().size end, setter("size"), Pct), fish and 40 or 44)
     glow:Add(W.Slider(glow, L.GLOW_TIME, 0, 60, 1, function() return cfg().glowTime or 0 end, setter("glowTime"),
         function(v) return v == 0 and L.GLOW_TIME_ALWAYS or L.SECONDS:format(v) end, L.GLOW_TIME_TIP), fish and 40 or 44)
